@@ -1,0 +1,130 @@
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.salons' | t }}</h1>
+  <span class="flex-1"></span>
+  @if (builtAt(); as builtAt) {
+    <span class="text-sm text-slate-600" data-testid="salons-built-at">{{
+      'list.updatedAt' | t: { time: builtAt }
+    }}</span>
+  }
+  <p-button
+    data-testid="salons-refresh"
+    severity="secondary"
+    size="small"
+    icon="pi pi-refresh"
+    [label]="'list.refresh' | t"
+    [loading]="loading()"
+    (onClick)="refresh()"
+  />
+</div>
+
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <p-iconfield class="w-80">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      data-testid="salons-search"
+      [attr.aria-label]="'salons.search' | t"
+      [placeholder]="'salons.search' | t"
+      [value]="searchText()"
+      (input)="onSearch($any($event.target).value)"
+    />
+  </p-iconfield>
+  <p-select
+    data-testid="salons-status-filter"
+    class="w-56"
+    [options]="statusOptions()"
+    optionLabel="label"
+    optionValue="value"
+    [showClear]="true"
+    [placeholder]="'salons.filter.status' | t"
+    [ariaLabel]="'salons.filter.status' | t"
+    [ngModel]="state().status"
+    (ngModelChange)="onStatus($event)"
+  />
+  <p-select
+    data-testid="salons-city-filter"
+    class="w-56"
+    [options]="cityOptions()"
+    optionLabel="label"
+    optionValue="key"
+    [showClear]="true"
+    [filter]="true"
+    [placeholder]="'salons.filter.city' | t"
+    [ariaLabel]="'salons.filter.city' | t"
+    [ngModel]="state().city"
+    (ngModelChange)="onCity($event)"
+  />
+  <span class="text-sm text-slate-600" data-testid="salons-total">{{ 'list.total' | t: { count: view().total } }}</span>
+</div>
+
+<p-table
+  data-testid="salons-table"
+  [value]="view().rows"
+  dataKey="salonId"
+  [lazy]="true"
+  [lazyLoadOnInit]="false"
+  (onLazyLoad)="onLazyLoad($event)"
+  [sortField]="state().sort"
+  [sortOrder]="sortOrder()"
+  [paginator]="true"
+  [first]="first()"
+  [rows]="state().size"
+  [totalRecords]="view().total"
+  [rowsPerPageOptions]="pageSizes"
+  [loading]="loading()"
+  [rowHover]="true"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="name">{{ 'salons.column.name' | t }} <p-sortIcon field="name" /></th>
+      <th pSortableColumn="city">{{ 'salons.column.city' | t }} <p-sortIcon field="city" /></th>
+      <th pSortableColumn="ownerName">{{ 'salons.column.owner' | t }} <p-sortIcon field="ownerName" /></th>
+      <th pSortableColumn="rating">{{ 'salons.column.rating' | t }} <p-sortIcon field="rating" /></th>
+      <th pSortableColumn="reviewCount">{{ 'salons.column.reviewCount' | t }} <p-sortIcon field="reviewCount" /></th>
+      <th pSortableColumn="status">{{ 'salons.column.status' | t }} <p-sortIcon field="status" /></th>
+      <th pSortableColumn="createdAt">{{ 'salons.column.createdAt' | t }} <p-sortIcon field="createdAt" /></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-salon>
+    <tr
+      class="cursor-pointer"
+      data-testid="salon-row"
+      [attr.data-status]="salon.status"
+      [class.bg-red-50]="salon.status === 'deleted'"
+      [class.text-slate-500]="salon.status === 'deleted'"
+      (click)="openSalon(salon.salonId, $event)"
+    >
+      <td>
+        <a class="font-medium hover:underline" data-testid="salon-name" [routerLink]="['/salons', salon.salonId]">{{
+          salon.name || '—'
+        }}</a>
+      </td>
+      <td>{{ salon.city || '—' }}</td>
+      <td>
+        <div>{{ salon.ownerName || '—' }}</div>
+        <div class="text-xs text-slate-500">{{ salon.email }}</div>
+        <div class="text-xs text-slate-500">{{ salon.phone }}</div>
+      </td>
+      <td>{{ salon.reviewCount > 0 ? formatRating(salon.rating) : '—' }}</td>
+      <td>{{ salon.reviewCount }}</td>
+      <td>
+        <p-tag
+          data-testid="salon-status"
+          [severity]="statusSeverity(salon.status)"
+          [icon]="salon.status === 'deleted' ? 'pi pi-trash' : undefined"
+          [value]="statusLabelKey(salon.status) | t"
+        />
+      </td>
+      <td>{{ formatDate(salon.createdAt) }}</td>
+    </tr>
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="7" class="py-8 text-center text-slate-600" data-testid="salons-empty">
+        {{ (failed() ? 'list.failed' : 'list.empty') | t }}
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

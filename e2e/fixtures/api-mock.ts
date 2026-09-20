@@ -7,8 +7,11 @@ export type MockResponse = {
   body: unknown;
 };
 
-/** Route table keyed by `"<METHOD> <pathname>"`, e.g. `"GET /admin/me"`. */
-export type MockRoutes = Record<string, MockResponse>;
+/**
+ * Route table keyed by `"<METHOD> <pathname>"`, e.g. `"GET /admin/me"`. A function entry answers
+ * from the request's URL — for an endpoint whose query string changes the response.
+ */
+export type MockRoutes = Record<string, MockResponse | ((url: URL) => MockResponse)>;
 
 export type ApiMock = {
   /** Requests that matched no entry. The app fixture asserts this is empty when a test ends. */
@@ -37,8 +40,10 @@ export async function installApiMock(context: BrowserContext, routes: MockRoutes
 
   await context.route(`${environment.adminApiUrl}/**`, async (route: Route): Promise<void> => {
     const request = route.request();
-    const key = `${request.method()} ${new URL(request.url()).pathname}`;
-    const entry = routes[key];
+    const url = new URL(request.url());
+    const key = `${request.method()} ${url.pathname}`;
+    const matched = routes[key];
+    const entry = typeof matched === 'function' ? matched(url) : matched;
 
     if (entry === undefined) {
       mock.unmatched.push(key);
