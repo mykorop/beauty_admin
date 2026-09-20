@@ -19,7 +19,7 @@ import { Select } from 'primeng/select';
 import { type TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import { map, type Subscription } from 'rxjs';
-import { type SalonList, SalonsClient, type SalonStatus } from '../../core/api/salons.client';
+import { SALON_STATUS_SEVERITY, type SalonList, SalonsClient, type SalonStatus } from '../../core/api/salons.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
@@ -35,12 +35,6 @@ import {
 } from './salons-table-state';
 
 const SEARCH_DEBOUNCE_MS = 250;
-
-const STATUS_SEVERITY: Record<SalonStatus, 'success' | 'warn' | 'danger'> = {
-  active: 'success',
-  blocked: 'warn',
-  deleted: 'danger',
-};
 
 /**
  * Every Салон on the platform. The backend hands over the whole list; searching, filtering,
@@ -127,7 +121,7 @@ export class SalonsPage {
 
   // PrimeNG hands the row template an untyped `$implicit`; these two give the status its type back.
   protected statusSeverity(status: SalonStatus): 'success' | 'warn' | 'danger' {
-    return STATUS_SEVERITY[status];
+    return SALON_STATUS_SEVERITY[status];
   }
 
   protected statusLabelKey(status: SalonStatus): TranslationKey {

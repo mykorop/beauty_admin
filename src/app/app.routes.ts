@@ -17,11 +17,10 @@ export const routes: Routes = [
         path: 'salons',
         loadComponent: () => import('./pages/salons/salons.page').then((m) => m.SalonsPage),
       },
-      // The card itself arrives with its own ticket; until then its address must at least resolve.
       {
         path: 'salons/:salonId',
-        loadComponent: () => import('./pages/section-stub/section-stub.page').then((m) => m.SectionStubPage),
-        data: { titleKey: 'nav.salons' },
+        loadComponent: () => import('./pages/salon-card/salon-card.page').then((m) => m.SalonCardPage),
+        loadChildren: () => import('./pages/salon-card/salon-card.tabs').then((m) => m.SALON_CARD_ROUTES),
       },
       ...NAV_SECTIONS.filter((section) => section.path !== 'salons').map((section) => ({
         path: section.path,

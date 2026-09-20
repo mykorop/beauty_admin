@@ -180,12 +180,24 @@ test.describe('salons list', () => {
     await expect(page.getByTestId('salons-built-at')).not.toHaveText(before ?? '');
   });
 
-  test('a click on a row opens the address of the salon card', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/salons': SALONS });
+  test('a click on a row opens the salon card', async ({ page, mockBackend }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons': SALONS,
+      // The card's own fields are `salon-card.spec.ts`'s business; here it only has to open.
+      'GET /admin/salons/s1': apiOk({
+        salonId: 's1',
+        name: 'Beauty Lab',
+        status: 'active',
+        timezone: 'Europe/Chisinau',
+        shortLinks: { random: null, handle: null },
+      }),
+    });
     await signIn(page, ADMIN, '/salons');
 
     await page.getByTestId('salon-row').first().getByText('Ana Rusu').click();
 
-    await expect(page).toHaveURL(/\/salons\/s1$/);
+    await expect(page).toHaveURL(/\/salons\/s1\/profile$/);
+    await expect(page.getByTestId('card-title')).toHaveText('Beauty Lab');
   });
 });
