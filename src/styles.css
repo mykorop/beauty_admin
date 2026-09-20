@@ -1,0 +1,12 @@
+/* PrimeNG's layer sits between Tailwind's base and utilities, so a utility class always wins over a
+   component's own styling without `!important`. */
+@layer theme, base, primeng, components, utilities;
+
+@import 'tailwindcss';
+@import 'tailwindcss-primeui';
+@import 'primeicons/primeicons.css';
+
+html,
+body {
+  height: 100%;
+}

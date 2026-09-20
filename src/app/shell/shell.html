@@ -1,0 +1,47 @@
+<div class="flex h-full bg-slate-50 text-slate-900">
+  <aside class="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
+    <div class="px-5 py-4 text-lg font-semibold">{{ 'app.title' | t }}</div>
+    <nav class="flex flex-col gap-1 px-2" data-testid="sidebar">
+      @for (section of sections; track section.path) {
+        <a
+          class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+          [routerLink]="['/', section.path]"
+          routerLinkActive="bg-slate-100 font-semibold text-slate-900"
+        >
+          <i [class]="section.icon" aria-hidden="true"></i>
+          {{ section.labelKey | t }}
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="flex items-center gap-4 border-b border-slate-200 bg-white px-6 py-3">
+      <span
+        data-testid="environment-indicator"
+        class="rounded-md px-2 py-1 text-xs font-bold tracking-wide"
+        [class]="stage === 'prod' ? 'bg-red-600 text-white' : 'bg-amber-200 text-amber-950'"
+      >
+        {{ stageLabelKey | t }}
+      </span>
+      <span class="flex-1"></span>
+      <app-language-switcher />
+      @if (admin(); as admin) {
+        <span class="text-sm text-slate-600" data-testid="admin-email">{{ admin.email }}</span>
+      }
+      <p-button
+        data-testid="sign-out"
+        severity="secondary"
+        size="small"
+        icon="pi pi-sign-out"
+        [label]="'header.signOut' | t"
+        [loading]="signingOut()"
+        (onClick)="signOut()"
+      />
+    </header>
+
+    <main class="min-h-0 flex-1 overflow-auto p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>

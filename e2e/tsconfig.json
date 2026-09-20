@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/e2e",
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"]
+  },
+  "references": [],
+  "files": [],
+  "include": ["**/*.ts", "../playwright.config.ts", "../src/environments/*.ts"]
+}
