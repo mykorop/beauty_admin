@@ -17,6 +17,14 @@ export const routes: Routes = [
         path: 'salons',
         loadComponent: () => import('./pages/salons/salons.page').then((m) => m.SalonsPage),
       },
+      // Before the salon card: its own tab routes end in a wildcard that would swallow this path.
+      {
+        path: 'salons/:salonId/masters/:masterId',
+        loadComponent: () =>
+          import('./pages/salon-master-card/salon-master-card.page').then((m) => m.SalonMasterCardPage),
+        loadChildren: () =>
+          import('./pages/salon-master-card/salon-master-card.tabs').then((m) => m.SALON_MASTER_CARD_ROUTES),
+      },
       {
         path: 'salons/:salonId',
         loadComponent: () => import('./pages/salon-card/salon-card.page').then((m) => m.SalonCardPage),

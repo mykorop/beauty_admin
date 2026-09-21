@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ButtonDirective } from 'primeng/button';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { formatRating } from '../../shared/rating';
 import { SalonCardStore } from './salon-card.store';
 import { SalonProfileForm } from './salon-profile.form';
 
@@ -45,11 +46,7 @@ export class SalonProfileTab {
 
   protected readonly rating = computed(() => {
     const salon = this.salon();
-    return salon && salon.reviewCount > 0
-      ? new Intl.NumberFormat(this.i18n.locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(
-          salon.rating,
-        )
-      : '—';
+    return salon ? formatRating(this.i18n.locale(), salon.rating, salon.reviewCount) : '—';
   });
 
   protected readonly createdAt = computed(() => this.store.venueDate(this.salon()?.createdAt));

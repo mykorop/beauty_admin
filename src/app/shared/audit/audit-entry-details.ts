@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import type { AuditEntry } from '../../core/api/audit.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { specializationLabel } from '../specialization';
 import { weekdayName } from '../weekday';
 
 /**
@@ -28,9 +29,9 @@ import { weekdayName } from '../weekday';
             <tr class="border-t border-slate-100 align-top" data-testid="history-change">
               <td class="py-1 pr-3">{{ fieldLabel(change.field) }}</td>
               <td class="py-1 pr-3 break-words whitespace-pre-line text-slate-500">
-                {{ display(change.before) }}
+                {{ display(change.before, change.field) }}
               </td>
-              <td class="py-1 break-words whitespace-pre-line">{{ display(change.after) }}</td>
+              <td class="py-1 break-words whitespace-pre-line">{{ display(change.after, change.field) }}</td>
             </tr>
           }
         </tbody>
@@ -76,13 +77,16 @@ export class AuditEntryDetails {
     return this.i18n.optional(`audit.targetType.${type}`) ?? type;
   }
 
-  protected display(value: unknown): string {
+  protected display(value: unknown, field?: string): string {
     // An emptied list — the windows of a day that closed — reads as nothing, like an emptied field.
     if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
       return '—';
     }
     if (typeof value === 'boolean') {
       return this.i18n.t(value ? 'audit.value.yes' : 'audit.value.no');
+    }
+    if (field === 'specialization' && typeof value === 'string') {
+      return specializationLabel(this.i18n, value);
     }
     if (isHoursDay(value)) {
       return value.isOpen && value.slots.length > 0 ? this.display(value.slots) : this.i18n.t('hours.closed');

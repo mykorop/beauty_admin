@@ -109,9 +109,9 @@ test.describe('salon card', () => {
       'Історія',
     ]);
 
-    await page.getByTestId('card-tab').filter({ hasText: 'Ростер' }).click();
+    await page.getByTestId('card-tab').filter({ hasText: 'Каталог послуг' }).click();
 
-    await expect(page).toHaveURL(/\/salons\/s1\/roster$/);
+    await expect(page).toHaveURL(/\/salons\/s1\/services$/);
     await expect(page.getByTestId('card-tab-stub')).toBeVisible();
     // The card around the tab stays.
     await expect(page.getByTestId('card-title')).toHaveText('Beauty Lab');

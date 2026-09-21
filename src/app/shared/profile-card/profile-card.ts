@@ -9,14 +9,19 @@ export type ProfileCardTab = { path: string; labelKey: TranslationKey };
 /**
  * The frame of a profile card: a way back, the title, the tab strip and the outlet the chosen tab
  * renders into. It knows nothing about whose profile it is — the Салон and the Незалежний майстер
- * pages hand it their own tabs and project their state (`cardStatus`) and warnings (`cardBanner`).
+ * pages hand it their own tabs and project their state (`cardStatus`), the card they sit inside
+ * (`cardContext`) and warnings (`cardBanner`).
  */
 @Component({
   selector: 'app-profile-card',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <a class="mb-3 inline-flex items-center gap-2 text-sm text-slate-600 hover:underline" [routerLink]="backLink()">
+    <a
+      class="mb-3 inline-flex items-center gap-2 text-sm text-slate-600 hover:underline"
+      data-testid="card-back"
+      [routerLink]="backLink()"
+    >
       <i class="pi pi-arrow-left" aria-hidden="true"></i>
       {{ backLabelKey() | t }}
     </a>
@@ -24,6 +29,7 @@ export type ProfileCardTab = { path: string; labelKey: TranslationKey };
       <h1 class="text-2xl font-semibold" data-testid="card-title">{{ title() || '—' }}</h1>
       <ng-content select="[cardStatus]" />
     </div>
+    <ng-content select="[cardContext]" />
     <ng-content select="[cardBanner]" />
     <nav class="mb-6 flex flex-wrap gap-1 border-b border-slate-200">
       @for (tab of tabs(); track tab.path) {

@@ -24,6 +24,14 @@ const IMPLEMENTED: Routes = [
     loadComponent: () => import('./salon-hours.tab').then((m) => m.SalonHoursTab),
   },
   {
+    path: 'roster',
+    loadComponent: () => import('./salon-roster.tab').then((m) => m.SalonRosterTab),
+  },
+  {
+    path: 'invites',
+    loadComponent: () => import('./salon-invites.tab').then((m) => m.SalonInvitesTab),
+  },
+  {
     path: 'history',
     loadComponent: () => import('./salon-history.tab').then((m) => m.SalonHistoryTab),
   },

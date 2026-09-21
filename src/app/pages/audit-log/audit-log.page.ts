@@ -26,8 +26,10 @@ import {
 } from './audit-log-filters';
 
 /** Where the card of each kind of target lives. A backend ahead of this list serves kinds it lacks. */
-const TARGET_CARD_ROUTE: Partial<Record<string, (id: string) => string[]>> = {
-  salon: (id) => ['/salons', id],
+const TARGET_CARD_ROUTE: Partial<Record<string, (entry: AuditEntry) => string[] | null>> = {
+  salon: (entry) => ['/salons', entry.targetId],
+  // A Майстер салону lives inside his Салон; the card of a Незалежний майстер is not built yet.
+  master: (entry) => (entry.salonId ? ['/salons', entry.salonId, 'masters', entry.targetId] : null),
 };
 
 /**
@@ -132,7 +134,7 @@ export class AuditLogPage {
   }
 
   protected targetLink(entry: AuditEntry): string[] | null {
-    return TARGET_CARD_ROUTE[entry.targetType]?.(entry.targetId) ?? null;
+    return TARGET_CARD_ROUTE[entry.targetType]?.(entry) ?? null;
   }
 
   protected actionLabel(action: string): string {

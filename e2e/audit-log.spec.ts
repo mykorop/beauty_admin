@@ -217,4 +217,41 @@ test.describe('audit log screen', () => {
 
     await expect(page).toHaveURL(/\/salons\/s1/);
   });
+
+  test('words a Майстер салону edit and links it to his card inside the salon', async ({ page, mockBackend }) => {
+    const notFound = { status: 404, body: { success: false, error: { code: 'NOT_FOUND', message: 'x' } } };
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [AUDIT]: apiOk({
+        items: [
+          auditEntry({
+            targetType: 'master',
+            targetId: 'm2',
+            action: 'salon.master.update',
+            changes: [
+              { field: 'specialization', before: 'barber', after: 'cosmetologist' },
+              { field: 'commissionPercent', before: 40, after: 50 },
+            ],
+          }),
+        ],
+        nextCursor: null,
+      }),
+      'GET /admin/salons/s1': notFound,
+      'GET /admin/salons/s1/masters/m2': notFound,
+    });
+    await signIn(page, ADMIN, '/audit-log');
+
+    const row = page.getByTestId('audit-row').first();
+    await expect(row).toContainText('Зміна даних Майстра салону');
+    await row.click();
+    const changes = page.getByTestId('history-change');
+    await expect(changes.nth(0)).toContainText('Спеціалізація');
+    await expect(changes.nth(0)).toContainText('Барбер');
+    await expect(changes.nth(0)).toContainText('Косметолог');
+    await expect(changes.nth(1)).toContainText('Комісія');
+
+    await page.getByTestId('audit-target').click();
+
+    await expect(page).toHaveURL(/\/salons\/s1\/masters\/m2/);
+  });
 });
