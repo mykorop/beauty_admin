@@ -21,12 +21,12 @@ import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
 import { WEEK_ORDER, weekdayName } from '../weekday';
+import { wordHoursRefusals } from './hours-refusal-wording';
 import {
   buildHoursWeek,
   type DayFormValue,
   daysOutsideBounds,
   formatSlots,
-  hoursRefusals,
   toWeekFormValue,
 } from './week-hours';
 
@@ -115,21 +115,7 @@ export class WeekHoursEditor implements OnInit {
 
   protected readonly refusals = computed(() => {
     const error = this.refused();
-    if (!(error instanceof ApiError)) {
-      return [];
-    }
-    const locale = this.i18n.locale();
-    const worded = hoursRefusals(error).map(({ key, dayOfWeek, masterName, slot, bounds }) => {
-      const day = dayOfWeek === undefined ? '' : weekdayName(locale, dayOfWeek);
-      return this.i18n.t(key, {
-        // A day opens its sentence everywhere but in the master's.
-        day: masterName === undefined ? day.charAt(0).toLocaleUpperCase(locale) + day.slice(1) : day,
-        master: masterName,
-        slot,
-        bounds,
-      });
-    });
-    return worded.length > 0 ? worded : [this.i18n.errorMessage(error.code)];
+    return error instanceof ApiError ? wordHoursRefusals(this.i18n, error) : [];
   });
 
   ngOnInit(): void {

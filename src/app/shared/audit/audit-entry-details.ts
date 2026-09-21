@@ -5,6 +5,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 import { serviceCategoryLabel } from '../service-category';
 import { specializationLabel } from '../specialization';
 import { weekdayName } from '../weekday';
+import { formatCalendarDate, formatPeriod, TIME_OFF_TYPE_KEYS } from '../working-schedule/time-off';
 
 /**
  * What one Журнал дій entry did: the old and new value of every changed field — in full, PII
@@ -79,6 +80,10 @@ export class AuditEntryDetails {
         ...(part ? [this.i18n.optional(`services.field.${part}`) ?? part] : []),
       ].join(' · ');
     }
+    // `timeOff.<groupId>`: the id names nothing a reader knows — the value beside it has the period.
+    if (TIME_OFF_FIELD.test(field)) {
+      return this.i18n.t('master.field.timeOff');
+    }
     const key = `${this.entry().targetType}.field.${FIELD_LABEL_ALIASES[field] ?? field}`;
     return this.i18n.optional(key) ?? field;
   }
@@ -109,6 +114,27 @@ export class AuditEntryDetails {
         `${value.price} ${value.currency}`,
       ].join(' · ');
     }
+    if (field === 'schedulePattern.anchorDate' && typeof value === 'string') {
+      return formatCalendarDate(value, this.i18n.locale());
+    }
+    if (field === 'schedulePattern.workingOffsets' && isCycleDays(value)) {
+      return cycleDays(value);
+    }
+    if (isRotation(value)) {
+      return this.i18n.t('rotation.summary', {
+        length: value.cycleLength,
+        days: cycleDays(value.workingOffsets),
+        date: formatCalendarDate(value.anchorDate, this.i18n.locale()),
+      });
+    }
+    if (isTimeOff(value)) {
+      return [
+        this.i18n.t(TIME_OFF_TYPE_KEYS[value.type]),
+        formatPeriod(value.fromDate, value.toDate, this.i18n.locale()),
+        ...(value.slots?.length ? [this.display(value.slots)] : []),
+        ...(value.reason ? [value.reason] : []),
+      ].join(' · ');
+    }
     if (isHoursDay(value)) {
       return value.isOpen && value.slots.length > 0 ? this.display(value.slots) : this.i18n.t('hours.closed');
     }
@@ -128,7 +154,51 @@ const HOURS_FIELD = /^hours\.([0-6])(?:\.(\w+))?$/;
  */
 const SERVICE_FIELD = /^services\.[^.]+(?:\.(\w+))?$/;
 
+/** `timeOff.<groupId>` — one Відсутність, filed or removed whole. */
+const TIME_OFF_FIELD = /^timeOff\.[^.]+$/;
+
 type Slot = { start: string; end: string };
+
+const isCycleDays = (value: unknown): value is number[] =>
+  Array.isArray(value) && value.length > 0 && value.every((offset) => typeof offset === 'number');
+
+/** Positions of a cycle as its editor numbers them: from 1. */
+const cycleDays = (offsets: number[]): string => offsets.map((offset) => offset + 1).join(', ');
+
+type Rotation = { anchorDate: string; cycleLength: number; workingOffsets: number[] };
+
+/** A whole Ротація as one value — the «after» of one set, the «before» of one removed. */
+const isRotation = (value: unknown): value is Rotation => {
+  const rotation = value as Partial<Rotation> | null;
+  return (
+    typeof rotation === 'object' &&
+    rotation !== null &&
+    typeof rotation.anchorDate === 'string' &&
+    typeof rotation.cycleLength === 'number' &&
+    isCycleDays(rotation.workingOffsets)
+  );
+};
+
+type TimeOff = {
+  type: keyof typeof TIME_OFF_TYPE_KEYS;
+  fromDate: string;
+  toDate: string;
+  slots?: Slot[];
+  reason?: string;
+};
+
+/** A whole Відсутність as one value — the «after» of one filed, the «before» of one removed. */
+const isTimeOff = (value: unknown): value is TimeOff => {
+  const timeOff = value as Partial<TimeOff> | null;
+  return (
+    typeof timeOff === 'object' &&
+    timeOff !== null &&
+    typeof timeOff.type === 'string' &&
+    timeOff.type in TIME_OFF_TYPE_KEYS &&
+    typeof timeOff.fromDate === 'string' &&
+    typeof timeOff.toDate === 'string'
+  );
+};
 
 const isSlots = (value: unknown): value is Slot[] =>
   Array.isArray(value) &&

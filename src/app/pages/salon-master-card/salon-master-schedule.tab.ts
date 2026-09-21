@@ -2,14 +2,16 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ButtonDirective } from 'primeng/button';
 import { catchError, EMPTY, forkJoin, map, Subject, switchMap, tap } from 'rxjs';
-import type { DayHours, MasterSchedule } from '../../core/api/master-schedule.model';
+import type { DayHours, MasterSchedule, SchedulePattern } from '../../core/api/master-schedule.model';
 import { SalonMastersClient } from '../../core/api/salon-masters.client';
 import { SalonsClient } from '../../core/api/salons.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { WEEK_ORDER, weekdayName } from '../../shared/weekday';
+import { RotationSection, type RotationSaveRequest } from '../../shared/working-schedule/rotation.section';
 import { monthOf, monthWindow, venueToday } from '../../shared/working-schedule/schedule-calendar';
 import { ScheduleCalendar } from '../../shared/working-schedule/schedule-calendar.view';
+import { TimeOffSection, type TimeOffCreateRequest } from '../../shared/working-schedule/time-off.section';
 import { daysOutsideBounds, formatSlots, toWeekFormValue } from '../../shared/working-schedule/week-hours';
 import { WeekHoursEditor, type WeekHoursSaveRequest } from '../../shared/working-schedule/week-hours.editor';
 import { SalonCardStore } from '../salon-card/salon-card.store';
@@ -17,12 +19,13 @@ import { SalonMasterStore } from './salon-master.store';
 
 /**
  * Робочий графік of a Майстер салону: his тижневі години next to the Години роботи of his Салон —
- * so a mismatch shows at a glance — and the month a Клієнт would meet. This tab is what knows about
- * the Салон: the editor only gets the bounds to show, the calendar only a schedule to draw.
+ * so a mismatch shows at a glance — his Ротація, the month a Клієнт would meet, and the Відсутності
+ * of that month. This tab is what knows about the Салон: the editor only gets the bounds to show,
+ * the calendar only a schedule to draw, the two sections only the calls that write.
  */
 @Component({
   selector: 'app-salon-master-schedule-tab',
-  imports: [ButtonDirective, ScheduleCalendar, TranslatePipe, WeekHoursEditor],
+  imports: [ButtonDirective, RotationSection, ScheduleCalendar, TimeOffSection, TranslatePipe, WeekHoursEditor],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (schedule(); as schedule) {
@@ -79,12 +82,32 @@ import { SalonMasterStore } from './salon-master.store';
         </table>
       }
 
+      <h2 class="mb-3 mt-8 font-medium">{{ 'rotation.title' | t }}</h2>
+      <app-rotation-section
+        [pattern]="schedule.schedulePattern"
+        [todayDate]="schedule.todayDate"
+        [writable]="writable()"
+        [save]="saveRotation"
+        (saved)="rotationSaved($event)"
+      />
+
       <h2 class="mb-3 mt-8 font-medium">{{ 'schedule.calendar.title' | t }}</h2>
       <app-schedule-calendar
         [month]="month()"
         [schedule]="schedule"
         [bounds]="salonHours()"
         (monthChange)="months.next($event)"
+      />
+
+      <h2 class="mb-1 mt-8 font-medium">{{ 'timeOff.title' | t }}</h2>
+      <p class="mb-3 text-xs text-slate-500">{{ 'timeOff.note' | t }}</p>
+      <app-time-off-section
+        [groups]="schedule.timeOff"
+        [todayDate]="schedule.todayDate"
+        [writable]="writable()"
+        [create]="createTimeOff"
+        [remove]="removeTimeOff"
+        (changed)="months.next($event ? monthOf($event) : month())"
       />
     } @else if (failed()) {
       <p class="text-slate-600" data-testid="schedule-failed">{{ 'card.failed' | t }}</p>
@@ -135,6 +158,19 @@ export class SalonMasterScheduleTab {
   protected readonly save = (request: WeekHoursSaveRequest) =>
     this.client.updateHours(this.salonId, this.masterId, request).pipe(map((hours) => hours.days));
 
+  protected readonly saveRotation = (request: RotationSaveRequest) =>
+    this.client
+      .updateSchedulePattern(this.salonId, this.masterId, request)
+      .pipe(map((stored) => stored.schedulePattern));
+
+  protected readonly createTimeOff = (request: TimeOffCreateRequest) =>
+    this.client.createTimeOff(this.salonId, this.masterId, request);
+
+  protected readonly removeTimeOff = (groupId: string, reason?: string) =>
+    this.client.removeTimeOff(this.salonId, this.masterId, groupId, reason);
+
+  protected readonly monthOf = monthOf;
+
   constructor() {
     if (!this.salonId || !this.masterId) {
       return;
@@ -171,6 +207,11 @@ export class SalonMasterScheduleTab {
   /** The saved week changes what the calendar shows, without another read. */
   protected weekSaved(weeklyHours: DayHours[]): void {
     this.schedule.update((schedule) => schedule && { ...schedule, weeklyHours });
+  }
+
+  /** Like the week: the stored Ротація redraws the calendar without another read. */
+  protected rotationSaved(schedulePattern: SchedulePattern | null): void {
+    this.schedule.update((schedule) => schedule && { ...schedule, schedulePattern });
   }
 
   private read(month: string) {

@@ -23,6 +23,18 @@ export type TimeOffGroup = {
   createdAt: string;
 };
 
+/** One Відсутність as it is filed: the range, and for особливі години the one window still worked. */
+export type TimeOffRequest = {
+  type: TimeOffType;
+  fromDate: string;
+  toDate: string;
+  slots?: TimeSlot[];
+  /** The reason the Майстер's own apps show — not the Журнал's. */
+  reason?: string;
+  /** The administrator has seen the Записи standing in the range; nothing is cancelled either way. */
+  allowExistingAppointments?: boolean;
+};
+
 /** One Запис as the calendar needs it; the instants are UTC. */
 export type ScheduleAppointment = {
   appointmentId: string;

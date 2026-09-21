@@ -35,3 +35,12 @@ export const HOURS_REFUSAL_CODES: readonly string[] = [
   ROSTER_HOURS_OUTSIDE_SALON_HOURS_CODE,
   MASTER_HOURS_OUTSIDE_SALON_HOURS_CODE,
 ];
+
+/** Live Записи stand inside a Відсутність; `details` names the days, and the same request confirms it. */
+export const TIME_OFF_HAS_APPOINTMENTS_CODE = 'TIME_OFF_HAS_APPOINTMENTS';
+
+/** Refusals of a Відсутність its form words itself: what is in the way, or the window that sticks out. */
+export const TIME_OFF_REFUSAL_CODES: readonly string[] = [
+  TIME_OFF_HAS_APPOINTMENTS_CODE,
+  MASTER_HOURS_OUTSIDE_SALON_HOURS_CODE,
+];
