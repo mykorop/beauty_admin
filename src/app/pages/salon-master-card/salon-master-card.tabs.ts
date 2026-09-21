@@ -16,6 +16,10 @@ const IMPLEMENTED: Routes = [
     loadComponent: () => import('./salon-master-profile.tab').then((m) => m.SalonMasterProfileTab),
   },
   {
+    path: 'schedule',
+    loadComponent: () => import('./salon-master-schedule.tab').then((m) => m.SalonMasterScheduleTab),
+  },
+  {
     path: 'services',
     loadComponent: () => import('./salon-master-services.tab').then((m) => m.SalonMasterServicesTab),
   },

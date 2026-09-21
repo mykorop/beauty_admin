@@ -1,17 +1,37 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, type OnInit, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  type OnInit,
+  output,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
-import { finalize } from 'rxjs';
-import { ApiError } from '../../core/api/api-error';
-import { HOURS_REFUSAL_CODES, type SalonDayHours, SalonsClient } from '../../core/api/salons.client';
+import { finalize, type Observable } from 'rxjs';
+import { ApiError, HOURS_REFUSAL_CODES } from '../../core/api/api-error';
+import type { DayHours } from '../../core/api/master-schedule.model';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
-import { buildSalonHoursWeek, type DayFormValue, hoursRefusals, toWeekFormValue } from './salon-hours-week';
-import { WEEK_ORDER, weekdayName } from '../../shared/weekday';
+import type { TranslationKey } from '../../i18n/translations';
+import { WEEK_ORDER, weekdayName } from '../weekday';
+import {
+  buildHoursWeek,
+  type DayFormValue,
+  daysOutsideBounds,
+  formatSlots,
+  hoursRefusals,
+  toWeekFormValue,
+} from './week-hours';
+
+/** The whole resulting week, all seven days, and the optional Журнал reason. */
+export type WeekHoursSaveRequest = { days: DayHours[]; reason?: string };
 
 const dayGroup = (day: DayFormValue) =>
   new FormGroup({
@@ -21,32 +41,40 @@ const dayGroup = (day: DayFormValue) =>
   });
 
 /**
- * Editing the Години роботи of a Салон: each day open or closed, with one window. Always sends the
- * whole week. The domain stays the judge of it — a refused week is worded here rule by rule, and
- * the form stays as typed so the administrator can fix exactly that.
+ * Editing a stored week — the Години роботи of a Салон or the тижневі години of a Майстер: each day
+ * open or closed, with one window. Always sends the whole week, through the `save` it was handed:
+ * it knows neither whose week this is nor whether the Майстер works in a Салон. Given `bounds`, it
+ * shows them next to each day. The domain stays the judge — a refused week is worded here rule by
+ * rule, and the form stays as typed so the administrator can fix exactly that.
  */
 @Component({
-  selector: 'app-salon-hours-form',
+  selector: 'app-week-hours-editor',
   imports: [ReactiveFormsModule, ButtonDirective, InputText, Message, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './salon-hours.form.html',
+  templateUrl: './week-hours.editor.html',
 })
-export class SalonHoursForm implements OnInit {
-  private readonly client = inject(SalonsClient);
+export class WeekHoursEditor implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly messages = inject(MessageService);
 
-  readonly salonId = input.required<string>();
   /** The stored week the editor opens on. */
-  readonly stored = input.required<SalonDayHours[]>();
+  readonly stored = input.required<DayHours[]>();
+  /** The week this one has to stay inside — the Години роботи of the Майстер's Салон. `null`: none. */
+  readonly bounds = input<DayHours[] | null>(null);
+  /** Writes the week and answers with it as stored. */
+  readonly save = input.required<(request: WeekHoursSaveRequest) => Observable<DayHours[]>>();
+  readonly savedMessage = input<TranslationKey>('hours.edit.saved');
 
-  readonly saved = output<SalonDayHours[]>();
+  readonly saved = output<DayHours[]>();
   /** Saved or cancelled — either way the tab goes back to reading. */
   readonly closed = output<void>();
 
   /** Indexed by `dayOfWeek`; the template walks it Monday first. */
   protected readonly week = new FormArray<ReturnType<typeof dayGroup>>([]);
-  protected readonly reason = new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] });
+  protected readonly reason = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.maxLength(500)],
+  });
   protected readonly form = new FormGroup({ week: this.week, reason: this.reason });
   protected readonly busy = signal(false);
   private readonly refused = signal<unknown>(null);
@@ -62,7 +90,8 @@ export class SalonHoursForm implements OnInit {
         dayOfWeek,
         name: weekdayName(locale, dayOfWeek),
         // More windows than this editor can hold.
-        split: slots.length > 1 ? slots.map((slot) => `${slot.start} – ${slot.end}`).join(', ') : null,
+        split: slots.length > 1 ? formatSlots(slots) : null,
+        bounds: this.boundsOf(dayOfWeek),
       };
     });
   });
@@ -73,7 +102,13 @@ export class SalonHoursForm implements OnInit {
       return null;
     }
     const touched = new Set(this.week.controls.flatMap((day, dayOfWeek) => (day.dirty ? [dayOfWeek] : [])));
-    return buildSalonHoursWeek(this.stored(), this.week.getRawValue(), touched);
+    return buildHoursWeek(this.stored(), this.week.getRawValue(), touched);
+  });
+
+  /** Only a hint: the save stays open, and the domain answers for the rule. */
+  protected readonly outside = computed(() => {
+    this.value();
+    return new Set(daysOutsideBounds(this.week.getRawValue(), this.bounds()));
   });
 
   protected readonly canSave = computed(() => !this.busy() && this.days() !== null);
@@ -84,12 +119,14 @@ export class SalonHoursForm implements OnInit {
       return [];
     }
     const locale = this.i18n.locale();
-    const worded = hoursRefusals(error).map(({ key, dayOfWeek, masterName }) => {
+    const worded = hoursRefusals(error).map(({ key, dayOfWeek, masterName, slot, bounds }) => {
       const day = dayOfWeek === undefined ? '' : weekdayName(locale, dayOfWeek);
       return this.i18n.t(key, {
         // A day opens its sentence everywhere but in the master's.
         day: masterName === undefined ? day.charAt(0).toLocaleUpperCase(locale) + day.slice(1) : day,
         master: masterName,
+        slot,
+        bounds,
       });
     });
     return worded.length > 0 ? worded : [this.i18n.errorMessage(error.code)];
@@ -107,27 +144,38 @@ export class SalonHoursForm implements OnInit {
     return this.week.at(dayOfWeek).dirty;
   }
 
-  protected save(): void {
+  /** What a day has to fit in, as the row shows it; `null` when nothing bounds this week. */
+  private boundsOf(dayOfWeek: number): string | null {
+    const bounds = this.bounds();
+    if (!bounds?.length) {
+      return null;
+    }
+    const day = bounds.find((candidate) => candidate.dayOfWeek === dayOfWeek);
+    return day?.isOpen && day.slots.length > 0 ? formatSlots(day.slots) : this.i18n.t('hours.closed');
+  }
+
+  protected submit(): void {
     const days = this.days();
     if (!days || !this.canSave() || this.reason.invalid) {
       return;
     }
     this.busy.set(true);
     this.refused.set(null);
-    this.client
-      .updateHours(this.salonId(), { days, reason: this.reason.value.trim() || undefined })
+    this.save()({ days, reason: this.reason.value.trim() || undefined })
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
-        next: (hours) => {
-          this.messages.add({ severity: 'success', summary: this.i18n.t('hours.edit.saved'), life: 4000 });
-          this.saved.emit(hours.days);
+        next: (stored) => {
+          this.messages.add({
+            severity: 'success',
+            summary: this.i18n.t(this.savedMessage()),
+            life: 4000,
+          });
+          this.saved.emit(stored);
           this.closed.emit();
         },
         // Any other refusal has already been worded as a toast; the form stays as typed.
         error: (error: unknown) =>
-          this.refused.set(
-            error instanceof ApiError && HOURS_REFUSAL_CODES.includes(error.code) ? error : null,
-          ),
+          this.refused.set(error instanceof ApiError && HOURS_REFUSAL_CODES.includes(error.code) ? error : null),
       });
   }
 }

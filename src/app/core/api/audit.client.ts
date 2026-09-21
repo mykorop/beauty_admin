@@ -12,6 +12,7 @@ export const AUDIT_ACTIONS = [
   'salon.hours.update',
   'salon.master.update',
   'salon.master.remove',
+  'salon.master.hours.update',
   'salon.service.create',
   'salon.service.update',
   'salon.service.deactivate',

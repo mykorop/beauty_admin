@@ -65,7 +65,8 @@ export class AuditEntryDetails {
     if (day) {
       const [, dayOfWeek, part] = day;
       return [
-        this.i18n.t('salon.field.hours'),
+        // The same `hours.<day>` path names a Салон's Години роботи and a Майстер's тижневі години.
+        this.i18n.t(this.entry().action === 'salon.master.hours.update' ? 'schedule.week.title' : 'salon.field.hours'),
         weekdayName(this.i18n.locale(), Number(dayOfWeek)),
         ...(part ? [this.i18n.optional(`salon.field.hours.${part}`) ?? part] : []),
       ].join(' · ');

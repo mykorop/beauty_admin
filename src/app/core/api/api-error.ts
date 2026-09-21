@@ -22,3 +22,16 @@ export const VALIDATION_ERROR_CODE = 'VALIDATION_ERROR';
 
 /** New Години роботи would leave a Майстер салону working outside them; `details.masters` names them. */
 export const ROSTER_HOURS_OUTSIDE_SALON_HOURS_CODE = 'ROSTER_HOURS_OUTSIDE_SALON_HOURS';
+
+/** A Майстер салону's week would stick out of the Години роботи of his Салон; `details` names the day. */
+export const MASTER_HOURS_OUTSIDE_SALON_HOURS_CODE = 'MASTER_HOURS_OUTSIDE_SALON_HOURS';
+
+/**
+ * Refusals of a weekly-hours save that carry the broken rule in their `details`. The editor words
+ * them itself, rule by rule, so the clients leave them to the caller instead of a toast.
+ */
+export const HOURS_REFUSAL_CODES: readonly string[] = [
+  VALIDATION_ERROR_CODE,
+  ROSTER_HOURS_OUTSIDE_SALON_HOURS_CODE,
+  MASTER_HOURS_OUTSIDE_SALON_HOURS_CODE,
+];

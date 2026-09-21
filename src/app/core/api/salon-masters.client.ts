@@ -2,7 +2,8 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
-import { EDIT_CONFLICT_CODE } from './api-error';
+import { EDIT_CONFLICT_CODE, HOURS_REFUSAL_CODES } from './api-error';
+import type { DayHours, MasterSchedule } from './master-schedule.model';
 import { adminApiUrl } from './admin-api-url';
 
 /** Mirror of the platform's fixed list of specializations; changing it is not the panel's job. */
@@ -130,6 +131,33 @@ export class SalonMastersClient {
     return this.http.delete<{ status: SalonMasterStatus }>(
       salonUrl(salonId, `masters/${encodeURIComponent(masterId)}`),
       { body: { reason } },
+    );
+  }
+
+  /**
+   * The Робочий графік of a Майстер салону over `[from, to]` of the salon's calendar: his week, the
+   * Ротація, the Відсутності and the Записи — everything the month calendar is drawn from.
+   */
+  schedule(salonId: string, masterId: string, window: { from: string; to: string }): Observable<MasterSchedule> {
+    return this.http.get<MasterSchedule>(salonUrl(salonId, `masters/${encodeURIComponent(masterId)}/schedule`), {
+      params: window,
+    });
+  }
+
+  /**
+   * The whole resulting week, all seven days. A week the domain refuses — outside the Години роботи
+   * of the Салон above all — is worded by the editor itself, so those codes are left to the caller.
+   */
+  updateHours(
+    salonId: string,
+    masterId: string,
+    request: { days: DayHours[]; reason?: string },
+  ): Observable<{ days: DayHours[] }> {
+    const { days, reason } = request;
+    return this.http.put<{ days: DayHours[] }>(
+      salonUrl(salonId, `masters/${encodeURIComponent(masterId)}/hours`),
+      { masterHours: days, ...(reason ? { reason } : {}) },
+      { context: new HttpContext().set(SILENT_ERROR_CODES, HOURS_REFUSAL_CODES) },
     );
   }
 

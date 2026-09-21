@@ -1,26 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { map } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SalonsClient, type SalonDayHours } from '../../core/api/salons.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ButtonDirective } from 'primeng/button';
 import { SalonCardStore } from './salon-card.store';
-import { SalonHoursForm } from './salon-hours.form';
 import { WEEK_ORDER, weekdayName } from '../../shared/weekday';
+import { WeekHoursEditor, type WeekHoursSaveRequest } from '../../shared/working-schedule/week-hours.editor';
 
 /** Години роботи of the Салон by day of week: read first, edited on demand — never a Видалений one. */
 @Component({
   selector: 'app-salon-hours-tab',
-  imports: [ButtonDirective, SalonHoursForm, TranslatePipe],
+  imports: [ButtonDirective, WeekHoursEditor, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (editing() && days(); as stored) {
-      <app-salon-hours-form
-        [salonId]="salon()!.salonId"
-        [stored]="stored"
-        (saved)="days.set($event)"
-        (closed)="editing.set(false)"
-      />
+      <app-week-hours-editor [stored]="stored" [save]="save" (saved)="days.set($event)" (closed)="editing.set(false)" />
     } @else if (week(); as week) {
       @if (salon()?.status !== 'deleted') {
         <div class="mb-3 flex max-w-xl justify-end">
@@ -62,11 +58,15 @@ import { WEEK_ORDER, weekdayName } from '../../shared/weekday';
 })
 export class SalonHoursTab {
   private readonly i18n = inject(I18nService);
+  private readonly client = inject(SalonsClient);
 
   protected readonly salon = inject(SalonCardStore).salon.asReadonly();
   protected readonly days = signal<SalonDayHours[] | null>(null);
   protected readonly failed = signal(false);
   protected readonly editing = signal(false);
+
+  protected readonly save = (request: WeekHoursSaveRequest) =>
+    this.client.updateHours(this.salon()!.salonId, request).pipe(map((hours) => hours.days));
 
   protected readonly week = computed(() => {
     const days = this.days();
@@ -85,7 +85,7 @@ export class SalonHoursTab {
     // The card renders its tabs only once the salon is loaded, and rebuilds them for another one.
     const salonId = this.salon()?.salonId;
     if (salonId) {
-      inject(SalonsClient)
+      this.client
         .hours(salonId)
         .pipe(takeUntilDestroyed())
         .subscribe({
