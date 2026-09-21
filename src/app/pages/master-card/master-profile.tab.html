@@ -1,0 +1,107 @@
+@if (editing()) {
+  <app-master-profile-form (closed)="editing.set(false)" />
+} @else if (master(); as master) {
+  @if (master.status !== 'deleted') {
+    <div class="mb-3 flex max-w-4xl justify-end">
+      <button
+        pButton
+        type="button"
+        size="small"
+        icon="pi pi-pencil"
+        data-testid="profile-edit"
+        [label]="'salon.edit.open' | t"
+        (click)="editing.set(true)"
+      ></button>
+    </div>
+  }
+  <dl class="grid max-w-4xl grid-cols-[14rem_1fr] gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm">
+    <dt class="text-slate-500">{{ 'master.field.name' | t }}</dt>
+    <dd data-testid="field-name">{{ master.name || '—' }}</dd>
+
+    <dt class="text-slate-500">{{ 'salon.field.description' | t }}</dt>
+    <dd class="whitespace-pre-line" data-testid="field-description">{{ master.description || '—' }}</dd>
+
+    <dt class="text-slate-500">{{ 'master.field.specialization' | t }}</dt>
+    <dd data-testid="field-specialization">{{ specialization() }}</dd>
+
+    <dt class="text-slate-500">{{ 'salon.field.address' | t }}</dt>
+    <dd data-testid="field-address">
+      @for (line of addressLines(); track $index) {
+        <div>{{ line }}</div>
+      } @empty {
+        —
+      }
+    </dd>
+
+    <dt class="text-slate-500">{{ 'salon.field.coordinates' | t }}</dt>
+    <dd data-testid="field-coordinates">{{ coordinates() }}</dd>
+
+    <dt class="text-slate-500">{{ 'master.field.phone' | t }}</dt>
+    <dd data-testid="field-phone">{{ master.phone || '—' }}</dd>
+
+    <dt class="text-slate-500">{{ 'master.field.email' | t }}</dt>
+    <dd data-testid="field-email">{{ master.email || '—' }}</dd>
+
+    <dt class="text-slate-500">{{ 'salon.field.timezone' | t }}</dt>
+    <dd data-testid="field-timezone">{{ master.timezone }}</dd>
+
+    <dt class="text-slate-500">{{ 'master.field.buffer' | t }}</dt>
+    <dd data-testid="field-buffer">{{ 'salon.value.minutes' | t: { count: master.bufferMinutes } }}</dd>
+
+    <dt class="text-slate-500">{{ 'master.field.bookingHorizon' | t }}</dt>
+    <dd data-testid="field-bookingHorizon">{{ 'salon.value.days' | t: { count: master.bookingForwardDays } }}</dd>
+
+    <dt class="text-slate-500">{{ 'master.field.brandColor' | t }}</dt>
+    <dd class="flex items-center gap-2" data-testid="field-brandColor">
+      @if (master.brandColor) {
+        <span
+          class="inline-block size-4 rounded border border-slate-300"
+          aria-hidden="true"
+          [style.background-color]="master.brandColor"
+        ></span>
+        {{ master.brandColor }}
+      } @else {
+        —
+      }
+    </dd>
+
+    <dt class="text-slate-500">{{ 'salon.field.shortLink' | t }}</dt>
+    <dd data-testid="field-shortLink">
+      @if (master.shortLinks.random || master.shortLinks.handle) {
+        @if (master.shortLinks.handle; as handle) {
+          <div>{{ handle.path }}</div>
+        }
+        @if (master.shortLinks.random; as random) {
+          <div>{{ random.path }}</div>
+        }
+      } @else {
+        —
+      }
+    </dd>
+
+    <dt class="text-slate-500">{{ 'salon.field.rating' | t }}</dt>
+    <dd data-testid="field-rating">{{ rating() }} · {{ 'salon.value.reviews' | t: { count: master.reviewCount } }}</dd>
+
+    @if (master.salon; as salon) {
+      <dt class="text-slate-500">{{ 'master.field.formerSalon' | t }}</dt>
+      <dd data-testid="field-formerSalon">
+        <a class="font-medium hover:underline" [routerLink]="['/salons', salon.salonId]">{{
+          salon.name || salon.salonId
+        }}</a>
+        @if (salon.status && salon.status !== 'active') {
+          <span class="ml-2 text-xs text-slate-500">{{ salonStatusKey(salon.status) | t }}</span>
+        }
+        <div class="text-xs text-slate-500">
+          {{ 'master.formerSalon.period' | t: { from: joinedAt(), to: leftAt() } }}
+        </div>
+      </dd>
+    }
+
+    <dt class="text-slate-500">{{ 'salon.field.createdAt' | t }}</dt>
+    <dd data-testid="field-createdAt">{{ createdAt() }}</dd>
+
+    <dt class="text-slate-500">{{ 'salon.field.updatedAt' | t }}</dt>
+    <dd data-testid="field-updatedAt">{{ updatedAt() }}</dd>
+  </dl>
+  <p class="mt-2 text-xs text-slate-500">{{ 'salon.datesInVenueZone' | t: { timezone: master.timezone } }}</p>
+}

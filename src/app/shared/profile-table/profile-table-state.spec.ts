@@ -1,13 +1,14 @@
 import type { SalonListItem } from '../../core/api/salons.client';
+import { DEFAULT_TABLE_STATE, SALON_SORT_FIELDS, type SalonSortField } from '../../pages/salons/salons-table-state';
 import {
-  applyTableState,
+  applyProfileTableState,
   cityOptionsOf,
-  DEFAULT_TABLE_STATE,
-  parseTableState,
-  type SalonsTableState,
-  toQueryParams,
-} from './salons-table-state';
+  parseProfileTableState,
+  toProfileQueryParams,
+  type ProfileTableState,
+} from './profile-table-state';
 
+/** Exercised through the Салони table — the one with a column (`ownerName`) all of its own. */
 const salon = (overrides: Partial<SalonListItem>): SalonListItem => ({
   salonId: 'id',
   name: 'Salon',
@@ -26,21 +27,28 @@ const salon = (overrides: Partial<SalonListItem>): SalonListItem => ({
 const params = (values: Record<string, string>) => ({
   get: (name: string) => values[name] ?? null,
 });
-const state = (overrides: Partial<SalonsTableState>): SalonsTableState => ({
+const state = (overrides: Partial<ProfileTableState<SalonSortField>>): ProfileTableState<SalonSortField> => ({
   ...DEFAULT_TABLE_STATE,
   ...overrides,
 });
-const names = (items: SalonListItem[], tableState: SalonsTableState): string[] =>
-  applyTableState(items, tableState, 'uk-UA').rows.map((row) => row.name);
+const parse = (values: Record<string, string>) =>
+  parseProfileTableState(params(values), SALON_SORT_FIELDS, DEFAULT_TABLE_STATE);
+const apply = (
+  items: SalonListItem[],
+  tableState: ProfileTableState<SalonSortField>,
+  sortValueOf?: (item: SalonListItem, field: SalonSortField) => unknown,
+) => applyProfileTableState(items, tableState, 'uk-UA', { idOf: (item) => item.salonId, sortValueOf });
+const names = (items: SalonListItem[], tableState: ProfileTableState<SalonSortField>): string[] =>
+  apply(items, tableState).rows.map((row) => row.name);
 
-describe('salons table state in the address', () => {
+describe('profile table state in the address', () => {
   it('is the default when the address carries nothing', () => {
-    expect(parseTableState(params({}))).toEqual(DEFAULT_TABLE_STATE);
-    expect(toQueryParams(DEFAULT_TABLE_STATE)).toEqual({});
+    expect(parse({})).toEqual(DEFAULT_TABLE_STATE);
+    expect(toProfileQueryParams(DEFAULT_TABLE_STATE, DEFAULT_TABLE_STATE)).toEqual({});
   });
 
   it('round-trips every part of the state', () => {
-    const full: SalonsTableState = {
+    const full: ProfileTableState<SalonSortField> = {
       q: 'lab',
       status: 'deleted',
       city: '0300000',
@@ -50,7 +58,7 @@ describe('salons table state in the address', () => {
       size: 50,
     };
 
-    const query = toQueryParams(full);
+    const query = toProfileQueryParams(full, DEFAULT_TABLE_STATE);
 
     expect(query).toEqual({
       q: 'lab',
@@ -61,20 +69,18 @@ describe('salons table state in the address', () => {
       page: 3,
       size: 50,
     });
-    expect(parseTableState(params(Object.fromEntries(Object.entries(query).map(([k, v]) => [k, String(v)]))))).toEqual(
-      full,
-    );
+    expect(parse(Object.fromEntries(Object.entries(query).map(([k, v]) => [k, String(v)])))).toEqual(full);
   });
 
   it('falls back to defaults on values it does not know', () => {
-    expect(
-      parseTableState(params({ status: 'banned', sort: 'password', dir: 'sideways', page: '-2', size: '7' })),
-    ).toEqual(DEFAULT_TABLE_STATE);
+    expect(parse({ status: 'banned', sort: 'password', dir: 'sideways', page: '-2', size: '7' })).toEqual(
+      DEFAULT_TABLE_STATE,
+    );
   });
 });
 
-describe('salons table rows', () => {
-  it('hides Deleted salons unless the filter asks for them', () => {
+describe('profile table rows', () => {
+  it('hides Deleted profiles unless the filter asks for them', () => {
     const items = [
       salon({ name: 'Alive' }),
       salon({ name: 'Blocked', status: 'blocked' }),
@@ -127,6 +133,23 @@ describe('salons table rows', () => {
     expect(names(items, state({ sort: 'reviewCount', dir: 'asc' }))).toEqual(['анна', 'Яна', 'Єва']);
   });
 
+  it('sorts a translated column by what the reader sees, not by the stored code', () => {
+    // What the Незалежні майстри table does with `specialization`: the labels reverse the raw order.
+    const labels: Record<string, string> = { 'z-code': 'Абищо', 'a-code': 'Ящірка' };
+    const items = [
+      salon({ salonId: '1', name: 'Zed', ownerName: 'z-code' }),
+      salon({ salonId: '2', name: 'Ann', ownerName: 'a-code' }),
+    ];
+
+    const rows = apply(items, state({ sort: 'ownerName', dir: 'asc' }), (item, field) =>
+      field === 'ownerName' ? labels[item.ownerName] : item[field],
+    ).rows;
+
+    expect(rows.map((row) => row.name)).toEqual(['Zed', 'Ann']);
+    // Without the hook the stored codes decide, and the order is the other way round.
+    expect(names(items, state({ sort: 'ownerName', dir: 'asc' }))).toEqual(['Ann', 'Zed']);
+  });
+
   it('sorts by registration date, newest first by default', () => {
     const items = [
       salon({ name: 'Old', createdAt: '2025-01-01T00:00:00.000Z' }),
@@ -141,7 +164,7 @@ describe('salons table rows', () => {
       salon({ salonId: `${i}`, name: `S${String(i).padStart(2, '0')}` }),
     );
 
-    const second = applyTableState(items, state({ sort: 'name', dir: 'asc', page: 2 }), 'uk-UA');
+    const second = apply(items, state({ sort: 'name', dir: 'asc', page: 2 }));
 
     expect(second.total).toBe(60);
     expect(second.page).toBe(2);
@@ -152,7 +175,7 @@ describe('salons table rows', () => {
   it('lands on the last page when the address asks for one past the end', () => {
     const items = Array.from({ length: 30 }, (_, i) => salon({ salonId: `${i}` }));
 
-    const result = applyTableState(items, state({ page: 9 }), 'uk-UA');
+    const result = apply(items, state({ page: 9 }));
 
     expect(result.page).toBe(2);
     expect(result.rows.length).toBe(5);

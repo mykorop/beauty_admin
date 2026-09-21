@@ -34,7 +34,7 @@ export class SalonCardPage {
 
   protected readonly statusSeverity = computed(() => SALON_STATUS_SEVERITY[this.salon()?.status ?? 'active']);
   protected readonly statusLabelKey = computed<TranslationKey>(
-    () => `salons.status.${this.salon()?.status ?? 'active'}`,
+    () => `profile.status.${this.salon()?.status ?? 'active'}`,
   );
   protected readonly deletedAt = computed(() => this.store.venueDate(this.salon()?.deletedAt));
   protected readonly blockedAt = computed(() => this.store.venueDate(this.salon()?.blockedAt));

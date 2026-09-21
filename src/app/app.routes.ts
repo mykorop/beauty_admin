@@ -31,10 +31,21 @@ export const routes: Routes = [
         loadChildren: () => import('./pages/salon-card/salon-card.tabs').then((m) => m.SALON_CARD_ROUTES),
       },
       {
+        path: 'independent-masters',
+        loadComponent: () => import('./pages/masters/masters.page').then((m) => m.MastersPage),
+      },
+      {
+        path: 'independent-masters/:masterId',
+        loadComponent: () => import('./pages/master-card/master-card.page').then((m) => m.MasterCardPage),
+        loadChildren: () => import('./pages/master-card/master-card.tabs').then((m) => m.MASTER_CARD_ROUTES),
+      },
+      {
         path: 'audit-log',
         loadComponent: () => import('./pages/audit-log/audit-log.page').then((m) => m.AuditLogPage),
       },
-      ...NAV_SECTIONS.filter((section) => !['salons', 'audit-log'].includes(section.path)).map((section) => ({
+      ...NAV_SECTIONS.filter(
+        (section) => !['salons', 'independent-masters', 'audit-log'].includes(section.path),
+      ).map((section) => ({
         path: section.path,
         loadComponent: () => import('./pages/section-stub/section-stub.page').then((m) => m.SectionStubPage),
         data: { titleKey: section.labelKey },

@@ -22,6 +22,7 @@ export const AUDIT_ACTIONS = [
   'salon.master.service.create',
   'salon.master.service.update',
   'salon.master.service.remove',
+  'master.profile.update',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

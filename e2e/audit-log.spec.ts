@@ -71,7 +71,8 @@ test.describe('audit log screen', () => {
     await page.getByTestId('audit-filter-target-type').click();
     await page.getByRole('option', { name: 'Салон' }).click();
     await page.getByTestId('audit-filter-action').click();
-    await page.getByRole('option', { name: 'Зміна профілю' }).click();
+    // Exact: «Зміна профілю Майстра» is another action of the same list.
+    await page.getByRole('option', { name: 'Зміна профілю', exact: true }).click();
 
     await expect(page.getByTestId('audit-row')).toHaveCount(1);
     await expect(page).toHaveURL(/from=2026-09-01/);
