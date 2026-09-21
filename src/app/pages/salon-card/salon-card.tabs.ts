@@ -28,6 +28,10 @@ const IMPLEMENTED: Routes = [
     loadComponent: () => import('./salon-roster.tab').then((m) => m.SalonRosterTab),
   },
   {
+    path: 'services',
+    loadComponent: () => import('./salon-services.tab').then((m) => m.SalonServicesTab),
+  },
+  {
     path: 'invites',
     loadComponent: () => import('./salon-invites.tab').then((m) => m.SalonInvitesTab),
   },

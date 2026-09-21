@@ -12,6 +12,9 @@ export const AUDIT_ACTIONS = [
   'salon.hours.update',
   'salon.master.update',
   'salon.master.remove',
+  'salon.service.create',
+  'salon.service.update',
+  'salon.service.deactivate',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

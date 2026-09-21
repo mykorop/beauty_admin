@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import type { AuditEntry } from '../../core/api/audit.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { serviceCategoryLabel } from '../service-category';
 import { specializationLabel } from '../specialization';
 import { weekdayName } from '../weekday';
 
@@ -69,6 +70,14 @@ export class AuditEntryDetails {
         ...(part ? [this.i18n.optional(`salon.field.hours.${part}`) ?? part] : []),
       ].join(' · ');
     }
+    const service = SERVICE_FIELD.exec(field);
+    if (service) {
+      const part = service[1];
+      return [
+        this.i18n.t('services.auditField'),
+        ...(part ? [this.i18n.optional(`services.field.${part}`) ?? part] : []),
+      ].join(' · ');
+    }
     const key = `${this.entry().targetType}.field.${FIELD_LABEL_ALIASES[field] ?? field}`;
     return this.i18n.optional(key) ?? field;
   }
@@ -88,6 +97,17 @@ export class AuditEntryDetails {
     if (field === 'specialization' && typeof value === 'string') {
       return specializationLabel(this.i18n, value);
     }
+    if (field?.endsWith('.category') && SERVICE_FIELD.test(field) && typeof value === 'string') {
+      return serviceCategoryLabel(this.i18n, value);
+    }
+    if (isCatalogService(value)) {
+      return [
+        value.name,
+        serviceCategoryLabel(this.i18n, value.category),
+        this.i18n.t('services.value.minutes', { count: value.durationMinutes }),
+        `${value.price} ${value.currency}`,
+      ].join(' · ');
+    }
     if (isHoursDay(value)) {
       return value.isOpen && value.slots.length > 0 ? this.display(value.slots) : this.i18n.t('hours.closed');
     }
@@ -101,12 +121,31 @@ export class AuditEntryDetails {
 /** `hours.<dayOfWeek>` or `hours.<dayOfWeek>.<isOpen|slots>` — a day of a week of Години роботи. */
 const HOURS_FIELD = /^hours\.([0-6])(?:\.(\w+))?$/;
 
+/** `services.<serviceId>` (a new service) or `services.<serviceId>.<field>` — the Каталог послуг. */
+const SERVICE_FIELD = /^services\.[^.]+(?:\.(\w+))?$/;
+
 type Slot = { start: string; end: string };
 
 const isSlots = (value: unknown): value is Slot[] =>
   Array.isArray(value) &&
   value.length > 0 &&
   value.every((slot: Partial<Slot> | null) => typeof slot?.start === 'string' && typeof slot.end === 'string');
+
+type CatalogService = { name: string; category: string; durationMinutes: number; price: number; currency: string };
+
+/** A whole послуга as one value — the «after» of a created one. */
+const isCatalogService = (value: unknown): value is CatalogService => {
+  const service = value as Partial<CatalogService> | null;
+  return (
+    typeof service === 'object' &&
+    service !== null &&
+    typeof service.name === 'string' &&
+    typeof service.category === 'string' &&
+    typeof service.durationMinutes === 'number' &&
+    typeof service.price === 'number' &&
+    typeof service.currency === 'string'
+  );
+};
 
 const isHoursDay = (value: unknown): value is { isOpen: boolean; slots: Slot[] } =>
   typeof value === 'object' &&
