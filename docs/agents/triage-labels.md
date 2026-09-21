@@ -13,18 +13,3 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the right-hand column to match whatever vocabulary you actually use.
-
-## Статуси петлі реалізації
-
-`run-issues.sh` у корені воркспейсу проганяє тикети з `.scratch/<feature>/issues/`
-і веде їхній стан у тому самому `Status:`-рядку трьома значеннями поза таблицею
-вище:
-
-| Статус        | Значення                                                       |
-| ------------- | -------------------------------------------------------------- |
-| `in-progress` | Тикет узятий у роботу; лежить у робочому дереві, ще не закомічений |
-| `done`        | Гейт якості зелений, робота закомічена в обох репозиторіях       |
-| `failed`      | Гейт червоний і після ретраю; нічого не закомічено, петля стала  |
-
-`ready-for-agent` лишається входом у петлю: тикет береться, коли він
-`ready-for-agent` і кожен номер із його `Blocked by:` має `done`.
