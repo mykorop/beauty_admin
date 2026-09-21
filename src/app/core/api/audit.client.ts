@@ -3,7 +3,12 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { adminApiUrl } from './admin-api-url';
 
-export type AuditTargetType = 'salon';
+/** Mirrors of the backend's lists; they grow with every card that gains write actions. */
+export const AUDIT_TARGET_TYPES = ['salon'] as const;
+export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
+
+export const AUDIT_ACTIONS = ['salon.profile.update'] as const;
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
 /** One changed field of a Журнал дій entry; an absent value is `null` on either side. */
 export type AuditFieldChange = { field: string; before: unknown; after: unknown };
@@ -21,7 +26,12 @@ export type AuditEntry = {
   /** Full values, PII included. */
   changes: AuditFieldChange[];
   reason: string | null;
+  /** What a bulk action touched; empty for every other action, absent from a backend older than this field. */
+  affected?: { type: string; id: string }[];
 };
+
+/** `from` inclusive, `to` exclusive — both instants. */
+export type AuditLogQuery = { from?: string; to?: string; targetType?: AuditTargetType; action?: AuditAction };
 
 export type AuditPage = { items: AuditEntry[]; nextCursor: string | null };
 
@@ -33,6 +43,13 @@ export class AuditClient {
   forTarget(type: AuditTargetType, id: string, cursor?: string): Observable<AuditPage> {
     return this.http.get<AuditPage>(adminApiUrl('/admin/audit'), {
       params: { target: `${type}:${id}`, ...(cursor ? { cursor } : {}) },
+    });
+  }
+
+  /** The whole Журнал дій, newest first — the «Журнал дій» screen. */
+  list(query: AuditLogQuery, cursor?: string): Observable<AuditPage> {
+    return this.http.get<AuditPage>(adminApiUrl('/admin/audit'), {
+      params: { ...query, ...(cursor ? { cursor } : {}) },
     });
   }
 }

@@ -5,16 +5,16 @@ import { Subject, switchMap } from 'rxjs';
 import { AuditClient, type AuditEntry, type AuditPage } from '../../core/api/audit.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { AuditEntryDetails } from '../../shared/audit/audit-entry-details';
 import { SalonCardStore } from './salon-card.store';
 
 /**
- * «Історія»: the Журнал дій rows about this Салон, newest first, each with the old and new value of
- * every changed field — in full, PII included. Read again every time the tab opens, so an edit
- * saved a moment ago on another tab is already here.
+ * «Історія»: the Журнал дій rows about this Салон, newest first. Read again every time the tab
+ * opens, so an edit saved a moment ago on another tab is already here.
  */
 @Component({
   selector: 'app-salon-history-tab',
-  imports: [ButtonDirective, TranslatePipe],
+  imports: [AuditEntryDetails, ButtonDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (entries(); as entries) {
@@ -26,31 +26,7 @@ import { SalonCardStore } from './salon-card.store';
               <span class="text-slate-500">{{ store.venueDate(entry.createdAt) }}</span>
               <span class="text-slate-500">{{ entry.adminEmail || entry.adminId }}</span>
             </header>
-            @if (entry.changes.length > 0) {
-              <table class="w-full table-fixed text-left">
-                <thead class="text-xs text-slate-500">
-                  <tr>
-                    <th class="w-1/4 py-1 font-normal">{{ 'history.field' | t }}</th>
-                    <th class="py-1 font-normal">{{ 'history.before' | t }}</th>
-                    <th class="py-1 font-normal">{{ 'history.after' | t }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (change of entry.changes; track change.field) {
-                    <tr class="border-t border-slate-100 align-top" data-testid="history-change">
-                      <td class="py-1 pr-3">{{ fieldLabel(change.field) }}</td>
-                      <td class="py-1 pr-3 break-words whitespace-pre-line text-slate-500">
-                        {{ display(change.before) }}
-                      </td>
-                      <td class="py-1 break-words whitespace-pre-line">{{ display(change.after) }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-            @if (entry.reason) {
-              <p class="mt-2 text-slate-600">{{ 'history.reason' | t: { reason: entry.reason } }}</p>
-            }
+            <app-audit-entry-details [entry]="entry" />
           </article>
         } @empty {
           <p class="text-slate-500" data-testid="history-empty">{{ 'history.empty' | t }}</p>
@@ -120,22 +96,4 @@ export class SalonHistoryTab {
   protected actionLabel(action: string): string {
     return this.i18n.optional(`audit.action.${action}`) ?? action;
   }
-
-  /** A profile field is named as the Профіль tab names it; anything else keeps its raw path. */
-  protected fieldLabel(field: string): string {
-    return this.i18n.optional(`salon.field.${FIELD_LABEL_ALIASES[field] ?? field}`) ?? field;
-  }
-
-  protected display(value: unknown): string {
-    if (value === null || value === undefined || value === '') {
-      return '—';
-    }
-    return typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
-  }
 }
-
-/** Row attributes whose label on the Профіль tab lives under another name. */
-const FIELD_LABEL_ALIASES: Record<string, string> = {
-  bufferMinutes: 'buffer',
-  bookingForwardDays: 'bookingHorizon',
-};

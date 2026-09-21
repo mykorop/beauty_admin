@@ -22,7 +22,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/salon-card/salon-card.page').then((m) => m.SalonCardPage),
         loadChildren: () => import('./pages/salon-card/salon-card.tabs').then((m) => m.SALON_CARD_ROUTES),
       },
-      ...NAV_SECTIONS.filter((section) => section.path !== 'salons').map((section) => ({
+      {
+        path: 'audit-log',
+        loadComponent: () => import('./pages/audit-log/audit-log.page').then((m) => m.AuditLogPage),
+      },
+      ...NAV_SECTIONS.filter((section) => !['salons', 'audit-log'].includes(section.path)).map((section) => ({
         path: section.path,
         loadComponent: () => import('./pages/section-stub/section-stub.page').then((m) => m.SectionStubPage),
         data: { titleKey: section.labelKey },
