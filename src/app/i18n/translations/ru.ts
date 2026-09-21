@@ -250,6 +250,32 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'services.form.copiesWarning':
     'Копии мастеров не меняются: новая цена или длительность останется только в Каталоге. Мастеров с Копией этой услуги: {{count}} — их цены и длительность редактируются отдельно, у каждого Мастера салона.',
 
+  // Копії майстра
+  'audit.action.salon.master.service.create': 'Добавление Копии услуги Мастеру',
+  'audit.action.salon.master.service.update': 'Изменение Копии услуги Мастера',
+  'audit.action.salon.master.service.remove': 'Удаление Копии услуги Мастера',
+  'copies.new': 'Добавить из Каталога',
+  'copies.new.none': 'У Мастера уже есть Копии всех услуг Каталога.',
+  'copies.empty': 'У Мастера ещё нет ни одной Копии услуги.',
+  'copies.note':
+    'Цена и длительность Копии — именно то, что видит и бронирует Клиент. Каталог услуг Салона отсюда не меняется.',
+  'copies.column.catalogDuration': 'Длительность в Каталоге',
+  'copies.column.catalogPrice': 'Цена в Каталоге',
+  'copies.notOffered.catalogInactive': 'Услуга деактивирована в Каталоге — Клиенты её не видят.',
+  'copies.notOffered.catalogMissing': 'Услуги уже нет в Каталоге — Клиенты её не видят.',
+  'copies.remove': 'Убрать',
+  'copies.remove.confirmText': 'Собственная цена Мастера исчезнет вместе с Копией.',
+  'copies.removed': 'Копия убрана.',
+  'copies.field.service': 'Услуга Каталога',
+  'copies.field.servicePlaceholder': 'Выберите услугу Каталога',
+  'copies.form.newTitle': 'Новая Копия услуги',
+  'copies.form.editTitle': 'Редактирование Копии услуги',
+  'copies.form.inCatalog': 'В Каталоге',
+  'copies.form.clientNote':
+    'Название, описание, Категорию и валюту Копия берёт из Каталога услуг — они редактируются там.',
+  'copies.form.alreadyHeld':
+    'У Мастера уже была эта Копия — её цена и длительность не изменены. Отредактируйте её, если нужно.',
+
   // Категорії послуг — carried over from the mobile app's dictionaries
   'category.beard_and_mustache': 'Барберинг',
   'category.body_wraps': 'Обёртывания и скрабы',

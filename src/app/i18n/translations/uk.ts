@@ -248,6 +248,31 @@ export const UK_TRANSLATIONS = {
   'services.form.copiesWarning':
     'Копії майстрів не змінюються: нова ціна чи тривалість лишиться тільки в Каталозі. Майстрів із Копією цієї послуги: {{count}} — їхні ціни й тривалість редагуються окремо, у кожного Майстра салону.',
 
+  // Копії майстра
+  'audit.action.salon.master.service.create': 'Додавання Копії послуги Майстру',
+  'audit.action.salon.master.service.update': 'Зміна Копії послуги Майстра',
+  'audit.action.salon.master.service.remove': 'Прибирання Копії послуги Майстра',
+  'copies.new': 'Додати з Каталогу',
+  'copies.new.none': 'Майстер уже має Копії всіх послуг Каталогу.',
+  'copies.empty': 'У Майстра ще немає жодної Копії послуги.',
+  'copies.note':
+    'Ціна й тривалість Копії — саме те, що бачить і бронює Клієнт. Каталог послуг Салону звідси не змінюється.',
+  'copies.column.catalogDuration': 'Тривалість у Каталозі',
+  'copies.column.catalogPrice': 'Ціна в Каталозі',
+  'copies.notOffered.catalogInactive': 'Послугу деактивовано в Каталозі — Клієнти її не бачать.',
+  'copies.notOffered.catalogMissing': 'Послуги вже немає в Каталозі — Клієнти її не бачать.',
+  'copies.remove': 'Прибрати',
+  'copies.remove.confirmText': 'Власна ціна Майстра зникне разом із Копією.',
+  'copies.removed': 'Копію прибрано.',
+  'copies.field.service': 'Послуга Каталогу',
+  'copies.field.servicePlaceholder': 'Оберіть послугу Каталогу',
+  'copies.form.newTitle': 'Нова Копія послуги',
+  'copies.form.editTitle': 'Редагування Копії послуги',
+  'copies.form.inCatalog': 'У Каталозі',
+  'copies.form.clientNote': 'Назву, опис, Категорію й валюту Копія бере з Каталогу послуг — вони редагуються там.',
+  'copies.form.alreadyHeld':
+    'Майстер уже мав цю Копію — її ціну й тривалість не змінено. Відредагуйте її, якщо потрібно.',
+
   // Категорії послуг — carried over from the mobile app's dictionaries
   'category.beard_and_mustache': 'Барберинг',
   'category.body_wraps': 'Обгортання та скраби',

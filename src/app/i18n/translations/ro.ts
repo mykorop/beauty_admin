@@ -252,6 +252,32 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'services.form.copiesWarning':
     'Copiile maeștrilor nu se modifică: noul preț sau noua durată rămâne doar în Catalog. Maeștri cu Copia acestui serviciu: {{count}} — prețurile și duratele lor se editează separat, la fiecare Maestru al salonului.',
 
+  // Копії майстра
+  'audit.action.salon.master.service.create': 'Adăugarea unei Copii de serviciu Maestrului',
+  'audit.action.salon.master.service.update': 'Modificarea Copiei de serviciu a Maestrului',
+  'audit.action.salon.master.service.remove': 'Eliminarea Copiei de serviciu a Maestrului',
+  'copies.new': 'Adaugă din Catalog',
+  'copies.new.none': 'Maestrul are deja Copii ale tuturor serviciilor din Catalog.',
+  'copies.empty': 'Maestrul nu are încă nicio Copie de serviciu.',
+  'copies.note':
+    'Prețul și durata Copiei sunt exact ceea ce vede și rezervă Clientul. Catalogul de servicii al Salonului nu se modifică de aici.',
+  'copies.column.catalogDuration': 'Durata în Catalog',
+  'copies.column.catalogPrice': 'Prețul în Catalog',
+  'copies.notOffered.catalogInactive': 'Serviciul este dezactivat în Catalog — Clienții nu îl văd.',
+  'copies.notOffered.catalogMissing': 'Serviciul nu mai există în Catalog — Clienții nu îl văd.',
+  'copies.remove': 'Elimină',
+  'copies.remove.confirmText': 'Prețul propriu al Maestrului dispare odată cu Copia.',
+  'copies.removed': 'Copia a fost eliminată.',
+  'copies.field.service': 'Serviciu din Catalog',
+  'copies.field.servicePlaceholder': 'Alegeți un serviciu din Catalog',
+  'copies.form.newTitle': 'Copie nouă de serviciu',
+  'copies.form.editTitle': 'Editarea Copiei de serviciu',
+  'copies.form.inCatalog': 'În Catalog',
+  'copies.form.clientNote':
+    'Denumirea, descrierea, Categoria și valuta Copia le ia din Catalogul de servicii — se editează acolo.',
+  'copies.form.alreadyHeld':
+    'Maestrul avea deja această Copie — prețul și durata ei nu s-au modificat. Editați-o, dacă este nevoie.',
+
   // Категорії послуг — carried over from the mobile app's dictionaries
   'category.beard_and_mustache': 'Barbering',
   'category.body_wraps': 'Împachetări și scrub',

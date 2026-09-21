@@ -100,10 +100,10 @@ export class AuditEntryDetails {
     if (field?.endsWith('.category') && SERVICE_FIELD.test(field) && typeof value === 'string') {
       return serviceCategoryLabel(this.i18n, value);
     }
-    if (isCatalogService(value)) {
+    if (isService(value)) {
       return [
         value.name,
-        serviceCategoryLabel(this.i18n, value.category),
+        ...(value.category === undefined ? [] : [serviceCategoryLabel(this.i18n, value.category)]),
         this.i18n.t('services.value.minutes', { count: value.durationMinutes }),
         `${value.price} ${value.currency}`,
       ].join(' · ');
@@ -121,7 +121,10 @@ export class AuditEntryDetails {
 /** `hours.<dayOfWeek>` or `hours.<dayOfWeek>.<isOpen|slots>` — a day of a week of Години роботи. */
 const HOURS_FIELD = /^hours\.([0-6])(?:\.(\w+))?$/;
 
-/** `services.<serviceId>` (a new service) or `services.<serviceId>.<field>` — the Каталог послуг. */
+/**
+ * `services.<serviceId>` (one added or removed) or `services.<serviceId>.<field>` — the Каталог
+ * послуг of a salon, or the Копії of a master.
+ */
 const SERVICE_FIELD = /^services\.[^.]+(?:\.(\w+))?$/;
 
 type Slot = { start: string; end: string };
@@ -131,16 +134,17 @@ const isSlots = (value: unknown): value is Slot[] =>
   value.length > 0 &&
   value.every((slot: Partial<Slot> | null) => typeof slot?.start === 'string' && typeof slot.end === 'string');
 
-type CatalogService = { name: string; category: string; durationMinutes: number; price: number; currency: string };
+/** A Копія майстра is logged without the Каталог's category. */
+type Service = { name: string; category?: string; durationMinutes: number; price: number; currency: string };
 
-/** A whole послуга as one value — the «after» of a created one. */
-const isCatalogService = (value: unknown): value is CatalogService => {
-  const service = value as Partial<CatalogService> | null;
+/** A whole послуга as one value — the «after» of an added one, the «before» of a removed Копія. */
+const isService = (value: unknown): value is Service => {
+  const service = value as Partial<Service> | null;
   return (
     typeof service === 'object' &&
     service !== null &&
     typeof service.name === 'string' &&
-    typeof service.category === 'string' &&
+    (service.category === undefined || typeof service.category === 'string') &&
     typeof service.durationMinutes === 'number' &&
     typeof service.price === 'number' &&
     typeof service.currency === 'string'

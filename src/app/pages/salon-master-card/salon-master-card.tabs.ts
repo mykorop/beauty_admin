@@ -15,6 +15,10 @@ const IMPLEMENTED: Routes = [
     path: 'profile',
     loadComponent: () => import('./salon-master-profile.tab').then((m) => m.SalonMasterProfileTab),
   },
+  {
+    path: 'services',
+    loadComponent: () => import('./salon-master-services.tab').then((m) => m.SalonMasterServicesTab),
+  },
 ];
 
 export const SALON_MASTER_CARD_ROUTES: Routes = [
