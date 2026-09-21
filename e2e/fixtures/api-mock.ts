@@ -29,8 +29,8 @@ export function apiOk<T>(data: T): MockResponse {
 }
 
 /** A refusal in the backend's error envelope. */
-export function apiError(status: number, code: string, message = code): MockResponse {
-  return { status, body: { success: false, error: { code, message } } };
+export function apiError(status: number, code: string, message = code, details?: unknown): MockResponse {
+  return { status, body: { success: false, error: { code, message, ...(details === undefined ? {} : { details }) } } };
 }
 
 /**

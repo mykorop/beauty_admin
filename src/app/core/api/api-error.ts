@@ -17,3 +17,8 @@ export const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
 
 /** The record changed after the form was opened; every edit form answers it by offering a reload. */
 export const EDIT_CONFLICT_CODE = 'EDIT_CONFLICT';
+
+export const VALIDATION_ERROR_CODE = 'VALIDATION_ERROR';
+
+/** New Години роботи would leave a Майстер салону working outside them; `details.masters` names them. */
+export const ROSTER_HOURS_OUTSIDE_SALON_HOURS_CODE = 'ROSTER_HOURS_OUTSIDE_SALON_HOURS';

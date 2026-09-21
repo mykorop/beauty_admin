@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import type { AuditEntry } from '../../core/api/audit.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { weekdayName } from '../weekday';
 
 /**
  * What one Журнал дій entry did: the old and new value of every changed field — in full, PII
@@ -58,6 +59,15 @@ export class AuditEntryDetails {
 
   /** A field is named as its card's own tab names it; anything else keeps its raw path. */
   protected fieldLabel(field: string): string {
+    const day = HOURS_FIELD.exec(field);
+    if (day) {
+      const [, dayOfWeek, part] = day;
+      return [
+        this.i18n.t('salon.field.hours'),
+        weekdayName(this.i18n.locale(), Number(dayOfWeek)),
+        ...(part ? [this.i18n.optional(`salon.field.hours.${part}`) ?? part] : []),
+      ].join(' · ');
+    }
     const key = `${this.entry().targetType}.field.${FIELD_LABEL_ALIASES[field] ?? field}`;
     return this.i18n.optional(key) ?? field;
   }
@@ -67,12 +77,38 @@ export class AuditEntryDetails {
   }
 
   protected display(value: unknown): string {
-    if (value === null || value === undefined || value === '') {
+    // An emptied list — the windows of a day that closed — reads as nothing, like an emptied field.
+    if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
       return '—';
+    }
+    if (typeof value === 'boolean') {
+      return this.i18n.t(value ? 'audit.value.yes' : 'audit.value.no');
+    }
+    if (isHoursDay(value)) {
+      return value.isOpen && value.slots.length > 0 ? this.display(value.slots) : this.i18n.t('hours.closed');
+    }
+    if (isSlots(value)) {
+      return value.map((slot) => `${slot.start} – ${slot.end}`).join('\n');
     }
     return typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
   }
 }
+
+/** `hours.<dayOfWeek>` or `hours.<dayOfWeek>.<isOpen|slots>` — a day of a week of Години роботи. */
+const HOURS_FIELD = /^hours\.([0-6])(?:\.(\w+))?$/;
+
+type Slot = { start: string; end: string };
+
+const isSlots = (value: unknown): value is Slot[] =>
+  Array.isArray(value) &&
+  value.length > 0 &&
+  value.every((slot: Partial<Slot> | null) => typeof slot?.start === 'string' && typeof slot.end === 'string');
+
+const isHoursDay = (value: unknown): value is { isOpen: boolean; slots: Slot[] } =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as { isOpen?: unknown }).isOpen === 'boolean' &&
+  Array.isArray((value as { slots?: unknown }).slots);
 
 /** Row attributes whose label on the card lives under another name. */
 const FIELD_LABEL_ALIASES: Record<string, string> = {

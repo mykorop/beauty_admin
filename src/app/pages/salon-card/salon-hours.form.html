@@ -1,0 +1,84 @@
+<form class="max-w-xl text-sm" data-testid="hours-form" [formGroup]="form" (ngSubmit)="save()">
+  <div class="rounded-lg border border-slate-200 bg-white">
+    @for (row of rows(); track row.dayOfWeek) {
+      <div
+        class="border-b border-slate-100 px-6 py-3 last:border-0"
+        data-testid="hours-edit-day"
+        [formGroup]="week.at(row.dayOfWeek)"
+      >
+        <div class="flex min-h-10 items-center gap-4">
+          <span class="w-32 font-medium first-letter:uppercase">{{ row.name }}</span>
+          <label class="flex w-28 items-center gap-2">
+            <input type="checkbox" class="size-4" data-testid="hours-open" formControlName="isOpen" />
+            {{ (week.at(row.dayOfWeek).controls.isOpen.value ? 'hours.edit.dayOpen' : 'hours.closed') | t }}
+          </label>
+          @if (week.at(row.dayOfWeek).controls.isOpen.value) {
+            <input
+              pInputText
+              type="time"
+              data-testid="hours-start"
+              formControlName="start"
+              [attr.aria-label]="'hours.edit.from' | t"
+              [invalid]="week.at(row.dayOfWeek).controls.start.invalid"
+            />
+            <span aria-hidden="true">–</span>
+            <input
+              pInputText
+              type="time"
+              data-testid="hours-end"
+              formControlName="end"
+              [attr.aria-label]="'hours.edit.to' | t"
+              [invalid]="week.at(row.dayOfWeek).controls.end.invalid"
+            />
+          }
+        </div>
+        @if (row.split && !touched(row.dayOfWeek)) {
+          <p class="mt-1 text-xs text-slate-500" data-testid="hours-split">
+            {{ 'hours.edit.splitDay' | t: { slots: row.split } }}
+          </p>
+        }
+      </div>
+    }
+  </div>
+
+  <label class="mt-4 block text-slate-500" for="hours-reason">{{ 'salon.edit.reason' | t }}</label>
+  <input
+    pInputText
+    id="hours-reason"
+    class="mt-1 w-full"
+    data-testid="hours-reason"
+    maxlength="500"
+    formControlName="reason"
+  />
+
+  @if (refusals().length > 0) {
+    <p-message class="mt-4 block" severity="error" icon="pi pi-times-circle">
+      <ul>
+        @for (refusal of refusals(); track $index) {
+          <li data-testid="hours-refusal">{{ refusal }}</li>
+        }
+      </ul>
+    </p-message>
+  }
+
+  <div class="flex gap-2 pt-4">
+    <button
+      pButton
+      type="submit"
+      data-testid="hours-save"
+      [label]="'salon.edit.save' | t"
+      [disabled]="!canSave()"
+      [loading]="busy()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      data-testid="hours-cancel"
+      [text]="true"
+      [label]="'salon.edit.cancel' | t"
+      [disabled]="busy()"
+      (click)="closed.emit()"
+    ></button>
+  </div>
+</form>

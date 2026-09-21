@@ -2,7 +2,7 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
-import { EDIT_CONFLICT_CODE } from './api-error';
+import { EDIT_CONFLICT_CODE, ROSTER_HOURS_OUTSIDE_SALON_HOURS_CODE, VALIDATION_ERROR_CODE } from './api-error';
 import { adminApiUrl } from './admin-api-url';
 
 export type SalonStatus = 'active' | 'blocked' | 'deleted';
@@ -78,6 +78,9 @@ export type SalonDayHours = {
   slots: { start: string; end: string }[];
 };
 
+/** Refusals of a Години роботи save that carry the broken rule in their `details`. */
+export const HOURS_REFUSAL_CODES: readonly string[] = [VALIDATION_ERROR_CODE, ROSTER_HOURS_OUTSIDE_SALON_HOURS_CODE];
+
 export type SalonHours = {
   /** Only the days the salon has set. */
   days: SalonDayHours[];
@@ -135,6 +138,19 @@ export class SalonsClient {
       adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/profile`),
       { updatedAt, ...patch, ...(reason ? { reason } : {}) },
       { context: new HttpContext().set(SILENT_ERROR_CODES, [EDIT_CONFLICT_CODE]) },
+    );
+  }
+
+  /**
+   * The whole resulting week, all seven days. A week the domain refuses is worded by the form
+   * itself — rule by rule, master by master — so those two codes are left to the caller.
+   */
+  updateHours(salonId: string, request: { days: SalonDayHours[]; reason?: string }): Observable<SalonHours> {
+    const { days, reason } = request;
+    return this.http.put<SalonHours>(
+      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/hours`),
+      { salonHours: days, ...(reason ? { reason } : {}) },
+      { context: new HttpContext().set(SILENT_ERROR_CODES, HOURS_REFUSAL_CODES) },
     );
   }
 }

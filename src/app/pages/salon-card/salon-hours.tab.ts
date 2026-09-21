@@ -3,21 +3,38 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SalonsClient, type SalonDayHours } from '../../core/api/salons.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { ButtonDirective } from 'primeng/button';
 import { SalonCardStore } from './salon-card.store';
+import { SalonHoursForm } from './salon-hours.form';
+import { WEEK_ORDER, weekdayName } from '../../shared/weekday';
 
-/** Monday first, as every calendar of the region reads; the backend numbers days from Sunday = 0. */
-const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
-
-/** 2024-01-07 was a Sunday, so day `n` of that week names `dayOfWeek = n`. */
-const weekdayDate = (dayOfWeek: number): Date => new Date(Date.UTC(2024, 0, 7 + dayOfWeek));
-
-/** Години роботи of the Салон by day of week, read-only. */
+/** Години роботи of the Салон by day of week: read first, edited on demand — never a Видалений one. */
 @Component({
   selector: 'app-salon-hours-tab',
-  imports: [TranslatePipe],
+  imports: [ButtonDirective, SalonHoursForm, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (week(); as week) {
+    @if (editing() && days(); as stored) {
+      <app-salon-hours-form
+        [salonId]="salon()!.salonId"
+        [stored]="stored"
+        (saved)="days.set($event)"
+        (closed)="editing.set(false)"
+      />
+    } @else if (week(); as week) {
+      @if (salon()?.status !== 'deleted') {
+        <div class="mb-3 flex max-w-xl justify-end">
+          <button
+            pButton
+            type="button"
+            size="small"
+            icon="pi pi-pencil"
+            data-testid="hours-edit"
+            [label]="'hours.edit.open' | t"
+            (click)="editing.set(true)"
+          ></button>
+        </div>
+      }
       <table class="w-full max-w-xl rounded-lg border border-slate-200 bg-white text-sm">
         <tbody>
           @for (day of week; track day.dayOfWeek) {
@@ -46,25 +63,27 @@ const weekdayDate = (dayOfWeek: number): Date => new Date(Date.UTC(2024, 0, 7 + 
 export class SalonHoursTab {
   private readonly i18n = inject(I18nService);
 
-  private readonly days = signal<SalonDayHours[] | null>(null);
+  protected readonly salon = inject(SalonCardStore).salon.asReadonly();
+  protected readonly days = signal<SalonDayHours[] | null>(null);
   protected readonly failed = signal(false);
+  protected readonly editing = signal(false);
 
   protected readonly week = computed(() => {
     const days = this.days();
     if (!days) {
       return null;
     }
-    const weekday = new Intl.DateTimeFormat(this.i18n.locale(), { weekday: 'long', timeZone: 'UTC' });
+    const locale = this.i18n.locale();
     return WEEK_ORDER.map((dayOfWeek) => ({
       dayOfWeek,
-      name: weekday.format(weekdayDate(dayOfWeek)),
+      name: weekdayName(locale, dayOfWeek),
       hours: days.find((day) => day.dayOfWeek === dayOfWeek) ?? null,
     }));
   });
 
   constructor() {
     // The card renders its tabs only once the salon is loaded, and rebuilds them for another one.
-    const salonId = inject(SalonCardStore).salon()?.salonId;
+    const salonId = this.salon()?.salonId;
     if (salonId) {
       inject(SalonsClient)
         .hours(salonId)
