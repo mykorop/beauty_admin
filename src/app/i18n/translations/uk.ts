@@ -172,9 +172,18 @@ export const UK_TRANSLATIONS = {
   'salonMaster.backToRoster': 'До Ростеру',
   'salonMaster.inSalon': 'Майстер салону',
   'salonMaster.notFound': 'Такого Майстра в Ростері цього Салону немає.',
-  'salonMaster.salonDeletedBanner': 'Салон видалено — дані Майстра салону доступні лише для перегляду.',
+  'salonMaster.salonDeletedBanner':
+    'Салон видалено — дані Майстра салону доступні лише для перегляду; його можна тільки вилучити з Ростеру.',
   'salonMaster.edit.statusHint':
     'Статус лінку тут не змінюється: співпраця починається з Інвайту й закінчується вилученням із Ростеру.',
+  'salonMaster.remove.open': 'Вилучити з Ростеру',
+  'salonMaster.remove.title': 'Вилучення з Ростеру',
+  'salonMaster.remove.message':
+    '{{master}} перестане бути Майстром салону «{{salon}}» і стане Незалежним майстром. Майстер отримає сповіщення. Повернутись у Ростер можна лише через новий Інвайт.',
+  'salonMaster.remove.confirm': 'Вилучити',
+  'salonMaster.remove.done': 'Майстра вилучено з Ростеру.',
+  'reasonDialog.reason': 'Причина (обов’язково)',
+  'reasonDialog.cancel': 'Скасувати',
   'master.field.name': 'Ім’я',
   'master.field.email': 'Email акаунта',
   'master.field.specialization': 'Спеціалізація',
@@ -190,6 +199,7 @@ export const UK_TRANSLATIONS = {
   'specialization.esthetician': 'Естетист',
   'specialization.massage_therapist': 'Масажист',
   'audit.action.salon.master.update': 'Зміна даних Майстра салону',
+  'audit.action.salon.master.remove': 'Вилучення Майстра з Ростеру',
   'audit.targetType.master': 'Майстер',
   'auditLog.filter.from': 'Від',
   'auditLog.filter.to': 'До',
@@ -211,6 +221,9 @@ export const UK_TRANSLATIONS = {
   'error.CONFLICT': 'Дані змінилися або конфліктують із наявними. Оновіть сторінку й спробуйте ще раз.',
   'error.EDIT_CONFLICT': 'Дані змінились. Перезавантажте форму й спробуйте ще раз.',
   'error.SALON_DELETED': 'Салон видалено — змінювати його не можна.',
+  'error.OWNER_MASTER_PROTECTED': 'Власника-майстра не можна вилучити з Ростеру його Салону.',
+  'error.MASTER_HAS_ACTIVE_APPOINTMENTS':
+    'У Майстра є активні Записи в цьому Салоні — спершу їх треба скасувати.',
   'error.ROSTER_HOURS_OUTSIDE_SALON_HOURS': 'Робочий графік Майстра салону виходить за нові Години роботи.',
   'error.VALIDATION_ERROR': 'Дані не пройшли перевірку.',
   'error.INTERNAL_SERVER_ERROR': 'Помилка на сервері. Спробуйте пізніше.',

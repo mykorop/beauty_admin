@@ -122,6 +122,17 @@ export class SalonMastersClient {
     );
   }
 
+  /**
+   * Вилучення з Ростеру — a heavy action, so the reason is mandatory. Works in a Видалений salon
+   * too. There is nothing to read back but the ended link's status.
+   */
+  remove(salonId: string, masterId: string, reason: string): Observable<{ status: SalonMasterStatus }> {
+    return this.http.delete<{ status: SalonMasterStatus }>(
+      salonUrl(salonId, `masters/${encodeURIComponent(masterId)}`),
+      { body: { reason } },
+    );
+  }
+
   invites(salonId: string, cursor?: string): Observable<SalonInvitesPage> {
     return this.http.get<SalonInvitesPage>(salonUrl(salonId, 'invites'), {
       params: cursor ? { cursor } : {},

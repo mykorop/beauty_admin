@@ -174,9 +174,18 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'salonMaster.backToRoster': 'К Ростеру',
   'salonMaster.inSalon': 'Мастер салона',
   'salonMaster.notFound': 'Такого Мастера в Ростере этого Салона нет.',
-  'salonMaster.salonDeletedBanner': 'Салон удалён — данные Мастера салона доступны только для просмотра.',
+  'salonMaster.salonDeletedBanner':
+    'Салон удалён — данные Мастера салона доступны только для просмотра; его можно только исключить из Ростера.',
   'salonMaster.edit.statusHint':
     'Статус линка здесь не меняется: сотрудничество начинается с Инвайта и заканчивается исключением из Ростера.',
+  'salonMaster.remove.open': 'Исключить из Ростера',
+  'salonMaster.remove.title': 'Исключение из Ростера',
+  'salonMaster.remove.message':
+    '{{master}} перестанет быть Мастером салона «{{salon}}» и станет Независимым мастером. Мастер получит уведомление. Вернуться в Ростер можно только через новый Инвайт.',
+  'salonMaster.remove.confirm': 'Исключить',
+  'salonMaster.remove.done': 'Мастер исключён из Ростера.',
+  'reasonDialog.reason': 'Причина (обязательно)',
+  'reasonDialog.cancel': 'Отмена',
   'master.field.name': 'Имя',
   'master.field.email': 'Email аккаунта',
   'master.field.specialization': 'Специализация',
@@ -192,6 +201,7 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'specialization.esthetician': 'Эстетист',
   'specialization.massage_therapist': 'Массажист',
   'audit.action.salon.master.update': 'Изменение данных Мастера салона',
+  'audit.action.salon.master.remove': 'Исключение Мастера из Ростера',
   'audit.targetType.master': 'Мастер',
   'auditLog.filter.from': 'От',
   'auditLog.filter.to': 'До',
@@ -213,6 +223,9 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'error.CONFLICT': 'Данные изменились или конфликтуют с существующими. Обновите страницу и попробуйте ещё раз.',
   'error.EDIT_CONFLICT': 'Данные изменились. Перезагрузите форму и попробуйте ещё раз.',
   'error.SALON_DELETED': 'Салон удалён — изменять его нельзя.',
+  'error.OWNER_MASTER_PROTECTED': 'Владельца-мастера нельзя исключить из Ростера его Салона.',
+  'error.MASTER_HAS_ACTIVE_APPOINTMENTS':
+    'У Мастера есть активные Записи в этом Салоне — сначала их нужно отменить.',
   'error.ROSTER_HOURS_OUTSIDE_SALON_HOURS': 'Рабочий график Мастера салона выходит за новые Часы работы.',
   'error.VALIDATION_ERROR': 'Данные не прошли проверку.',
   'error.INTERNAL_SERVER_ERROR': 'Ошибка на сервере. Попробуйте позже.',

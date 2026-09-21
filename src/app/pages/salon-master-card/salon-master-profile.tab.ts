@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
+import { finalize } from 'rxjs';
+import { SalonMastersClient } from '../../core/api/salon-masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
 import { formatRating } from '../../shared/rating';
+import { ReasonDialog } from '../../shared/reason-dialog/reason-dialog';
 import { specializationLabel } from '../../shared/specialization';
 import { SalonCardStore } from '../salon-card/salon-card.store';
 import { SalonMasterForm } from './salon-master.form';
@@ -12,18 +16,32 @@ import { SalonMasterStore } from './salon-master.store';
 /**
  * Профіль of a Майстер салону — the data of his link to the Салон: read first, edited on demand,
  * never inside a Видалений salon. The link's status is shown and never edited here: a collaboration
- * starts with an Інвайт and ends with removal from the Ростер.
+ * starts with an Інвайт and ends with removal from the Ростер — which is offered here, in a
+ * Видалений salon too (that is where masters get stranded), and never for the Власник-майстер.
  */
 @Component({
   selector: 'app-salon-master-profile-tab',
-  imports: [ButtonDirective, SalonMasterForm, TranslatePipe],
+  imports: [ButtonDirective, ReasonDialog, SalonMasterForm, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (editing()) {
       <app-salon-master-form (closed)="editing.set(false)" />
     } @else if (master(); as master) {
-      @if (salon()?.status !== 'deleted') {
-        <div class="mb-3 flex max-w-4xl justify-end">
+      <div class="mb-3 flex max-w-4xl justify-end gap-2">
+        @if (canRemove()) {
+          <button
+            pButton
+            type="button"
+            size="small"
+            severity="danger"
+            icon="pi pi-user-minus"
+            data-testid="master-remove"
+            [outlined]="true"
+            [label]="'salonMaster.remove.open' | t"
+            (click)="removing.set(true)"
+          ></button>
+        }
+        @if (salon()?.status !== 'deleted') {
           <button
             pButton
             type="button"
@@ -33,8 +51,17 @@ import { SalonMasterStore } from './salon-master.store';
             [label]="'salon.edit.open' | t"
             (click)="editing.set(true)"
           ></button>
-        </div>
-      }
+        }
+      </div>
+      <app-reason-dialog
+        titleKey="salonMaster.remove.title"
+        confirmLabelKey="salonMaster.remove.confirm"
+        [busy]="busy()"
+        [(visible)]="removing"
+        (confirmed)="remove($event)"
+      >
+        {{ 'salonMaster.remove.message' | t: { master: master.masterName, salon: salon()?.name ?? '' } }}
+      </app-reason-dialog>
       <dl
         class="grid max-w-4xl grid-cols-[14rem_1fr] gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm"
       >
@@ -85,10 +112,21 @@ import { SalonMasterStore } from './salon-master.store';
 export class SalonMasterProfileTab {
   private readonly i18n = inject(I18nService);
   private readonly salonStore = inject(SalonCardStore);
+  private readonly store = inject(SalonMasterStore);
+  private readonly client = inject(SalonMastersClient);
+  private readonly messages = inject(MessageService);
 
   protected readonly salon = this.salonStore.salon.asReadonly();
-  protected readonly master = inject(SalonMasterStore).master.asReadonly();
+  protected readonly master = this.store.master.asReadonly();
   protected readonly editing = signal(false);
+  protected readonly removing = signal(false);
+  protected readonly busy = signal(false);
+
+  /** The backend refuses both as well: `OWNER_MASTER_PROTECTED`, and `NOT_FOUND` for an ended link. */
+  protected readonly canRemove = computed(() => {
+    const master = this.master();
+    return !!master && !master.isOwner && master.status !== 'INACTIVE';
+  });
 
   protected readonly specialization = computed(() =>
     specializationLabel(this.i18n, this.master()?.specialization ?? ''),
@@ -100,4 +138,26 @@ export class SalonMasterProfileTab {
   });
   protected readonly joinedAt = computed(() => this.salonStore.venueDay(this.master()?.joinedAt));
   protected readonly updatedAt = computed(() => this.salonStore.venueDate(this.master()?.updatedAt));
+
+  protected remove(reason: string): void {
+    const salon = this.salon();
+    const master = this.master();
+    if (!salon || !master || this.busy()) {
+      return;
+    }
+    this.busy.set(true);
+    this.client
+      .remove(salon.salonId, master.masterId, reason)
+      .pipe(finalize(() => this.busy.set(false)))
+      .subscribe({
+        next: ({ status }) => {
+          // The link stays on the Ростер as an ended one, so the card stays open on it.
+          this.store.master.set({ ...master, status });
+          this.removing.set(false);
+          this.messages.add({ severity: 'success', summary: this.i18n.t('salonMaster.remove.done'), life: 4000 });
+        },
+        // Already worded as a toast; the dialog stays open with the reason as typed.
+        error: () => undefined,
+      });
+  }
 }

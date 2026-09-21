@@ -254,6 +254,109 @@ test.describe('salon master editing', () => {
   });
 });
 
+test.describe('removal from the Ростер', () => {
+  test('asks for a reason first: no confirming without one, then a DELETE that carries it', async ({
+    page,
+    mockBackend,
+  }) => {
+    const mock = await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon()),
+      [`GET ${MASTER_PATH}`]: apiOk(master()),
+      [`DELETE ${MASTER_PATH}`]: apiOk({ removed: true, masterId: 'm2', status: 'INACTIVE' }),
+    });
+    await signIn(page, ADMIN, '/salons/s1/masters/m2/profile');
+
+    await page.getByTestId('master-remove').click();
+    await expect(page.getByTestId('reason-dialog')).toContainText('Ion Popa');
+    await expect(page.getByTestId('reason-confirm')).toBeDisabled();
+
+    // Blanks are not a reason.
+    await page.getByTestId('reason-input').fill('   ');
+    await expect(page.getByTestId('reason-confirm')).toBeDisabled();
+
+    await page.getByTestId('reason-input').fill('  Salon closed, master asked to be released ');
+    await page.getByTestId('reason-confirm').click();
+
+    await expect(page.getByTestId('reason-dialog')).toHaveCount(0);
+    await expect(page.getByTestId('card-status')).toHaveText('Співпрацю завершено');
+    await expect(page.getByTestId('master-remove')).toHaveCount(0);
+    expect(mock.bodies[`DELETE ${MASTER_PATH}`]).toEqual([
+      { reason: 'Salon closed, master asked to be released' },
+    ]);
+  });
+
+  test('cancelling sends nothing and forgets what was typed', async ({ page, mockBackend }) => {
+    const mock = await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon()),
+      [`GET ${MASTER_PATH}`]: apiOk(master()),
+    });
+    await signIn(page, ADMIN, '/salons/s1/masters/m2/profile');
+
+    await page.getByTestId('master-remove').click();
+    await page.getByTestId('reason-input').fill('Changed my mind');
+    await page.getByTestId('reason-cancel').click();
+    await expect(page.getByTestId('reason-dialog')).toHaveCount(0);
+
+    await page.getByTestId('master-remove').click();
+    await expect(page.getByTestId('reason-input')).toHaveValue('');
+    expect(mock.bodies[`DELETE ${MASTER_PATH}`]).toBeUndefined();
+  });
+
+  test('stays available in a Видалений salon, where editing is not', async ({ page, mockBackend }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon({ status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' })),
+      [`GET ${MASTER_PATH}`]: apiOk(master()),
+      [`DELETE ${MASTER_PATH}`]: apiOk({ removed: true, masterId: 'm2', status: 'INACTIVE' }),
+    });
+    await signIn(page, ADMIN, '/salons/s1/masters/m2/profile');
+
+    await expect(page.getByTestId('master-edit')).toHaveCount(0);
+    await page.getByTestId('master-remove').click();
+    await page.getByTestId('reason-input').fill('Stranded in a deleted salon');
+    await page.getByTestId('reason-confirm').click();
+
+    await expect(page.getByTestId('card-status')).toHaveText('Співпрацю завершено');
+  });
+
+  test('keeps the dialog and the reason when the backend refuses', async ({ page, mockBackend }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon()),
+      [`GET ${MASTER_PATH}`]: apiOk(master()),
+      [`DELETE ${MASTER_PATH}`]: apiError(409, 'MASTER_HAS_ACTIVE_APPOINTMENTS'),
+    });
+    await signIn(page, ADMIN, '/salons/s1/masters/m2/profile');
+
+    await page.getByTestId('master-remove').click();
+    await page.getByTestId('reason-input').fill('Owner unreachable');
+    await page.getByTestId('reason-confirm').click();
+
+    await expect(page.getByText('У Майстра є активні Записи в цьому Салоні')).toBeVisible();
+    await expect(page.getByTestId('reason-input')).toHaveValue('Owner unreachable');
+    await expect(page.getByTestId('card-status')).toHaveText('Активний');
+  });
+
+  for (const [who, path, body] of [
+    ['the Власник-майстер', '/admin/salons/s1/masters/s1', OWNER],
+    ['an ended collaboration', MASTER_PATH, master({ status: 'INACTIVE' })],
+  ] as const) {
+    test(`has no button for ${who}`, async ({ page, mockBackend }) => {
+      await mockBackend(ADMIN, {
+        'GET /admin/me': ME,
+        'GET /admin/salons/s1': apiOk(salon()),
+        [`GET ${path}`]: apiOk(body),
+      });
+      await signIn(page, ADMIN, `${path.replace('/admin', '')}/profile`);
+
+      await expect(page.getByTestId('master-edit')).toBeVisible();
+      await expect(page.getByTestId('master-remove')).toHaveCount(0);
+    });
+  }
+});
+
 test.describe('salon invites', () => {
   test('shows status, email and expiry on the salon’s clock — read-only', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, {

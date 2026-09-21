@@ -176,9 +176,18 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'salonMaster.backToRoster': 'Înapoi la Roster',
   'salonMaster.inSalon': 'Maestru al salonului',
   'salonMaster.notFound': 'Acest Maestru nu este în Rosterul acestui Salon.',
-  'salonMaster.salonDeletedBanner': 'Salonul este șters — datele Maestrului salonului sunt doar pentru vizualizare.',
+  'salonMaster.salonDeletedBanner':
+    'Salonul este șters — datele Maestrului salonului sunt doar pentru vizualizare; el poate fi doar exclus din Roster.',
   'salonMaster.edit.statusHint':
     'Starea legăturii nu se schimbă aici: colaborarea începe cu o Invitație și se încheie cu excluderea din Roster.',
+  'salonMaster.remove.open': 'Exclude din Roster',
+  'salonMaster.remove.title': 'Excludere din Roster',
+  'salonMaster.remove.message':
+    '{{master}} nu va mai fi Maestru al salonului „{{salon}}” și va deveni Maestru independent. Maestrul va primi o notificare. Revenirea în Roster este posibilă doar printr-o nouă Invitație.',
+  'salonMaster.remove.confirm': 'Exclude',
+  'salonMaster.remove.done': 'Maestrul a fost exclus din Roster.',
+  'reasonDialog.reason': 'Motiv (obligatoriu)',
+  'reasonDialog.cancel': 'Anulează',
   'master.field.name': 'Nume',
   'master.field.email': 'Emailul contului',
   'master.field.specialization': 'Specializare',
@@ -194,6 +203,7 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'specialization.esthetician': 'Estetician',
   'specialization.massage_therapist': 'Maseur',
   'audit.action.salon.master.update': 'Modificarea datelor Maestrului salonului',
+  'audit.action.salon.master.remove': 'Excluderea Maestrului din Roster',
   'audit.targetType.master': 'Maestru',
   'auditLog.filter.from': 'De la',
   'auditLog.filter.to': 'Până la',
@@ -215,6 +225,10 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'error.CONFLICT': 'Datele s-au schimbat sau intră în conflict cu cele existente. Reîncărcați pagina și încercați din nou.',
   'error.EDIT_CONFLICT': 'Datele s-au schimbat. Reîncărcați formularul și încercați din nou.',
   'error.SALON_DELETED': 'Salonul este șters — nu poate fi modificat.',
+  'error.OWNER_MASTER_PROTECTED':
+    'Proprietarul-maestru nu poate fi exclus din Rosterul propriului Salon.',
+  'error.MASTER_HAS_ACTIVE_APPOINTMENTS':
+    'Maestrul are Programări active în acest Salon — mai întâi trebuie anulate.',
   'error.ROSTER_HOURS_OUTSIDE_SALON_HOURS': 'Programul unui Maestru al salonului iese din noul Program de lucru.',
   'error.VALIDATION_ERROR': 'Datele nu au trecut verificarea.',
   'error.INTERNAL_SERVER_ERROR': 'Eroare de server. Încercați mai târziu.',
