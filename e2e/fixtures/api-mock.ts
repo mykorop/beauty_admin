@@ -9,15 +9,18 @@ export type MockResponse = {
 
 /**
  * Route table keyed by `"<METHOD> <pathname>"`, e.g. `"GET /admin/me"`. A function entry answers
- * from the request's URL — for an endpoint whose query string changes the response.
+ * from the request's URL and JSON body — for an endpoint whose response depends on either, or
+ * changes from one call to the next.
  */
-export type MockRoutes = Record<string, MockResponse | ((url: URL) => MockResponse)>;
+export type MockRoutes = Record<string, MockResponse | ((url: URL, body: unknown) => MockResponse)>;
 
 export type ApiMock = {
   /** Requests that matched no entry. The app fixture asserts this is empty when a test ends. */
   readonly unmatched: string[];
   /** `Authorization` header of every matched request, in order. */
   readonly authorizations: (string | undefined)[];
+  /** JSON body of every matched request under its route key, in order — what the app really sent. */
+  readonly bodies: Record<string, unknown[]>;
 };
 
 /** Wraps a payload in the backend's success envelope. */
@@ -36,14 +39,15 @@ export function apiError(status: number, code: string, message = code): MockResp
  * worse than a red one.
  */
 export async function installApiMock(context: BrowserContext, routes: MockRoutes): Promise<ApiMock> {
-  const mock: ApiMock = { unmatched: [], authorizations: [] };
+  const mock: ApiMock = { unmatched: [], authorizations: [], bodies: {} };
 
   await context.route(`${environment.adminApiUrl}/**`, async (route: Route): Promise<void> => {
     const request = route.request();
     const url = new URL(request.url());
     const key = `${request.method()} ${url.pathname}`;
     const matched = routes[key];
-    const entry = typeof matched === 'function' ? matched(url) : matched;
+    const body: unknown = request.postDataJSON();
+    const entry = typeof matched === 'function' ? matched(url, body) : matched;
 
     if (entry === undefined) {
       mock.unmatched.push(key);
@@ -56,6 +60,7 @@ export async function installApiMock(context: BrowserContext, routes: MockRoutes
     }
 
     mock.authorizations.push(request.headers()['authorization']);
+    (mock.bodies[key] ??= []).push(body);
     await route.fulfill({
       status: entry.status ?? 200,
       contentType: 'application/json',

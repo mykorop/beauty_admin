@@ -1,4 +1,19 @@
-@if (salon(); as salon) {
+@if (editing()) {
+  <app-salon-profile-form (closed)="editing.set(false)" />
+} @else if (salon(); as salon) {
+  @if (salon.status !== 'deleted') {
+    <div class="mb-3 flex max-w-4xl justify-end">
+      <button
+        pButton
+        type="button"
+        size="small"
+        icon="pi pi-pencil"
+        data-testid="profile-edit"
+        [label]="'salon.edit.open' | t"
+        (click)="editing.set(true)"
+      ></button>
+    </div>
+  }
   <dl class="grid max-w-4xl grid-cols-[14rem_1fr] gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm">
     <dt class="text-slate-500">{{ 'salon.field.name' | t }}</dt>
     <dd data-testid="field-name">{{ salon.name || '—' }}</dd>

@@ -2,6 +2,7 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
+import { EDIT_CONFLICT_CODE } from './api-error';
 import { adminApiUrl } from './admin-api-url';
 
 export type SalonStatus = 'active' | 'blocked' | 'deleted';
@@ -82,6 +83,23 @@ export type SalonHours = {
   days: SalonDayHours[];
 };
 
+/** What the administrator may change on a Салон; the account's email, phone and password are not here. */
+export type SalonProfileFields = {
+  name: string;
+  description: string;
+  addressStreet: string;
+  addressHouseNumber: string;
+  addressCityCode: string;
+  addressZipCode: string;
+  phone: string;
+  bufferMinutes: number;
+  bookingForwardDays: number;
+  brandColor: string | null;
+};
+
+/** Only the fields that changed, never the whole form. */
+export type SalonProfilePatch = Partial<SalonProfileFields>;
+
 @Injectable({ providedIn: 'root' })
 export class SalonsClient {
   private readonly http = inject(HttpClient);
@@ -102,5 +120,21 @@ export class SalonsClient {
 
   hours(salonId: string): Observable<SalonHours> {
     return this.http.get<SalonHours>(adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/hours`));
+  }
+
+  /**
+   * `updatedAt` is the one the administrator saw: if the Власник салону changed the profile since,
+   * the backend refuses with `EDIT_CONFLICT` — the form's own message, so it is left to the caller.
+   */
+  updateProfile(
+    salonId: string,
+    request: { updatedAt: string; patch: SalonProfilePatch; reason?: string },
+  ): Observable<Salon> {
+    const { updatedAt, patch, reason } = request;
+    return this.http.patch<Salon>(
+      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/profile`),
+      { updatedAt, ...patch, ...(reason ? { reason } : {}) },
+      { context: new HttpContext().set(SILENT_ERROR_CODES, [EDIT_CONFLICT_CODE]) },
+    );
   }
 }

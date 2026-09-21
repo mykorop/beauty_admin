@@ -14,3 +14,6 @@ export class ApiError extends Error {
 }
 
 export const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
+
+/** The record changed after the form was opened; every edit form answers it by offering a reload. */
+export const EDIT_CONFLICT_CODE = 'EDIT_CONFLICT';

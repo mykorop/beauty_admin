@@ -23,6 +23,10 @@ const IMPLEMENTED: Routes = [
     path: 'hours',
     loadComponent: () => import('./salon-hours.tab').then((m) => m.SalonHoursTab),
   },
+  {
+    path: 'history',
+    loadComponent: () => import('./salon-history.tab').then((m) => m.SalonHistoryTab),
+  },
 ];
 
 export const SALON_CARD_ROUTES: Routes = [

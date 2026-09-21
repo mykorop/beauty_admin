@@ -1,12 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ButtonDirective } from 'primeng/button';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { SalonCardStore } from './salon-card.store';
+import { SalonProfileForm } from './salon-profile.form';
 
-/** Профіль of the Салон, read-only. Dates are the salon's clock, never the browser's. */
+/**
+ * Профіль of the Салон: read first, edited on demand — never a Видалений one. Dates are the salon's
+ * clock, never the browser's.
+ */
 @Component({
   selector: 'app-salon-profile-tab',
-  imports: [TranslatePipe],
+  imports: [ButtonDirective, SalonProfileForm, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './salon-profile.tab.html',
 })
@@ -14,6 +19,7 @@ export class SalonProfileTab {
   private readonly i18n = inject(I18nService);
   private readonly store = inject(SalonCardStore);
   protected readonly salon = this.store.salon.asReadonly();
+  protected readonly editing = signal(false);
 
   protected readonly addressLines = computed(() => {
     const salon = this.salon();

@@ -44,6 +44,14 @@ export class I18nService {
     return this.lookup(`error.${code}`) ?? code;
   }
 
+  /**
+   * Wording for a key assembled from backend data (an audit action, a changed field), or `null`
+   * when the dictionaries have none — the caller then shows the raw value rather than nothing.
+   */
+  optional(key: string): string | null {
+    return this.lookup(key);
+  }
+
   private lookup(key: string, params?: TranslationParams): string | null {
     const dictionaries: TranslationDictionary = TRANSLATIONS;
     const value = dictionaries[this._language()][key] ?? dictionaries[DEFAULT_LANGUAGE][key];
