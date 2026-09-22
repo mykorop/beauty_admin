@@ -250,7 +250,7 @@ export const UK_TRANSLATIONS = {
   'appointments.stale': 'Час минув, а Запис досі заброньований',
   'appointments.empty': 'За цей період Записів немає.',
   'appointments.readonly':
-    'Лише перегляд: Запис створює Клієнт або бізнес — з адмінки створити Запис неможливо.',
+    'Запис створює Клієнт або бізнес — з адмінки створити Запис неможливо; діяти над наявним можна в його картці.',
   'appointments.details.open': 'Деталі Запису',
   'appointments.details.loading': 'Завантаження…',
   'appointments.details.client': 'Клієнт',
@@ -490,6 +490,39 @@ export const UK_TRANSLATIONS = {
   'error.VALIDATION_ERROR': 'Дані не пройшли перевірку.',
   'error.INTERNAL_SERVER_ERROR': 'Помилка на сервері. Спробуйте пізніше.',
   'error.NETWORK_ERROR': 'Немає зв’язку із сервером. Перевірте з’єднання.',
+
+  'appointments.action.cancel': 'Скасувати Запис',
+  'appointments.action.cancel.title': 'Скасувати Запис',
+  'appointments.action.cancel.message':
+    'Запис буде скасовано, слот звільниться, а Клієнт ({{client}}) отримає звичайне сповіщення про скасування.',
+  'appointments.action.cancel.confirm': 'Скасувати Запис',
+  'appointments.action.complete': 'Завершено',
+  'appointments.action.complete.title': 'Позначити як завершений',
+  'appointments.action.complete.message':
+    'Візит Клієнта {{client}} буде закрито як завершений. Скасувати цю дію не можна, а слот лишиться зайнятим.',
+  'appointments.action.complete.confirm': 'Позначити завершеним',
+  'appointments.action.noShow': 'Не з’явився',
+  'appointments.action.noShow.title': 'Позначити «не з’явився»',
+  'appointments.action.noShow.message':
+    'Візит Клієнта {{client}} буде закрито як «не з’явився». Скасувати цю дію не можна, а слот лишиться зайнятим.',
+  'appointments.action.noShow.confirm': 'Позначити «не з’явився»',
+  'appointments.action.reschedule': 'Перенести',
+  'appointments.action.closed': 'Запис уже закритий — діяти над ним не можна.',
+  'appointments.reschedule.title': 'Перенести Запис',
+  'appointments.reschedule.current': 'Зараз: {{when}}',
+  'appointments.reschedule.day': 'День',
+  'appointments.reschedule.noSlots': 'Цього дня Майстер не працює або вільних слотів немає.',
+  'appointments.reschedule.slotsFailed': 'Не вдалося прочитати вільні слоти цього дня.',
+  'appointments.reschedule.confirm': 'Перенести',
+  'reasonDialog.reasonOptional': 'Причина (необов’язково)',
+  'error.APPOINTMENT_ALREADY_CANCELLED': 'Запис уже скасовано. Оновіть сторінку.',
+  'error.APPOINTMENT_NOT_CANCELLABLE': 'Скасувати можна лише заброньований Запис.',
+  'error.APPOINTMENT_NOT_RESCHEDULABLE': 'Перенести можна лише заброньований Запис.',
+  'error.APPOINTMENT_STATUS_TRANSITION_NOT_ALLOWED': 'Запис уже закритий — змінити його статус не можна.',
+  'error.APPOINTMENT_IN_THE_PAST': 'Перенести Запис у минуле не можна.',
+  'error.APPOINTMENT_UNCHANGED': 'Це той самий час, на який Запис уже стоїть.',
+  'error.SLOT_UNAVAILABLE': 'Цей слот уже зайнятий. Оберіть інший.',
+  'error.OUTSIDE_WORKING_HOURS': 'Цей час поза Робочим графіком Майстра.',
 } as const;
 
 export type TranslationKey = keyof typeof UK_TRANSLATIONS;

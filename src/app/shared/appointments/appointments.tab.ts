@@ -36,13 +36,32 @@ import {
 } from './appointment-filters';
 import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.model';
 
+/** The card's answer, narrowed to what a table row shows — the card carries strictly more. */
+function toRow(details: AppointmentDetails): Partial<Appointment> {
+  return {
+    startTime: details.startTime,
+    endTime: details.endTime,
+    status: details.status,
+    masterId: details.masterId,
+    masterName: details.masterName,
+    serviceNames: details.services.map((service) => service.name),
+    totalPrice: details.totalPrice,
+    currency: details.currency,
+    isManual: details.isManual,
+  };
+}
+
 /**
  * Записи of a Салон or of a Майстер: the window the reader asked for, soonest first, each row
  * opening into the whole Запис.
  *
- * Read-only by design — there is no «new» button here and no endpoint behind one: a Запис is made
- * by a Клієнт or by the business, never by the platform. Whose Записи these are lives entirely in
- * the `port`; the filters live in the address, so a view can be linked to.
+ * A Запис is never **made** here — there is no «new» button and no endpoint behind one: a Запис is
+ * made by a Клієнт or by the business, never by the platform. Acting on one that exists is the
+ * open card's own business (`app-appointment-details`), and what comes back from an action is
+ * absorbed into the row it came from rather than re-read.
+ *
+ * Whose Записи these are lives entirely in the `port`; the filters live in the address, so a view
+ * can be linked to.
  */
 @Component({
   selector: 'app-appointments',
@@ -167,7 +186,7 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
                   <td></td>
                   <td class="px-4 py-4" [attr.colspan]="columns()">
                     @if (details(); as details) {
-                      <app-appointment-details [details]="details" />
+                      <app-appointment-details [details]="details" (changed)="absorb($event)" />
                     } @else if (detailsFailed()) {
                       <p class="text-slate-600" data-testid="appointment-details-failed">{{ 'card.failed' | t }}</p>
                     } @else {
@@ -323,6 +342,22 @@ export class AppointmentsTab implements OnInit {
     const next = this.isOpen(appointment) ? null : appointment.appointmentId;
     this.openId.set(next);
     this.opened.next(next);
+  }
+
+  /**
+   * A Запис an action just changed. The backend answers with the whole row, so the table redraws
+   * from that rather than re-reading the window: re-reading would drop rows the filters no longer
+   * match — a Запис just cancelled under a «заброньовано» filter would vanish from under the card
+   * still showing it.
+   */
+  protected absorb(details: AppointmentDetails): void {
+    this.details.set(details);
+    this.appointments.update(
+      (rows) =>
+        rows?.map((row) =>
+          row.appointmentId === details.appointmentId ? { ...row, ...toRow(details) } : row,
+        ) ?? rows,
+    );
   }
 
   protected setFilter(change: Partial<AppointmentFilters>): void {

@@ -54,6 +54,59 @@ export type AppointmentDetails = Appointment & {
   services: AppointmentService[];
   totalDurationMinutes: number;
   notes: string | null;
+  /** The clock every action over this Запис carries back — see `SeenAt`. */
+  updatedAt: string | null;
+};
+
+/**
+ * The three states the panel may move a Запис into. «Заброньовано» is absent on purpose, as it is
+ * on the backend: the platform un-cancels nothing.
+ */
+export const APPOINTMENT_ACTION_STATUSES = ['CANCELLED', 'COMPLETED', 'NO_SHOW'] as const;
+export type AppointmentActionStatus = (typeof APPOINTMENT_ACTION_STATUSES)[number];
+
+/**
+ * The clock the card showed, carried by every action: if the Запис has moved since — the Клієнт
+ * cancelled it, the Салон shifted it — the backend refuses with `EDIT_CONFLICT` instead of
+ * overwriting. `null` is a value, not a missing field: a Запис written before the attribute
+ * existed has none, and the guard then demands it still be absent.
+ */
+export type SeenAt = { updatedAt: string | null };
+
+/** Скасування needs a reason; closing a visit that happened may carry one. */
+export type AppointmentStatusChange = SeenAt & {
+  status: AppointmentActionStatus;
+  reason?: string;
+};
+
+/** A перенесення: a new start on the venue's clock, and why. Nothing else moves. */
+export type AppointmentRescheduleRequest = SeenAt & { startDateTime: string; reason?: string };
+
+/**
+ * One candidate start in the Майстер's day. `available` is the only selectable one — `booked` is
+ * an hour already taken, `too_short` one where this Запис would run into the next.
+ */
+export type SlotStatus = 'available' | 'booked' | 'too_short';
+
+export type AvailableSlot = {
+  date: string;
+  /** Venue-local `HH:mm` — what the button shows. */
+  localTime: string;
+  /** The instant the перенесення is asked for. */
+  startAtUtc: string;
+  utcOffset: string;
+  status: SlotStatus;
+};
+
+/**
+ * The day the reschedule dialog draws. The backend also answers with `bookedBlocks`,
+ * `workingWindows` and `workingDayStatus` — the business apps' calendars render those — but this
+ * dialog offers a list of hours, and a field declared here that nothing reads would be a promise
+ * about the screen that isn't true.
+ */
+export type AvailableSlotsPage = {
+  slotOptions: AvailableSlot[];
+  timezone: string;
 };
 
 /** What the backend is asked for: the window is never optional, and `masterId` narrows a Салон's list. */
@@ -72,9 +125,9 @@ const params = (query: AppointmentQuery): Record<string, string> => ({
 });
 
 /**
- * Записи as the panel reads them — and only reads them. There is deliberately nothing here that
- * creates one: the platform never books instead of the business, and the backend has no endpoint
- * for it either.
+ * Записи as the panel reads and acts on them. There is deliberately nothing here that **creates**
+ * one: the platform never books instead of the business, and the backend has no endpoint for it
+ * either. What it does have is the three actions over a Запис that already exists.
  */
 @Injectable({ providedIn: 'root' })
 export class AppointmentsClient {
@@ -104,6 +157,42 @@ export class AppointmentsClient {
     return this.http.get<AppointmentDetails>(
       adminApiUrl(`/admin/appointments/${encodeURIComponent(appointmentId)}`),
       { context: new HttpContext().set(SILENT_ERROR_CODES, ['NOT_FOUND']) },
+    );
+  }
+
+  /**
+   * Скасовано / завершено / не з'явився. Answers with the whole Запис, so the row that asked can
+   * redraw from the answer rather than from what it hoped the action did.
+   */
+  updateStatus(appointmentId: string, change: AppointmentStatusChange): Observable<AppointmentDetails> {
+    return this.http.patch<AppointmentDetails>(
+      adminApiUrl(`/admin/appointments/${encodeURIComponent(appointmentId)}`),
+      change,
+    );
+  }
+
+  /** The same Запис at another hour — one `availableSlots` has already called free. */
+  reschedule(
+    appointmentId: string,
+    request: AppointmentRescheduleRequest,
+  ): Observable<AppointmentDetails> {
+    return this.http.patch<AppointmentDetails>(
+      adminApiUrl(`/admin/appointments/${encodeURIComponent(appointmentId)}/reschedule`),
+      request,
+    );
+  }
+
+  /**
+   * One day of the Майстер's calendar for the reschedule dialog, this Запис left out of it. A day
+   * the backend refuses (one already past) is the dialog's own message, not a toast.
+   */
+  availableSlots(appointmentId: string, date: string): Observable<AvailableSlotsPage> {
+    return this.http.get<AvailableSlotsPage>(
+      adminApiUrl(`/admin/appointments/${encodeURIComponent(appointmentId)}/available-slots`),
+      {
+        params: { date },
+        context: new HttpContext().set(SILENT_ERROR_CODES, ['BAD_REQUEST', 'NOT_FOUND']),
+      },
     );
   }
 }

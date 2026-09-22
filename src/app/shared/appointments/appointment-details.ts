@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Tag } from 'primeng/tag';
 import { APPOINTMENT_STATUS_SEVERITY, type AppointmentDetails } from '../../core/api/appointments.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { formatVenueDateTime } from '../venue-date';
+import { AppointmentActions } from './appointment-actions';
 import { appointmentStatusLabel, formatPrice } from './appointment-wording';
 
 /**
@@ -13,10 +14,13 @@ import { appointmentStatusLabel, formatPrice } from './appointment-wording';
  *
  * The clock is the Запис's own: the one both sides agreed on when it was made, which is not always
  * the venue's today (a Салон may have moved zones since).
+ *
+ * The actions the administrator may take over it sit at the foot of the same panel — reading a
+ * disputed Запис and deciding what to do about it is one act, not two screens.
  */
 @Component({
   selector: 'app-appointment-details',
-  imports: [Tag, TranslatePipe],
+  imports: [AppointmentActions, Tag, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (view(); as view) {
@@ -90,11 +94,16 @@ import { appointmentStatusLabel, formatPrice } from './appointment-wording';
           </p>
         </div>
       </div>
+
+      <app-appointment-actions [details]="view.details" (changed)="changed.emit($event)" />
     }
   `,
 })
 export class AppointmentDetailsPanel {
   readonly details = input.required<AppointmentDetails>();
+
+  /** The Запис as an action left it — the table above redraws its row from this. */
+  readonly changed = output<AppointmentDetails>();
 
   private readonly i18n = inject(I18nService);
 
