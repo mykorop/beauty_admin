@@ -530,4 +530,27 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'error.APPOINTMENT_UNCHANGED': 'Este exact ora la care Programarea este deja fixată.',
   'error.SLOT_UNAVAILABLE': 'Acest interval este deja ocupat. Alegeți altul.',
   'error.OUTSIDE_WORKING_HOURS': 'Această oră este în afara Programului de lucru al Maestrului.',
+  'appointments.auditField': 'Programare',
+  'appointments.field.status': 'Statut',
+  'appointments.field.startTime': 'Început',
+  'appointments.field.endTime': 'Sfârșit',
+  'audit.action.appointment.cancel': 'Anularea unei Programări',
+  'audit.action.appointment.status.update': 'Schimbarea statutului unei Programări',
+  'audit.action.appointment.reschedule': 'Reprogramarea unei Programări',
+  'audit.action.appointment.bulk-cancel': 'Anulare în masă a Programărilor',
+
+  'upcoming.warning':
+    'Programări viitoare: {{count}}. Profilul este indisponibil — dacă nu sunt anulate, Clienții vor ajunge la ușa închisă.',
+  'upcoming.cancelAll': 'Anulează toate Programările viitoare',
+  'upcoming.title': 'Anulare în masă a Programărilor',
+  'upcoming.message':
+    'Toate Programările viitoare ale profilului «{{name}}» — acum sunt {{count}} — vor fi anulate, intervalele se eliberează, iar fiecare Client primește notificarea obișnuită de anulare. Acțiunea nu poate fi anulată.',
+  'upcoming.confirm': 'Anulează tot',
+  'upcoming.done': 'Programări anulate: {{cancelled}}.',
+  'upcoming.partial':
+    'Programări anulate: {{cancelled}}. Au rămas: {{remaining}} — rulați acțiunea din nou.',
+  'upcoming.none': 'Nu au mai rămas Programări viitoare.',
+  'block.upcoming':
+    'Programări viitoare: {{count}}. Blocarea nu le anulează — asta se face printr-o acțiune separată, după ea.',
+  'block.upcomingCancel': 'Anulează-le printr-o acțiune separată',
 };

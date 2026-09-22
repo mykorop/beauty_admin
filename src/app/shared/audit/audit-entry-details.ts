@@ -72,6 +72,17 @@ export class AuditEntryDetails {
         ...(part ? [this.i18n.optional(`salon.field.hours.${part}`) ?? part] : []),
       ].join(' · ');
     }
+    // `appointments.<appointmentId>.<field>` — a Запис one of the panel's actions moved. The id
+    // stays in the label, unlike the Каталог's: a масове скасування writes one row per Запис, and
+    // without it they would be a column of identical lines.
+    const appointment = APPOINTMENT_FIELD.exec(field);
+    if (appointment) {
+      const [, appointmentId, part] = appointment;
+      return [
+        `${this.i18n.t('appointments.auditField')} ${appointmentId}`,
+        this.i18n.optional(`appointments.field.${part}`) ?? part,
+      ].join(' · ');
+    }
     const service = SERVICE_FIELD.exec(field);
     if (service) {
       const part = service[1];
@@ -102,6 +113,11 @@ export class AuditEntryDetails {
     }
     if (field === 'specialization' && typeof value === 'string') {
       return specializationLabel(this.i18n, value);
+    }
+    // The states of a Запис are wording the panel already owns; the log must not be the one screen
+    // that prints them raw.
+    if (field?.startsWith('appointments.') && field.endsWith('.status') && typeof value === 'string') {
+      return this.i18n.optional(`appointments.status.${value}`) ?? value;
     }
     if (field?.endsWith('.category') && SERVICE_FIELD.test(field) && typeof value === 'string') {
       return serviceCategoryLabel(this.i18n, value);
@@ -153,6 +169,9 @@ const HOURS_FIELD = /^hours\.([0-6])(?:\.(\w+))?$/;
  * послуг of a salon, or the Копії of a master.
  */
 const SERVICE_FIELD = /^services\.[^.]+(?:\.(\w+))?$/;
+
+/** `appointments.<appointmentId>.<field>` — one Запис moved by an action of the panel. */
+const APPOINTMENT_FIELD = /^appointments\.([^.]+)\.(\w+)$/;
 
 /** `timeOff.<groupId>` — one Відсутність, filed or removed whole. */
 const TIME_OFF_FIELD = /^timeOff\.[^.]+$/;

@@ -523,6 +523,29 @@ export const UK_TRANSLATIONS = {
   'error.APPOINTMENT_UNCHANGED': 'Це той самий час, на який Запис уже стоїть.',
   'error.SLOT_UNAVAILABLE': 'Цей слот уже зайнятий. Оберіть інший.',
   'error.OUTSIDE_WORKING_HOURS': 'Цей час поза Робочим графіком Майстра.',
+  'appointments.auditField': 'Запис',
+  'appointments.field.status': 'Статус',
+  'appointments.field.startTime': 'Початок',
+  'appointments.field.endTime': 'Кінець',
+  'audit.action.appointment.cancel': 'Скасування Запису',
+  'audit.action.appointment.status.update': 'Зміна статусу Запису',
+  'audit.action.appointment.reschedule': 'Перенесення Запису',
+  'audit.action.appointment.bulk-cancel': 'Масове скасування Записів',
+
+  'upcoming.warning':
+    'Майбутніх Записів: {{count}}. Профіль недоступний — якщо їх не скасувати, Клієнти прийдуть до зачинених дверей.',
+  'upcoming.cancelAll': 'Скасувати всі майбутні Записи',
+  'upcoming.title': 'Масове скасування Записів',
+  'upcoming.message':
+    'Усі майбутні Записи профілю «{{name}}» — зараз їх {{count}} — буде скасовано, слоти звільняться, а кожен Клієнт отримає звичайне сповіщення про скасування. Відмінити цю дію не можна.',
+  'upcoming.confirm': 'Скасувати всі',
+  'upcoming.done': 'Скасовано Записів: {{cancelled}}.',
+  'upcoming.partial':
+    'Скасовано Записів: {{cancelled}}. Лишилось: {{remaining}} — запустіть дію ще раз.',
+  'upcoming.none': 'Майбутніх Записів не залишилось.',
+  'block.upcoming':
+    'Майбутніх Записів: {{count}}. Блокування їх не скасовує — зробити це можна окремою дією після нього.',
+  'block.upcomingCancel': 'Скасувати їх окремою дією',
 } as const;
 
 export type TranslationKey = keyof typeof UK_TRANSLATIONS;

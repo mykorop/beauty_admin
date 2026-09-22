@@ -12,8 +12,10 @@
         [blocked]="!!master.blockedAt"
         [subject]="master.name"
         [busy]="blocking()"
+        [upcomingCount]="upcomingCount()"
         [(open)]="blockDialogOpen"
         (confirmed)="toggleBlock($event)"
+        (cancelUpcoming)="offerUpcomingCancel()"
       />
     }
     @if (master.salon; as salon) {
@@ -33,6 +35,15 @@
         {{ 'master.blockedBanner' | t: { date: blockedAt(), reason: master.blockedReason || '—' } }}
       </p-message>
     }
+    <app-upcoming-appointments
+      cardBanner
+      [port]="upcomingPort"
+      [subject]="master.name"
+      [warn]="master.status !== 'active'"
+      [asked]="blockDialogOpen()"
+      [(count)]="upcomingCount"
+      [(open)]="cancelUpcomingOpen"
+    />
   </app-profile-card>
 } @else if (failure() === 'notFound') {
   <p class="text-slate-600" data-testid="card-not-found">{{ 'master.notFound' | t }}</p>

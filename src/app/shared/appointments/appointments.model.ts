@@ -1,5 +1,11 @@
 import type { Observable } from 'rxjs';
-import type { AppointmentDetails, AppointmentQuery, AppointmentsPage } from '../../core/api/appointments.client';
+import type {
+  AppointmentDetails,
+  AppointmentQuery,
+  AppointmentsPage,
+  BulkCancelResult,
+  UpcomingAppointments,
+} from '../../core/api/appointments.client';
 
 /** One Майстер as the tab's filter names him. */
 export type AppointmentsFilterMaster = { masterId: string; masterName: string };
@@ -19,4 +25,14 @@ export type AppointmentsPort = {
   masters: Observable<AppointmentsFilterMaster[]> | null;
   list(query: AppointmentQuery): Observable<AppointmentsPage>;
   details(appointmentId: string): Observable<AppointmentDetails>;
+};
+
+/**
+ * A profile's **future** Записи, bound to whose they are — the same trick as `AppointmentsPort`,
+ * for the same reason: the warning and the масове скасування read identically for a Салон and for
+ * a Незалежний майстер, and only the two addresses differ.
+ */
+export type UpcomingAppointmentsPort = {
+  count(): Observable<UpcomingAppointments>;
+  cancelAll(reason: string): Observable<BulkCancelResult>;
 };

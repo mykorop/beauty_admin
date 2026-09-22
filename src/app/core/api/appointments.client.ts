@@ -109,6 +109,19 @@ export type AvailableSlotsPage = {
   timezone: string;
 };
 
+/**
+ * «N майбутніх Записів» — the one number the warning on a Видалений or Заблокований card shows, and
+ * the one the Блокування dialog states before it asks for anything.
+ */
+export type UpcomingAppointments = { count: number };
+
+/**
+ * What a масове скасування did. `remaining` is the number that answers «did it finish?»: the Записи
+ * the backend refused plus whatever its per-call cap left behind. The action is idempotent, so a
+ * `remaining` above zero is an invitation to press the button again, not a failure.
+ */
+export type BulkCancelResult = { cancelled: number; failed: number; remaining: number };
+
 /** What the backend is asked for: the window is never optional, and `masterId` narrows a Салон's list. */
 export type AppointmentQuery = {
   from: string;
@@ -179,6 +192,39 @@ export class AppointmentsClient {
     return this.http.patch<AppointmentDetails>(
       adminApiUrl(`/admin/appointments/${encodeURIComponent(appointmentId)}/reschedule`),
       request,
+    );
+  }
+
+  /** How many Записи the Салон still has ahead of it — the card warning and the block dialog. */
+  salonUpcomingCount(salonId: string): Observable<UpcomingAppointments> {
+    return this.http.get<UpcomingAppointments>(
+      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/appointments/upcoming-count`),
+    );
+  }
+
+  /**
+   * Every future Запис of the Салон called off with one reason. Allowed over a Видалений Салон —
+   * that is the profile the exception exists for.
+   */
+  cancelSalonUpcoming(salonId: string, reason: string): Observable<BulkCancelResult> {
+    return this.http.post<BulkCancelResult>(
+      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/appointments/cancel-upcoming`),
+      { reason },
+    );
+  }
+
+  /** The twin of `salonUpcomingCount`, over the Записи a Незалежний майстер took on his own. */
+  masterUpcomingCount(masterId: string): Observable<UpcomingAppointments> {
+    return this.http.get<UpcomingAppointments>(
+      adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/appointments/upcoming-count`),
+    );
+  }
+
+  /** The twin of `cancelSalonUpcoming`. */
+  cancelMasterUpcoming(masterId: string, reason: string): Observable<BulkCancelResult> {
+    return this.http.post<BulkCancelResult>(
+      adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/appointments/cancel-upcoming`),
+      { reason },
     );
   }
 

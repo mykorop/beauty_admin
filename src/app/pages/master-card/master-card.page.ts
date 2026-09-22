@@ -5,10 +5,13 @@ import { Message } from 'primeng/message';
 import { Tag } from 'primeng/tag';
 import { finalize, type Subscription } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
+import { AppointmentsClient } from '../../core/api/appointments.client';
 import { MASTER_STATUS_SEVERITY, MastersClient } from '../../core/api/masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import type { UpcomingAppointmentsPort } from '../../shared/appointments/appointments.model';
+import { UpcomingAppointments } from '../../shared/appointments/upcoming-appointments';
 import { BlockAction } from '../../shared/block-action/block-action';
 import { ProfileCard } from '../../shared/profile-card/profile-card';
 import { MasterCardStore } from './master-card.store';
@@ -24,13 +27,14 @@ import { MASTER_CARD_TABS } from './master-card.tabs';
  */
 @Component({
   selector: 'app-master-card-page',
-  imports: [BlockAction, Message, ProfileCard, Tag, TranslatePipe],
+  imports: [BlockAction, Message, ProfileCard, Tag, TranslatePipe, UpcomingAppointments],
   providers: [MasterCardStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './master-card.page.html',
 })
 export class MasterCardPage {
   private readonly client = inject(MastersClient);
+  private readonly appointments = inject(AppointmentsClient);
   private readonly router = inject(Router);
   private readonly store = inject(MasterCardStore);
   private readonly i18n = inject(I18nService);
@@ -44,6 +48,15 @@ export class MasterCardPage {
   protected readonly failure = signal<'notFound' | 'failed' | null>(null);
   protected readonly blocking = signal(false);
   protected readonly blockDialogOpen = signal(false);
+  /** Filled by `app-upcoming-appointments`; the Блокування dialog states it before it asks. */
+  protected readonly upcomingCount = signal<number | null>(null);
+  protected readonly cancelUpcomingOpen = signal(false);
+
+  /** The Салон twin of this is `SalonCardPage.upcomingPort`, and it works the same way. */
+  protected readonly upcomingPort: UpcomingAppointmentsPort = {
+    count: () => this.appointments.masterUpcomingCount(this.masterId()),
+    cancelAll: (reason) => this.appointments.cancelMasterUpcoming(this.masterId(), reason),
+  };
 
   protected readonly statusSeverity = computed(() => MASTER_STATUS_SEVERITY[this.master()?.status ?? 'active']);
   protected readonly statusLabelKey = computed<TranslationKey>(
@@ -79,6 +92,15 @@ export class MasterCardPage {
     });
   }
 
+  /**
+   * The Блокування dialog offered the масове скасування and the administrator took it. Блокування
+   * itself is left alone: the two decisions each keep their own confirmation and their own reason.
+   */
+  protected offerUpcomingCancel(): void {
+    this.blockDialogOpen.set(false);
+    this.cancelUpcomingOpen.set(true);
+  }
+
   constructor() {
     let subscription: Subscription | undefined;
     // The router reuses this component between two masters, so the id is followed, not read once.
@@ -86,6 +108,9 @@ export class MasterCardPage {
       const masterId = this.masterId();
       this.store.master.set(null);
       this.failure.set(null);
+      // The count belongs to the profile that was showing; carrying it over would flash the last
+      // one's «N майбутніх Записів» over this card until the new read lands.
+      this.upcomingCount.set(null);
       subscription = this.client.get(masterId).subscribe({
         next: (master) => {
           // He is on a Ростер: his card is the one in his Салон, and that address is the real one.

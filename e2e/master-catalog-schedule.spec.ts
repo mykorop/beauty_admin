@@ -124,9 +124,14 @@ const schedule = (url: URL, weeklyHours: unknown[] = MASTER_WEEK): MockResponse 
   });
 };
 
+const upcomingCountRoute = (overrides: Record<string, unknown>): MockRoutes =>
+  // A card that is not active warns about the Записи still ahead of it (§12), and reads the count.
+  overrides['status'] ? { 'GET /admin/masters/m1/appointments/upcoming-count': apiOk({ count: 0 }) } : {};
+
 const catalogRoutes = (items: unknown[], masterOverrides: Record<string, unknown> = {}): MockRoutes => ({
   'GET /admin/me': ME,
   'GET /admin/masters/m1': apiOk(master(masterOverrides)),
+  ...upcomingCountRoute(masterOverrides),
   'GET /admin/dictionaries': DICTIONARIES,
   [`GET ${SERVICES_PATH}`]: apiOk({ items }),
 });
@@ -134,6 +139,7 @@ const catalogRoutes = (items: unknown[], masterOverrides: Record<string, unknown
 const scheduleRoutes = (extra: MockRoutes = {}, masterOverrides: Record<string, unknown> = {}): MockRoutes => ({
   'GET /admin/me': ME,
   'GET /admin/masters/m1': apiOk(master(masterOverrides)),
+  ...upcomingCountRoute(masterOverrides),
   [SCHEDULE]: (url: URL) => schedule(url),
   ...extra,
 });

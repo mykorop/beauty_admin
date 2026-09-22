@@ -62,6 +62,23 @@ const UNBLOCK_COPY: BlockCopy = {
       (confirmed)="confirmed.emit($event)"
     >
       {{ messageKey() | t: { name: subject() } }}
+      @if (upcomingStated()) {
+        <span class="mt-2 block font-medium text-amber-700" data-testid="block-upcoming">
+          {{ 'block.upcoming' | t: { count: upcomingCount() } }}
+        </span>
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="danger"
+          class="mt-2"
+          data-testid="block-upcoming-cancel"
+          [outlined]="true"
+          [label]="'block.upcomingCancel' | t"
+          [disabled]="busy()"
+          (click)="cancelUpcoming.emit()"
+        ></button>
+      }
     </app-reason-dialog>
   `,
 })
@@ -73,11 +90,34 @@ export class BlockAction {
   /** The card's call is in flight: nothing can be confirmed twice or dismissed from under it. */
   readonly busy = input(false);
 
+  /**
+   * How many Записи the profile still has ahead of it, or `null` while it is unknown.
+   *
+   * Блокування itself cancels nothing — that is the rule, not an omission — so the dialog says so
+   * with the number in hand, and the масове скасування stays a separate, deliberate press
+   * afterwards. Stated only when there is something to state, and only when blocking: lifting a
+   * Блокування puts those Записи back in a profile that can be reached again.
+   */
+  readonly upcomingCount = input<number | null>(null);
+
   /** The trimmed, non-empty reason. The intent is `blocked()` at the moment it was confirmed. */
   readonly confirmed = output<string>();
 
+  /**
+   * The administrator took the offer: leave Блокування alone and go to the масове скасування.
+   *
+   * Deliberately an offer and not a checkbox on this dialog. Блокування cancelling nothing is a
+   * rule of the domain, and the two decisions are owed separate confirmations with separate
+   * reasons — so this one closes this dialog and opens that one rather than bundling them.
+   */
+  readonly cancelUpcoming = output<void>();
+
   /** Two-way: the card closes it once its own call has succeeded, and never before. */
   readonly open = model(false);
+
+  protected readonly upcomingStated = computed(
+    () => !this.blocked() && (this.upcomingCount() ?? 0) > 0,
+  );
 
   private readonly copy = computed(() => (this.blocked() ? UNBLOCK_COPY : BLOCK_COPY));
 

@@ -146,6 +146,8 @@ test.describe('salon card', () => {
       'GET /admin/salons/s4': apiOk(
         salon({ salonId: 's4', name: 'Closed Doors', status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }),
       ),
+      // Not active, so the card asks how many Записи are still ahead of it (§12).
+      'GET /admin/salons/s4/appointments/upcoming-count': apiOk({ count: 0 }),
       'GET /admin/salons/s4/hours': HOURS,
     });
 
@@ -164,6 +166,7 @@ test.describe('salon card', () => {
   test('shows why a Blocked salon was blocked', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }),
       'GET /admin/salons/s1': apiOk(
         salon({ status: 'blocked', blockedAt: '2026-07-01T08:00:00.000Z', blockedReason: 'Fraud reports' }),
       ),

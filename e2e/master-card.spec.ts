@@ -179,6 +179,8 @@ test.describe('independent master card', () => {
   test('shows why a Заблокований master is blocked, and still lets him be edited', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
+      // Not active, so the card asks how many Записи are still ahead of it (§12).
+      'GET /admin/masters/m1/appointments/upcoming-count': apiOk({ count: 0 }),
       'GET /admin/masters/m1': apiOk(
         master({ status: 'blocked', blockedAt: '2026-05-01T09:00:00.000Z', blockedReason: 'Спам у відгуках' }),
       ),
@@ -194,6 +196,7 @@ test.describe('independent master card', () => {
   test('offers no editing on a Видалений master', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
+      'GET /admin/masters/m1/appointments/upcoming-count': apiOk({ count: 0 }),
       'GET /admin/masters/m1': apiOk(master({ status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' })),
     });
 

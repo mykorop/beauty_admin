@@ -184,6 +184,8 @@ test.describe('salon profile editing', () => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon({ status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' })),
+      // Not active, so the card asks how many Записи are still ahead of it (§12).
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }),
     });
     await signIn(page, ADMIN, '/salons/s1/profile');
 

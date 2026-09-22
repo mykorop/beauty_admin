@@ -528,4 +528,27 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'error.APPOINTMENT_UNCHANGED': 'Это то же время, на которое Запись уже стоит.',
   'error.SLOT_UNAVAILABLE': 'Этот слот уже занят. Выберите другой.',
   'error.OUTSIDE_WORKING_HOURS': 'Это время вне Рабочего графика Мастера.',
+  'appointments.auditField': 'Запись',
+  'appointments.field.status': 'Статус',
+  'appointments.field.startTime': 'Начало',
+  'appointments.field.endTime': 'Окончание',
+  'audit.action.appointment.cancel': 'Отмена Записи',
+  'audit.action.appointment.status.update': 'Изменение статуса Записи',
+  'audit.action.appointment.reschedule': 'Перенос Записи',
+  'audit.action.appointment.bulk-cancel': 'Массовая отмена Записей',
+
+  'upcoming.warning':
+    'Будущих Записей: {{count}}. Профиль недоступен — если их не отменить, Клиенты придут к закрытым дверям.',
+  'upcoming.cancelAll': 'Отменить все будущие Записи',
+  'upcoming.title': 'Массовая отмена Записей',
+  'upcoming.message':
+    'Все будущие Записи профиля «{{name}}» — сейчас их {{count}} — будут отменены, слоты освободятся, а каждый Клиент получит обычное уведомление об отмене. Отменить это действие нельзя.',
+  'upcoming.confirm': 'Отменить все',
+  'upcoming.done': 'Отменено Записей: {{cancelled}}.',
+  'upcoming.partial':
+    'Отменено Записей: {{cancelled}}. Осталось: {{remaining}} — запустите действие ещё раз.',
+  'upcoming.none': 'Будущих Записей не осталось.',
+  'block.upcoming':
+    'Будущих Записей: {{count}}. Блокировка их не отменяет — сделать это можно отдельным действием после неё.',
+  'block.upcomingCancel': 'Отменить их отдельным действием',
 };

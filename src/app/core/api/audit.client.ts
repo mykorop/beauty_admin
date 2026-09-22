@@ -10,6 +10,8 @@ export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 export const AUDIT_ACTIONS = [
   'salon.profile.update',
   'salon.hours.update',
+  'salon.block',
+  'salon.unblock',
   'salon.master.update',
   'salon.master.remove',
   'salon.master.hours.update',
@@ -23,6 +25,8 @@ export const AUDIT_ACTIONS = [
   'salon.master.service.update',
   'salon.master.service.remove',
   'master.profile.update',
+  'master.block',
+  'master.unblock',
   'master.service.create',
   'master.service.update',
   'master.service.deactivate',
@@ -30,6 +34,13 @@ export const AUDIT_ACTIONS = [
   'master.schedule-pattern.update',
   'master.time-off.create',
   'master.time-off.remove',
+  // The Записи actions. Unlike every value above, their prefix is not the target type: one Запис
+  // belongs to a Салон or to a Незалежний майстер and the decision reads the same either way, so
+  // the filter offers one value per decision and `targetType` carries whose Запис it was.
+  'appointment.cancel',
+  'appointment.status.update',
+  'appointment.reschedule',
+  'appointment.bulk-cancel',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

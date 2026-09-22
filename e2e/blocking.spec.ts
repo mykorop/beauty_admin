@@ -80,6 +80,8 @@ test.describe('блокування Салону', () => {
     const mock = await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),
+      // The Блокування dialog states how many Записи the profile still has ahead of it (§12).
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }),
       'POST /admin/salons/s1/block': apiOk(salon({ status: 'blocked', ...BLOCKED })),
     });
     await signIn(page, ADMIN, '/salons/s1/profile');
@@ -110,6 +112,7 @@ test.describe('блокування Салону', () => {
     const mock = await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon({ status: 'blocked', ...BLOCKED })),
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }),
       'POST /admin/salons/s1/unblock': apiOk(salon()),
     });
     await signIn(page, ADMIN, '/salons/s1/profile');
@@ -133,6 +136,8 @@ test.describe('блокування Салону', () => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),
+      // The Блокування dialog states how many Записи the profile still has ahead of it (§12).
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }),
       'POST /admin/salons/s1/block': apiError(409, 'PROFILE_ALREADY_BLOCKED'),
     });
     await signIn(page, ADMIN, '/salons/s1/profile');
@@ -151,6 +156,7 @@ test.describe('блокування Салону', () => {
     const mock = await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }),
     });
     await signIn(page, ADMIN, '/salons/s1/profile');
 
@@ -168,6 +174,7 @@ test.describe('блокування Салону', () => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon({ status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' })),
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }),
     });
     await signIn(page, ADMIN, '/salons/s1/profile');
 
@@ -181,6 +188,7 @@ test.describe('блокування Незалежного майстра', () =
     const mock = await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/masters/m1': apiOk(master()),
+      'GET /admin/masters/m1/appointments/upcoming-count': apiOk({ count: 0 }),
       'POST /admin/masters/m1/block': apiOk(master({ status: 'blocked', ...BLOCKED })),
       'POST /admin/masters/m1/unblock': apiOk(master()),
     });
@@ -210,6 +218,7 @@ test.describe('Журнал дій', () => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon({ status: 'blocked', ...BLOCKED })),
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }),
       'GET /admin/audit': apiOk({
         items: [
           {

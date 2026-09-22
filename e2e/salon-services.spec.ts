@@ -62,6 +62,8 @@ const DICTIONARIES = apiOk({
 const base = (items: unknown[], salonOverrides: Record<string, unknown> = {}) => ({
   'GET /admin/me': ME,
   'GET /admin/salons/s1': apiOk(salon(salonOverrides)),
+  // A card that is not active warns about the Записи still ahead of it (§12), and reads the count.
+  ...(salonOverrides['status'] ? { 'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }) } : {}),
   'GET /admin/dictionaries': DICTIONARIES,
   [`GET ${SERVICES_PATH}`]: apiOk({ items }),
 });

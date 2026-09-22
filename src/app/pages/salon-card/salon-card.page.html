@@ -7,8 +7,10 @@
         [blocked]="!!salon.blockedAt"
         [subject]="salon.name"
         [busy]="blocking()"
+        [upcomingCount]="upcomingCount()"
         [(open)]="blockDialogOpen"
         (confirmed)="toggleBlock($event)"
+        (cancelUpcoming)="offerUpcomingCancel()"
       />
     }
     @if (salon.status === 'deleted') {
@@ -25,6 +27,15 @@
         {{ 'salon.blockedBanner' | t: { date: blockedAt(), reason: salon.blockedReason || '—' } }}
       </p-message>
     }
+    <app-upcoming-appointments
+      cardBanner
+      [port]="upcomingPort"
+      [subject]="salon.name"
+      [warn]="salon.status !== 'active'"
+      [asked]="blockDialogOpen()"
+      [(count)]="upcomingCount"
+      [(open)]="cancelUpcomingOpen"
+    />
   </app-profile-card>
 } @else if (failure() === 'notFound') {
   <p class="text-slate-600" data-testid="card-not-found">{{ 'salon.notFound' | t }}</p>
