@@ -589,6 +589,40 @@ export const UK_TRANSLATIONS = {
   'error.REVIEW_ALREADY_HIDDEN': 'Відгук уже приховано. Оновіть сторінку.',
   'error.REVIEW_NOT_HIDDEN': 'Відгук не приховано. Оновіть сторінку.',
   'error.REVIEW_MODERATION_RETRY_LATER': 'Рейтинг змінювався під час дії, тож нічого не записано. Спробуйте ще раз.',
+
+  'media.irreversible':
+    'Видалення тут незворотне: файл знищується в Cloudinary, і повернути його неможливо. Завантажити щось замість власника адмінка не може.',
+  'media.readonly': 'Додати фото чи сертифікат може лише власник профілю — ендпоінта завантаження не існує.',
+  'media.deletedProfile': 'Профіль видалено: вміст лишається видимим, але змінювати його вже не можна.',
+  'media.avatar': 'Аватар',
+  'media.gallery': 'Галерея фото',
+  'media.gallery.empty': 'Фотографій немає.',
+  'media.certificates': 'Сертифікати',
+  'media.certificates.empty': 'Сертифікатів немає.',
+  'media.certificate.noScan': 'Без скана',
+  'media.certificate.issued': 'Видано {{issued}}',
+  'media.certificate.period': 'Видано {{issued}} · дійсний до {{expires}}',
+  'media.certificate.credentialId': 'Номер: {{value}}',
+  'media.certificate.verification': 'Посилання на перевірку',
+  'media.delete': 'Видалити',
+  'media.photo.title': 'Видалити фото',
+  'media.photo.message':
+    'Фото зникне з галереї профілю, а файл буде знищено в Cloudinary назавжди. Власник отримає сповіщення з причиною.',
+  'media.avatar.title': 'Видалити аватар',
+  'media.avatar.message':
+    'Аватар зникне з профілю, а файл буде знищено в Cloudinary назавжди. Власник отримає сповіщення з причиною.',
+  'media.certificate.title': 'Видалити сертифікат',
+  'media.certificate.message':
+    'Сертифікат «{{name}}» буде видалено разом зі сканом, а файл знищено в Cloudinary назавжди. Власник отримає сповіщення з причиною.',
+  'media.auditField': 'Вміст профілю',
+  'media.field.image': 'Фото',
+  'media.field.avatar': 'Аватар',
+  'media.field.certificate': 'Сертифікат',
+  'audit.action.salon.image.remove': 'Видалення фото Салону',
+  'audit.action.salon.certificate.remove': 'Видалення сертифіката Салону',
+  'audit.action.master.image.remove': 'Видалення фото Майстра',
+  'audit.action.master.avatar.remove': 'Видалення аватара Майстра',
+  'audit.action.master.certificate.remove': 'Видалення сертифіката Майстра',
 } as const;
 
 export type TranslationKey = keyof typeof UK_TRANSLATIONS;

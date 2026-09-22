@@ -93,8 +93,12 @@ test.describe('salon card', () => {
     await expect(field(page, 'createdAt')).toContainText('00:30');
   });
 
-  test('lists every tab under its own address; unfinished ones are stubs', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/salons/s1': apiOk(salon()) });
+  test('lists every tab, each under its own address', async ({ page, mockBackend }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon()),
+      'GET /admin/salons/s1/media': apiOk({ avatarUrl: null, images: [], certificates: [] }),
+    });
     await signIn(page, ADMIN, '/salons/s1');
 
     await expect(page.getByTestId('card-tab')).toHaveText([
@@ -112,7 +116,7 @@ test.describe('salon card', () => {
     await page.getByTestId('card-tab').filter({ hasText: 'Фото й сертифікати' }).click();
 
     await expect(page).toHaveURL(/\/salons\/s1\/media$/);
-    await expect(page.getByTestId('card-tab-stub')).toBeVisible();
+    await expect(page.getByTestId('media-gallery-empty')).toBeVisible();
     // The card around the tab stays.
     await expect(page.getByTestId('card-title')).toHaveText('Beauty Lab');
   });

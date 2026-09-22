@@ -103,10 +103,11 @@ test.describe('independent master card', () => {
       'GET /admin/me': ME,
       'GET /admin/masters/m1': apiOk(master()),
       'GET /admin/masters/nope': apiError(404, 'NOT_FOUND'),
+      'GET /admin/masters/m1/media': apiOk({ avatarUrl: null, images: [], certificates: [] }),
     });
 
     await signIn(page, ADMIN, '/independent-masters/m1/media');
-    await expect(page.getByTestId('card-tab-stub')).toBeVisible();
+    await expect(page.getByTestId('media-gallery-empty')).toBeVisible();
 
     await page.goto('/independent-masters/nope');
     await expect(page.getByTestId('card-not-found')).toBeVisible();

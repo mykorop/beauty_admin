@@ -1,0 +1,166 @@
+@if (media(); as media) {
+  @if (writable()) {
+    <p class="mb-4 max-w-3xl text-sm text-amber-700" data-testid="media-irreversible">
+      {{ 'media.irreversible' | t }}
+    </p>
+  } @else {
+    <p class="mb-4 max-w-3xl text-sm text-slate-600" data-testid="media-readonly-profile">
+      {{ 'media.deletedProfile' | t }}
+    </p>
+  }
+
+  @if (media.avatarUrl; as avatarUrl) {
+    <section class="mb-6" data-testid="media-avatar">
+      <h2 class="mb-2 text-sm font-medium text-slate-700">{{ 'media.avatar' | t }}</h2>
+      <div class="flex items-start gap-3">
+        <a [href]="avatarUrl" target="_blank" rel="noopener">
+          <img
+            class="h-24 w-24 rounded-full border border-slate-200 object-cover"
+            data-testid="media-avatar-image"
+            [src]="avatarUrl"
+            [alt]="'media.avatar' | t"
+          />
+        </a>
+        @if (writable()) {
+          <button
+            pButton
+            type="button"
+            size="small"
+            severity="danger"
+            data-testid="media-avatar-delete"
+            [outlined]="true"
+            [label]="'media.delete' | t"
+            [disabled]="busy()"
+            (click)="askAvatar(avatarUrl)"
+          ></button>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="mb-6">
+    <h2 class="mb-2 text-sm font-medium text-slate-700">{{ 'media.gallery' | t }}</h2>
+    @if (media.images.length > 0) {
+      <ul class="flex flex-wrap gap-4" data-testid="media-gallery">
+        @for (imageUrl of media.images; track imageUrl) {
+          <li class="w-44" data-testid="media-photo">
+            <a [href]="imageUrl" target="_blank" rel="noopener">
+              <img
+                class="h-32 w-44 rounded-lg border border-slate-200 object-cover"
+                data-testid="media-photo-image"
+                [src]="imageUrl"
+                [alt]="'media.gallery' | t"
+              />
+            </a>
+            @if (writable()) {
+              <button
+                pButton
+                type="button"
+                size="small"
+                severity="danger"
+                class="mt-2 w-full"
+                data-testid="media-photo-delete"
+                [outlined]="true"
+                [label]="'media.delete' | t"
+                [disabled]="busy()"
+                (click)="askPhoto(imageUrl)"
+              ></button>
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="text-slate-600" data-testid="media-gallery-empty">{{ 'media.gallery.empty' | t }}</p>
+    }
+  </section>
+
+  <section>
+    <h2 class="mb-2 text-sm font-medium text-slate-700">{{ 'media.certificates' | t }}</h2>
+    @if (certificates(); as certificates) {
+      @if (certificates.length > 0) {
+        <ul class="flex max-w-5xl flex-col gap-3" data-testid="media-certificates">
+          @for (row of certificates; track row.certificate.certificateId) {
+            <li
+              class="flex items-start gap-4 rounded-lg border border-slate-200 bg-white p-3"
+              data-testid="media-certificate"
+            >
+              @if (row.certificate.fileUrl) {
+                <a [href]="row.certificate.fileUrl" target="_blank" rel="noopener">
+                  <img
+                    class="h-24 w-24 rounded border border-slate-200 object-cover"
+                    data-testid="media-certificate-scan"
+                    [src]="row.certificate.fileUrl"
+                    [alt]="row.certificate.title"
+                  />
+                </a>
+              } @else {
+                <span
+                  class="flex h-24 w-24 items-center justify-center rounded border border-dashed border-slate-300 px-2 text-center text-xs text-slate-500"
+                  data-testid="media-certificate-noscan"
+                  >{{ 'media.certificate.noScan' | t }}</span
+                >
+              }
+              <div class="min-w-0 flex-1 text-sm">
+                <p class="font-medium" data-testid="media-certificate-title">{{ row.certificate.title || '—' }}</p>
+                <p class="text-slate-600" data-testid="media-certificate-issuer">{{ row.certificate.issuer || '—' }}</p>
+                <p class="text-xs text-slate-500" data-testid="media-certificate-dates">{{ row.dates }}</p>
+                @if (row.certificate.credentialId) {
+                  <p class="text-xs text-slate-500">
+                    {{ 'media.certificate.credentialId' | t: { value: row.certificate.credentialId } }}
+                  </p>
+                }
+                @if (row.certificate.verificationUrl; as verificationUrl) {
+                  <a
+                    class="text-xs font-medium hover:underline"
+                    data-testid="media-certificate-verification"
+                    [href]="verificationUrl"
+                    target="_blank"
+                    rel="noopener"
+                    >{{ 'media.certificate.verification' | t }}</a
+                  >
+                }
+                @if (row.certificate.notes; as notes) {
+                  <p class="mt-1 text-xs whitespace-pre-line text-slate-600">{{ notes }}</p>
+                }
+              </div>
+              @if (writable()) {
+                <button
+                  pButton
+                  type="button"
+                  size="small"
+                  severity="danger"
+                  data-testid="media-certificate-delete"
+                  [outlined]="true"
+                  [label]="'media.delete' | t"
+                  [disabled]="busy()"
+                  (click)="askCertificate(row.certificate)"
+                ></button>
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="text-slate-600" data-testid="media-certificates-empty">
+          {{ 'media.certificates.empty' | t }}
+        </p>
+      }
+    }
+  </section>
+
+  <p class="mt-4 text-xs text-slate-500" data-testid="media-readonly">{{ 'media.readonly' | t }}</p>
+} @else if (failed()) {
+  <p class="text-slate-600" data-testid="media-failed">{{ 'card.failed' | t }}</p>
+}
+
+@if (asked(); as asked) {
+  <app-reason-dialog
+    [titleKey]="asked.titleKey"
+    [confirmLabelKey]="'media.delete'"
+    [busy]="busy()"
+    [visible]="true"
+    (visibleChange)="closeUnless($event)"
+    (confirmed)="apply(asked, $event)"
+  >
+    {{ asked.messageKey | t: { name: asked.name } }}
+  </app-reason-dialog>
+}

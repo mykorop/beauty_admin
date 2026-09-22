@@ -45,6 +45,13 @@ export const AUDIT_ACTIONS = [
   // a Салон or to a Незалежний майстер, and `targetType` carries which.
   'review.hide',
   'review.unhide',
+  // Content destroyed from a profile. Spelled by the target, unlike the four above: a photo of a
+  // Салон and a photo of a Майстер are read from different cards.
+  'salon.image.remove',
+  'salon.certificate.remove',
+  'master.image.remove',
+  'master.avatar.remove',
+  'master.certificate.remove',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

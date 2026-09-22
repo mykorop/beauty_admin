@@ -596,4 +596,38 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'error.REVIEW_ALREADY_HIDDEN': 'Recenzia este deja ascunsă. Reîmprospătați pagina.',
   'error.REVIEW_NOT_HIDDEN': 'Recenzia nu este ascunsă. Reîmprospătați pagina.',
   'error.REVIEW_MODERATION_RETRY_LATER': 'Ratingul s-a schimbat în timpul acțiunii, așa că nu s-a scris nimic. Încercați din nou.',
+
+  'media.irreversible':
+    'Ștergerea de aici este ireversibilă: fișierul este distrus în Cloudinary și nu poate fi recuperat. Panoul nu poate încărca nimic în locul proprietarului.',
+  'media.readonly': 'Doar proprietarul profilului poate adăuga o fotografie sau un certificat — nu există un endpoint de încărcare.',
+  'media.deletedProfile': 'Profilul a fost șters: conținutul rămâne vizibil, dar nu mai poate fi modificat.',
+  'media.avatar': 'Avatar',
+  'media.gallery': 'Galerie foto',
+  'media.gallery.empty': 'Nu există fotografii.',
+  'media.certificates': 'Certificate',
+  'media.certificates.empty': 'Nu există certificate.',
+  'media.certificate.noScan': 'Fără scan',
+  'media.certificate.issued': 'Emis la {{issued}}',
+  'media.certificate.period': 'Emis la {{issued}} · valabil până la {{expires}}',
+  'media.certificate.credentialId': 'Număr: {{value}}',
+  'media.certificate.verification': 'Link de verificare',
+  'media.delete': 'Șterge',
+  'media.photo.title': 'Șterge fotografia',
+  'media.photo.message':
+    'Fotografia va dispărea din galeria profilului, iar fișierul va fi distrus definitiv în Cloudinary. Proprietarul va primi o notificare cu motivul.',
+  'media.avatar.title': 'Șterge avatarul',
+  'media.avatar.message':
+    'Avatarul va dispărea din profil, iar fișierul va fi distrus definitiv în Cloudinary. Proprietarul va primi o notificare cu motivul.',
+  'media.certificate.title': 'Șterge certificatul',
+  'media.certificate.message':
+    'Certificatul „{{name}}” va fi șters împreună cu scanul, iar fișierul va fi distrus definitiv în Cloudinary. Proprietarul va primi o notificare cu motivul.',
+  'media.auditField': 'Conținutul profilului',
+  'media.field.image': 'Fotografie',
+  'media.field.avatar': 'Avatar',
+  'media.field.certificate': 'Certificat',
+  'audit.action.salon.image.remove': 'Ștergerea unei fotografii a salonului',
+  'audit.action.salon.certificate.remove': 'Ștergerea unui certificat al salonului',
+  'audit.action.master.image.remove': 'Ștergerea unei fotografii a maestrului',
+  'audit.action.master.avatar.remove': 'Ștergerea avatarului maestrului',
+  'audit.action.master.certificate.remove': 'Ștergerea unui certificat al maestrului',
 };

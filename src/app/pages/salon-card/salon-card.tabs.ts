@@ -40,6 +40,10 @@ const IMPLEMENTED: Routes = [
     loadComponent: () => import('./salon-reviews.tab').then((m) => m.SalonReviewsTab),
   },
   {
+    path: 'media',
+    loadComponent: () => import('./salon-media.tab').then((m) => m.SalonMediaTab),
+  },
+  {
     path: 'invites',
     loadComponent: () => import('./salon-invites.tab').then((m) => m.SalonInvitesTab),
   },

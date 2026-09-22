@@ -594,4 +594,38 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'error.REVIEW_ALREADY_HIDDEN': 'Отзыв уже скрыт. Обновите страницу.',
   'error.REVIEW_NOT_HIDDEN': 'Отзыв не скрыт. Обновите страницу.',
   'error.REVIEW_MODERATION_RETRY_LATER': 'Рейтинг менялся во время действия, поэтому ничего не записано. Попробуйте ещё раз.',
+
+  'media.irreversible':
+    'Удаление здесь необратимо: файл уничтожается в Cloudinary, и вернуть его невозможно. Загрузить что-либо вместо владельца админка не может.',
+  'media.readonly': 'Добавить фото или сертификат может только владелец профиля — эндпоинта загрузки не существует.',
+  'media.deletedProfile': 'Профиль удалён: содержимое остаётся видимым, но изменять его уже нельзя.',
+  'media.avatar': 'Аватар',
+  'media.gallery': 'Галерея фото',
+  'media.gallery.empty': 'Фотографий нет.',
+  'media.certificates': 'Сертификаты',
+  'media.certificates.empty': 'Сертификатов нет.',
+  'media.certificate.noScan': 'Без скана',
+  'media.certificate.issued': 'Выдан {{issued}}',
+  'media.certificate.period': 'Выдан {{issued}} · действителен до {{expires}}',
+  'media.certificate.credentialId': 'Номер: {{value}}',
+  'media.certificate.verification': 'Ссылка на проверку',
+  'media.delete': 'Удалить',
+  'media.photo.title': 'Удалить фото',
+  'media.photo.message':
+    'Фото исчезнет из галереи профиля, а файл будет уничтожен в Cloudinary навсегда. Владелец получит уведомление с причиной.',
+  'media.avatar.title': 'Удалить аватар',
+  'media.avatar.message':
+    'Аватар исчезнет из профиля, а файл будет уничтожен в Cloudinary навсегда. Владелец получит уведомление с причиной.',
+  'media.certificate.title': 'Удалить сертификат',
+  'media.certificate.message':
+    'Сертификат «{{name}}» будет удалён вместе со сканом, а файл уничтожен в Cloudinary навсегда. Владелец получит уведомление с причиной.',
+  'media.auditField': 'Содержимое профиля',
+  'media.field.image': 'Фото',
+  'media.field.avatar': 'Аватар',
+  'media.field.certificate': 'Сертификат',
+  'audit.action.salon.image.remove': 'Удаление фото Салона',
+  'audit.action.salon.certificate.remove': 'Удаление сертификата Салона',
+  'audit.action.master.image.remove': 'Удаление фото Мастера',
+  'audit.action.master.avatar.remove': 'Удаление аватара Мастера',
+  'audit.action.master.certificate.remove': 'Удаление сертификата Мастера',
 };

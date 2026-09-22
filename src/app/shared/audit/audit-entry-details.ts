@@ -93,6 +93,15 @@ export class AuditEntryDetails {
         this.i18n.optional(`reviews.field.${part}`) ?? part,
       ].join(' · ');
     }
+    // `media.<kind>` — an asset the panel destroyed. The value beside it is the URL the file used
+    // to live at, which is the only record of it left.
+    const media = MEDIA_FIELD.exec(field);
+    if (media) {
+      return [
+        this.i18n.t('media.auditField'),
+        this.i18n.optional(`media.field.${media[1]}`) ?? media[1],
+      ].join(' · ');
+    }
     const service = SERVICE_FIELD.exec(field);
     if (service) {
       const part = service[1];
@@ -182,6 +191,9 @@ const SERVICE_FIELD = /^services\.[^.]+(?:\.(\w+))?$/;
 
 /** `appointments.<appointmentId>.<field>` — one Запис moved by an action of the panel. */
 const APPOINTMENT_FIELD = /^appointments\.([^.]+)\.(\w+)$/;
+
+/** `media.<image|avatar|certificate>` — one asset the panel destroyed. */
+const MEDIA_FIELD = /^media\.(\w+)$/;
 
 /** `reviews.<reviewId>.<field>` — one відгук hidden or returned by the panel. */
 const REVIEW_FIELD = /^reviews\.([^.]+)\.(\w+)$/;
