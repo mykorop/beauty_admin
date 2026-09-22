@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { Message } from 'primeng/message';
 import { Tag } from 'primeng/tag';
-import type { Subscription } from 'rxjs';
+import { finalize, type Subscription } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
 import { MASTER_STATUS_SEVERITY, MastersClient } from '../../core/api/masters.client';
+import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { BlockAction } from '../../shared/block-action/block-action';
 import { ProfileCard } from '../../shared/profile-card/profile-card';
 import { MasterCardStore } from './master-card.store';
 import { MASTER_CARD_TABS } from './master-card.tabs';
@@ -16,11 +19,12 @@ import { MASTER_CARD_TABS } from './master-card.tabs';
  * Видалений master opens like any other, under a banner that says it is read-only.
  *
  * A Майстер салону reached by this address is not shown here at all — his card is the one inside
- * his Ростер, and this page sends the reader straight there.
+ * his Ростер, and this page sends the reader straight there; that is also why Блокування is offered
+ * here — only a Незалежний майстер is his own listing, and only his own listing can leave search.
  */
 @Component({
   selector: 'app-master-card-page',
-  imports: [Message, ProfileCard, Tag, TranslatePipe],
+  imports: [BlockAction, Message, ProfileCard, Tag, TranslatePipe],
   providers: [MasterCardStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './master-card.page.html',
@@ -29,6 +33,8 @@ export class MasterCardPage {
   private readonly client = inject(MastersClient);
   private readonly router = inject(Router);
   private readonly store = inject(MasterCardStore);
+  private readonly i18n = inject(I18nService);
+  private readonly messages = inject(MessageService);
 
   /** Bound from the route by `withComponentInputBinding()`. */
   readonly masterId = input.required<string>();
@@ -36,6 +42,8 @@ export class MasterCardPage {
   protected readonly tabs = MASTER_CARD_TABS;
   protected readonly master = this.store.master.asReadonly();
   protected readonly failure = signal<'notFound' | 'failed' | null>(null);
+  protected readonly blocking = signal(false);
+  protected readonly blockDialogOpen = signal(false);
 
   protected readonly statusSeverity = computed(() => MASTER_STATUS_SEVERITY[this.master()?.status ?? 'active']);
   protected readonly statusLabelKey = computed<TranslationKey>(
@@ -44,6 +52,32 @@ export class MasterCardPage {
   protected readonly deletedAt = computed(() => this.store.venueDate(this.master()?.deletedAt));
   protected readonly blockedAt = computed(() => this.store.venueDate(this.master()?.blockedAt));
   protected readonly leftAt = computed(() => this.store.venueDay(this.master()?.salon?.leftAt));
+
+  /** The Салон twin of this is `SalonCardPage.toggleBlock`, and it works the same way. */
+  protected toggleBlock(reason: string): void {
+    const master = this.master();
+    if (!master || this.blocking()) {
+      return;
+    }
+    const blocked = !!master.blockedAt;
+    this.blocking.set(true);
+    const request = blocked
+      ? this.client.unblock(master.masterId, reason)
+      : this.client.block(master.masterId, reason);
+    request.pipe(finalize(() => this.blocking.set(false))).subscribe({
+      next: (updated) => {
+        this.store.master.set(updated);
+        this.blockDialogOpen.set(false);
+        this.messages.add({
+          severity: 'success',
+          summary: this.i18n.t(blocked ? 'unblock.done' : 'block.done'),
+          life: 4000,
+        });
+      },
+      // Already worded as a toast; the dialog stays open with the reason as typed.
+      error: () => undefined,
+    });
+  }
 
   constructor() {
     let subscription: Subscription | undefined;

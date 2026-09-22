@@ -9,8 +9,9 @@ export type ProfileCardTab = { path: string; labelKey: TranslationKey };
 /**
  * The frame of a profile card: a way back, the title, the tab strip and the outlet the chosen tab
  * renders into. It knows nothing about whose profile it is — the Салон and the Незалежний майстер
- * pages hand it their own tabs and project their state (`cardStatus`), the card they sit inside
- * (`cardContext`) and warnings (`cardBanner`).
+ * pages hand it their own tabs and project their state (`cardStatus`), the actions that act on the
+ * profile as a whole (`cardActions`), the card they sit inside (`cardContext`) and warnings
+ * (`cardBanner`).
  */
 @Component({
   selector: 'app-profile-card',
@@ -28,6 +29,9 @@ export type ProfileCardTab = { path: string; labelKey: TranslationKey };
     <div class="mb-4 flex flex-wrap items-center gap-3">
       <h1 class="text-2xl font-semibold" data-testid="card-title">{{ title() || '—' }}</h1>
       <ng-content select="[cardStatus]" />
+      <div class="ml-auto flex items-center gap-2">
+        <ng-content select="[cardActions]" />
+      </div>
     </div>
     <ng-content select="[cardContext]" />
     <ng-content select="[cardBanner]" />

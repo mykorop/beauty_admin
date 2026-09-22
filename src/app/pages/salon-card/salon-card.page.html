@@ -1,6 +1,16 @@
 @if (salon(); as salon) {
   <app-profile-card [title]="salon.name" [tabs]="tabs" backLink="/salons" backLabelKey="salon.backToList">
     <p-tag cardStatus data-testid="card-status" [severity]="statusSeverity()" [value]="statusLabelKey() | t" />
+    @if (salon.status !== 'deleted') {
+      <app-block-action
+        cardActions
+        [blocked]="!!salon.blockedAt"
+        [subject]="salon.name"
+        [busy]="blocking()"
+        [(open)]="blockDialogOpen"
+        (confirmed)="toggleBlock($event)"
+      />
+    }
     @if (salon.status === 'deleted') {
       <p-message cardBanner class="mb-4 block" severity="error" icon="pi pi-trash" data-testid="card-deleted-banner">
         {{

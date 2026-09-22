@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { MessageService } from 'primeng/api';
 import { Message } from 'primeng/message';
 import { Tag } from 'primeng/tag';
-import type { Subscription } from 'rxjs';
+import { finalize, type Subscription } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
 import { SALON_STATUS_SEVERITY, SalonsClient } from '../../core/api/salons.client';
+import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { BlockAction } from '../../shared/block-action/block-action';
 import { ProfileCard } from '../../shared/profile-card/profile-card';
 import { SalonCardStore } from './salon-card.store';
 import { SALON_CARD_TABS } from './salon-card.tabs';
@@ -13,10 +16,13 @@ import { SALON_CARD_TABS } from './salon-card.tabs';
 /**
  * The card of one Салон: loads the profile once and frames the tabs with it. A Deleted salon opens
  * like any other, under a banner that says it is read-only.
+ *
+ * Блокування is offered here rather than on a tab — it is about the whole profile, and the banner
+ * that explains the state sits right under the button.
  */
 @Component({
   selector: 'app-salon-card-page',
-  imports: [Message, ProfileCard, Tag, TranslatePipe],
+  imports: [BlockAction, Message, ProfileCard, Tag, TranslatePipe],
   providers: [SalonCardStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './salon-card.page.html',
@@ -24,6 +30,8 @@ import { SALON_CARD_TABS } from './salon-card.tabs';
 export class SalonCardPage {
   private readonly client = inject(SalonsClient);
   private readonly store = inject(SalonCardStore);
+  private readonly i18n = inject(I18nService);
+  private readonly messages = inject(MessageService);
 
   /** Bound from the route by `withComponentInputBinding()`. */
   readonly salonId = input.required<string>();
@@ -31,6 +39,8 @@ export class SalonCardPage {
   protected readonly tabs = SALON_CARD_TABS;
   protected readonly salon = this.store.salon.asReadonly();
   protected readonly failure = signal<'notFound' | 'failed' | null>(null);
+  protected readonly blocking = signal(false);
+  protected readonly blockDialogOpen = signal(false);
 
   protected readonly statusSeverity = computed(() => SALON_STATUS_SEVERITY[this.salon()?.status ?? 'active']);
   protected readonly statusLabelKey = computed<TranslationKey>(
@@ -38,6 +48,36 @@ export class SalonCardPage {
   );
   protected readonly deletedAt = computed(() => this.store.venueDate(this.salon()?.deletedAt));
   protected readonly blockedAt = computed(() => this.store.venueDate(this.salon()?.blockedAt));
+
+  /**
+   * The dialog's own button decided which way this goes, so the card reads the state it saw, not
+   * the one the response brings back. Both answers carry the whole card, so the store swaps it in
+   * and the banner, the tag and the button all follow from the one write.
+   */
+  protected toggleBlock(reason: string): void {
+    const salon = this.salon();
+    if (!salon || this.blocking()) {
+      return;
+    }
+    const blocked = !!salon.blockedAt;
+    this.blocking.set(true);
+    const request = blocked
+      ? this.client.unblock(salon.salonId, reason)
+      : this.client.block(salon.salonId, reason);
+    request.pipe(finalize(() => this.blocking.set(false))).subscribe({
+      next: (updated) => {
+        this.store.salon.set(updated);
+        this.blockDialogOpen.set(false);
+        this.messages.add({
+          severity: 'success',
+          summary: this.i18n.t(blocked ? 'unblock.done' : 'block.done'),
+          life: 4000,
+        });
+      },
+      // Already worded as a toast; the dialog stays open with the reason as typed.
+      error: () => undefined,
+    });
+  }
 
   constructor() {
     let subscription: Subscription | undefined;

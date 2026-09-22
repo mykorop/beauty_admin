@@ -143,6 +143,19 @@ export class MastersClient {
   }
 
   /**
+   * Блокування, and its lifting — the Салон twin of these, down to the mandatory reason and the
+   * card that comes back. Only a Незалежний майстер is blocked here: a Майстер салону earns
+   * `MASTER_ON_ROSTER`, worded as a toast like every other refusal of this address.
+   */
+  block(masterId: string, reason: string): Observable<Master> {
+    return this.http.post<Master>(masterUrl(masterId, 'block'), { reason });
+  }
+
+  unblock(masterId: string, reason: string): Observable<Master> {
+    return this.http.post<Master>(masterUrl(masterId, 'unblock'), { reason });
+  }
+
+  /**
    * The Робочий графік of a Незалежний майстер over `[from, to]` of his own calendar: his week, the
    * Ротація, the Відсутності and the Записи — the same answer a Майстер салону gives, so one
    * calendar draws both.

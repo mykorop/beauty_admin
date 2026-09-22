@@ -385,8 +385,9 @@ test.describe('salon invites', () => {
     await expect(rows.nth(1).getByTestId('invite-status')).toHaveText('Термін вичерпано');
     await expect(rows.nth(1).getByTestId('invite-delivery-failed')).toBeVisible();
     await expect(page.getByTestId('invites-more')).toHaveCount(0);
-    // Read-only: nothing to send, resend or revoke.
-    await expect(page.getByRole('main').getByRole('button')).toHaveCount(0);
+    // Read-only: nothing to send, resend or revoke. Scoped to the tab — the card's own header
+    // carries the Блокування action, which is about the profile, not about these invitations.
+    await expect(page.locator('app-salon-invites-tab').getByRole('button')).toHaveCount(0);
   });
 
   test('pages through older Інвайти by cursor', async ({ page, mockBackend }) => {

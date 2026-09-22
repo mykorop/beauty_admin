@@ -6,6 +6,16 @@
     backLabelKey="master.backToList"
   >
     <p-tag cardStatus data-testid="card-status" [severity]="statusSeverity()" [value]="statusLabelKey() | t" />
+    @if (master.status !== 'deleted') {
+      <app-block-action
+        cardActions
+        [blocked]="!!master.blockedAt"
+        [subject]="master.name"
+        [busy]="blocking()"
+        [(open)]="blockDialogOpen"
+        (confirmed)="toggleBlock($event)"
+      />
+    }
     @if (master.salon; as salon) {
       <p cardContext class="-mt-2 mb-4 text-sm text-slate-600" data-testid="card-former-salon">
         {{ 'master.formerSalon' | t: { salon: salon.name || salon.salonId, date: leftAt() } }}

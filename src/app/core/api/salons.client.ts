@@ -96,6 +96,9 @@ export type SalonProfileFields = {
 /** Only the fields that changed, never the whole form. */
 export type SalonProfilePatch = Partial<SalonProfileFields>;
 
+const salonUrl = (salonId: string, rest = ''): string =>
+  adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}${rest && `/${rest}`}`);
+
 @Injectable({ providedIn: 'root' })
 export class SalonsClient {
   private readonly http = inject(HttpClient);
@@ -109,13 +112,13 @@ export class SalonsClient {
 
   /** A missing salon is the card's own screen, not a toast: `NOT_FOUND` is left to the caller. */
   get(salonId: string): Observable<Salon> {
-    return this.http.get<Salon>(adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}`), {
+    return this.http.get<Salon>(salonUrl(salonId), {
       context: new HttpContext().set(SILENT_ERROR_CODES, ['NOT_FOUND']),
     });
   }
 
   hours(salonId: string): Observable<SalonHours> {
-    return this.http.get<SalonHours>(adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/hours`));
+    return this.http.get<SalonHours>(salonUrl(salonId, 'hours'));
   }
 
   /**
@@ -128,10 +131,23 @@ export class SalonsClient {
   ): Observable<Salon> {
     const { updatedAt, patch, reason } = request;
     return this.http.patch<Salon>(
-      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/profile`),
+      salonUrl(salonId, 'profile'),
       { updatedAt, ...patch, ...(reason ? { reason } : {}) },
       { context: new HttpContext().set(SILENT_ERROR_CODES, [EDIT_CONFLICT_CODE]) },
     );
+  }
+
+  /**
+   * Блокування, and its lifting — both heavy actions, so both carry a mandatory reason and both
+   * answer with the whole card, which the store then swaps in. The refusals they can earn
+   * (`SALON_DELETED`, and the repeat codes) are ordinary toasts.
+   */
+  block(salonId: string, reason: string): Observable<Salon> {
+    return this.http.post<Salon>(salonUrl(salonId, 'block'), { reason });
+  }
+
+  unblock(salonId: string, reason: string): Observable<Salon> {
+    return this.http.post<Salon>(salonUrl(salonId, 'unblock'), { reason });
   }
 
   /**
@@ -141,7 +157,7 @@ export class SalonsClient {
   updateHours(salonId: string, request: { days: SalonDayHours[]; reason?: string }): Observable<SalonHours> {
     const { days, reason } = request;
     return this.http.put<SalonHours>(
-      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/hours`),
+      salonUrl(salonId, 'hours'),
       { salonHours: days, ...(reason ? { reason } : {}) },
       { context: new HttpContext().set(SILENT_ERROR_CODES, HOURS_REFUSAL_CODES) },
     );
