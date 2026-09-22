@@ -13,14 +13,20 @@ import { SalonCardStore } from './salon-card.store';
   selector: 'app-salon-services-tab',
   imports: [ServiceCatalogTab],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-service-catalog [port]="port" [writable]="writable()" [copies]="true" />`,
+  // Guarded on the id, as this tab was before the editor moved: the card fills its store before it
+  // renders the tabs, and a tab built without one would ask `/admin/salons//services`.
+  template: `
+    @if (salonId) {
+      <app-service-catalog [port]="port" [writable]="writable()" [copies]="true" />
+    }
+  `,
 })
 export class SalonServicesTab {
   private readonly store = inject(SalonCardStore);
   private readonly client = inject(SalonServicesClient);
 
   // The card renders its tabs only once the salon is loaded, and rebuilds them for another one.
-  private readonly salonId = this.store.salon()?.salonId ?? '';
+  protected readonly salonId = this.store.salon()?.salonId ?? '';
 
   /** The backend refuses every write in a Видалений salon as well: `SALON_DELETED`. */
   protected readonly writable = computed(() => this.store.salon()?.status !== 'deleted');

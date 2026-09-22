@@ -19,7 +19,7 @@ import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
 import { finalize } from 'rxjs';
 import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
-import type { Dictionaries } from '../../core/api/salon-services.client';
+import type { Dictionaries } from '../../core/api/dictionaries.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { serviceCategoryLabel } from '../service-category';

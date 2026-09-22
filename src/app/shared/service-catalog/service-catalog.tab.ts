@@ -14,7 +14,7 @@ import { ButtonDirective } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import { finalize, forkJoin, type Observable } from 'rxjs';
 import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
-import { type Dictionaries, DictionariesClient } from '../../core/api/salon-services.client';
+import { type Dictionaries, DictionariesClient } from '../../core/api/dictionaries.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { serviceCategoryLabel } from '../service-category';

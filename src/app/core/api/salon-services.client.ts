@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { type Observable, shareReplay } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { EDIT_CONFLICT_CODE } from './api-error';
 import { adminApiUrl } from './admin-api-url';
@@ -21,14 +21,6 @@ export type SalonServiceFields = CatalogServiceFields;
 
 /** Only the fields that changed, never the whole form. */
 export type SalonServicePatch = CatalogServicePatch;
-
-/** Платформні довідники — stored labels, read-only; the panel translates them. */
-export type Dictionaries = {
-  serviceCategories: string[];
-  specializations: string[];
-  /** What a new service may be priced in — MDL only, as for the business itself. */
-  serviceCurrencies: string[];
-};
 
 const servicesUrl = (salonId: string, serviceId?: string): string =>
   adminApiUrl(
@@ -74,18 +66,5 @@ export class SalonServicesClient {
   /** Deactivation, never a deletion; `update` with `isActive: true` brings the service back. */
   deactivate(salonId: string, serviceId: string): Observable<SalonService> {
     return this.http.delete<SalonService>(servicesUrl(salonId, serviceId));
-  }
-}
-
-@Injectable({ providedIn: 'root' })
-export class DictionariesClient {
-  private readonly http = inject(HttpClient);
-  private cached: Observable<Dictionaries> | null = null;
-
-  /** Fixed platform lists: read once per session; a failed read is not remembered. */
-  get(): Observable<Dictionaries> {
-    return (this.cached ??= this.http
-      .get<Dictionaries>(adminApiUrl('/admin/dictionaries'))
-      .pipe(shareReplay({ bufferSize: 1, refCount: false })));
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MasterServicesClient } from '../../core/api/master-services.client';
 import type { ServiceCatalogPort } from '../../shared/service-catalog/service-catalog.model';
 import { ServiceCatalogTab } from '../../shared/service-catalog/service-catalog.tab';
@@ -14,17 +14,24 @@ import { MasterCardStore } from './master-card.store';
   selector: 'app-master-services-tab',
   imports: [ServiceCatalogTab],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-service-catalog [port]="port" [writable]="writable" [copies]="false" />`,
+  // Guarded on the id, like the Салон twin: a tab built before the card's store is filled would
+  // ask `/admin/masters//services`.
+  template: `
+    @if (masterId) {
+      <app-service-catalog [port]="port" [writable]="writable()" [copies]="false" />
+    }
+  `,
 })
 export class MasterServicesTab {
   private readonly client = inject(MasterServicesClient);
 
   // The card renders its tabs only once the master is loaded, and rebuilds them for another one.
-  private readonly master = inject(MasterCardStore).master();
-  private readonly masterId = this.master?.masterId ?? '';
+  private readonly store = inject(MasterCardStore);
+  private readonly master = this.store.master();
+  protected readonly masterId = this.master?.masterId ?? '';
 
   /** The backend refuses every write to a Видалений майстер as well: `MASTER_DELETED`. */
-  protected readonly writable = this.master?.status !== 'deleted';
+  protected readonly writable = computed(() => this.store.master()?.status !== 'deleted');
 
   protected readonly port: ServiceCatalogPort = {
     list: () => this.client.catalog(this.masterId),

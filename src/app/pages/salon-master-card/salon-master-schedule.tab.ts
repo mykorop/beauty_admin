@@ -15,7 +15,12 @@ import { SalonMasterStore } from './salon-master.store';
   selector: 'app-salon-master-schedule-tab',
   imports: [WorkingScheduleTab],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-working-schedule [port]="port" />`,
+  // Guarded on both ids, as this tab was before the editor moved.
+  template: `
+    @if (salonId && masterId) {
+      <app-working-schedule [port]="port" />
+    }
+  `,
 })
 export class SalonMasterScheduleTab {
   private readonly client = inject(SalonMastersClient);
@@ -25,8 +30,8 @@ export class SalonMasterScheduleTab {
   // The card renders its tabs only once the salon and the master are loaded, and rebuilds them for
   // another pair.
   private readonly salon = this.salonStore.salon();
-  private readonly salonId = this.salon?.salonId ?? '';
-  private readonly masterId = inject(SalonMasterStore).master()?.masterId ?? '';
+  protected readonly salonId = this.salon?.salonId ?? '';
+  protected readonly masterId = inject(SalonMasterStore).master()?.masterId ?? '';
 
   protected readonly port: WorkingSchedulePort = {
     timezone: this.salon?.timezone ?? 'UTC',

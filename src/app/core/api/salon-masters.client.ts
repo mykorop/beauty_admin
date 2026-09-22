@@ -3,14 +3,9 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { EDIT_CONFLICT_CODE, HOURS_REFUSAL_CODES, TIME_OFF_REFUSAL_CODES } from './api-error';
-import type {
-  DayHours,
-  MasterSchedule,
-  SchedulePattern,
-  TimeOffGroup,
-  TimeOffRequest,
-} from './master-schedule.model';
+import type { DayHours, MasterSchedule, SchedulePattern, TimeOffGroup, TimeOffRequest } from './master-schedule.model';
 import { adminApiUrl } from './admin-api-url';
+import { hoursBody, schedulePatternBody, timeOffBody } from './schedule-request';
 
 /** Mirror of the platform's fixed list of specializations; changing it is not the panel's job. */
 export const MASTER_SPECIALIZATIONS = [
@@ -162,7 +157,7 @@ export class SalonMastersClient {
     const { days, reason } = request;
     return this.http.put<{ days: DayHours[] }>(
       salonUrl(salonId, `masters/${encodeURIComponent(masterId)}/hours`),
-      { masterHours: days, ...(reason ? { reason } : {}) },
+      hoursBody(days, reason),
       { context: new HttpContext().set(SILENT_ERROR_CODES, HOURS_REFUSAL_CODES) },
     );
   }
@@ -176,7 +171,7 @@ export class SalonMastersClient {
     const { pattern, reason } = request;
     return this.http.put<{ schedulePattern: SchedulePattern | null }>(
       salonUrl(salonId, `masters/${encodeURIComponent(masterId)}/schedule-pattern`),
-      { pattern: pattern && { patternType: 'CYCLE', ...pattern }, ...(reason ? { reason } : {}) },
+      schedulePatternBody(pattern, reason),
     );
   }
 
@@ -193,19 +188,14 @@ export class SalonMastersClient {
     const { timeOff, reason } = request;
     return this.http.post<TimeOffGroup>(
       salonUrl(salonId, `masters/${encodeURIComponent(masterId)}/time-off`),
-      { timeOff, ...(reason ? { reason } : {}) },
+      timeOffBody(timeOff, reason),
       { context: new HttpContext().set(SILENT_ERROR_CODES, TIME_OFF_REFUSAL_CODES) },
     );
   }
 
   /** Removes the whole Відсутність — every date of the group, never one of them. */
   /** Not a heavy action — filing it again undoes it — so the Журнал reason is optional. */
-  removeTimeOff(
-    salonId: string,
-    masterId: string,
-    groupId: string,
-    reason?: string,
-  ): Observable<{ removed: boolean }> {
+  removeTimeOff(salonId: string, masterId: string, groupId: string, reason?: string): Observable<{ removed: boolean }> {
     return this.http.delete<{ removed: boolean }>(
       salonUrl(salonId, `masters/${encodeURIComponent(masterId)}/time-off/${encodeURIComponent(groupId)}`),
       reason ? { body: { reason } } : {},

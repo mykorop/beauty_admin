@@ -15,14 +15,19 @@ import { MasterCardStore } from './master-card.store';
   selector: 'app-master-schedule-tab',
   imports: [WorkingScheduleTab],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-working-schedule [port]="port" />`,
+  // Guarded on the id, like the Майстер салону twin.
+  template: `
+    @if (masterId) {
+      <app-working-schedule [port]="port" />
+    }
+  `,
 })
 export class MasterScheduleTab {
   private readonly client = inject(MastersClient);
 
   // The card renders its tabs only once the master is loaded, and rebuilds them for another one.
   private readonly master = inject(MasterCardStore).master();
-  private readonly masterId = this.master?.masterId ?? '';
+  protected readonly masterId = this.master?.masterId ?? '';
 
   protected readonly port: WorkingSchedulePort = {
     timezone: this.master?.timezone ?? 'UTC',

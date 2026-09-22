@@ -5,6 +5,7 @@ import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { adminApiUrl } from './admin-api-url';
 import { EDIT_CONFLICT_CODE, HOURS_REFUSAL_CODES, TIME_OFF_REFUSAL_CODES } from './api-error';
 import type { DayHours, MasterSchedule, SchedulePattern, TimeOffGroup, TimeOffRequest } from './master-schedule.model';
+import { hoursBody, schedulePatternBody, timeOffBody } from './schedule-request';
 import type { ShortLink } from './salons.client';
 
 /** A Незалежний майстер wears the same three states as a Салон. */
@@ -157,11 +158,9 @@ export class MastersClient {
    */
   updateHours(masterId: string, request: { days: DayHours[]; reason?: string }): Observable<{ days: DayHours[] }> {
     const { days, reason } = request;
-    return this.http.put<{ days: DayHours[] }>(
-      masterUrl(masterId, 'hours'),
-      { masterHours: days, ...(reason ? { reason } : {}) },
-      { context: new HttpContext().set(SILENT_ERROR_CODES, HOURS_REFUSAL_CODES) },
-    );
+    return this.http.put<{ days: DayHours[] }>(masterUrl(masterId, 'hours'), hoursBody(days, reason), {
+      context: new HttpContext().set(SILENT_ERROR_CODES, HOURS_REFUSAL_CODES),
+    });
   }
 
   /** Sets the Ротація, or clears it with `pattern: null` — one call for both. */
@@ -170,10 +169,10 @@ export class MastersClient {
     request: { pattern: SchedulePattern | null; reason?: string },
   ): Observable<{ schedulePattern: SchedulePattern | null }> {
     const { pattern, reason } = request;
-    return this.http.put<{ schedulePattern: SchedulePattern | null }>(masterUrl(masterId, 'schedule-pattern'), {
-      pattern: pattern && { patternType: 'CYCLE', ...pattern },
-      ...(reason ? { reason } : {}),
-    });
+    return this.http.put<{ schedulePattern: SchedulePattern | null }>(
+      masterUrl(masterId, 'schedule-pattern'),
+      schedulePatternBody(pattern, reason),
+    );
   }
 
   /**
@@ -183,11 +182,9 @@ export class MastersClient {
    */
   createTimeOff(masterId: string, request: { timeOff: TimeOffRequest; reason?: string }): Observable<TimeOffGroup> {
     const { timeOff, reason } = request;
-    return this.http.post<TimeOffGroup>(
-      masterUrl(masterId, 'time-off'),
-      { timeOff, ...(reason ? { reason } : {}) },
-      { context: new HttpContext().set(SILENT_ERROR_CODES, TIME_OFF_REFUSAL_CODES) },
-    );
+    return this.http.post<TimeOffGroup>(masterUrl(masterId, 'time-off'), timeOffBody(timeOff, reason), {
+      context: new HttpContext().set(SILENT_ERROR_CODES, TIME_OFF_REFUSAL_CODES),
+    });
   }
 
   /** Removes the whole Відсутність — every date of the group, never one of them. */
