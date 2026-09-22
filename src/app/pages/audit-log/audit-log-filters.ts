@@ -5,6 +5,7 @@ import {
   type AuditLogQuery,
   type AuditTargetType,
 } from '../../core/api/audit.client';
+import { addCalendarDays, parseCalendarDay } from '../../shared/calendar-day';
 
 /**
  * The platform's own clock. The Журнал дій spans every venue, so "21 September" means the day as
@@ -24,22 +25,13 @@ export const NO_AUDIT_LOG_FILTERS: AuditLogFilters = { from: null, to: null, tar
 
 type ParamReader = { get(name: string): string | null };
 
-function parseDay(raw: string | null): string | null {
-  if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    return null;
-  }
-  // `Date` rolls 31 February over into March; a day that does not survive the round trip is not one.
-  const date = new Date(`${raw}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(raw) ? raw : null;
-}
-
 const oneOf = <T extends string>(allowed: readonly T[], raw: string | null): T | null =>
   allowed.find((value) => value === raw) ?? null;
 
 /** Anything a hand-edited address got wrong reads as "not set" rather than as a refusal. */
 export function parseAuditLogFilters(params: ParamReader): AuditLogFilters {
-  const from = parseDay(params.get('from'));
-  const to = parseDay(params.get('to'));
+  const from = parseCalendarDay(params.get('from'));
+  const to = parseCalendarDay(params.get('to'));
   return {
     from,
     to: from && to && to < from ? null : to,
@@ -85,17 +77,11 @@ export function zonedDayStart(day: string, timeZone: string): string {
   return new Date(utcMidnight - zoneOffsetMs(guess, timeZone)).toISOString();
 }
 
-function nextDay(day: string): string {
-  const date = new Date(`${day}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().slice(0, 10);
-}
-
 /** What the backend is asked: `from` inclusive and `to` exclusive, as instants on the platform's clock. */
 export function toApiFilters(filters: AuditLogFilters): AuditLogQuery {
   return {
     ...(filters.from ? { from: zonedDayStart(filters.from, PLATFORM_TIME_ZONE) } : {}),
-    ...(filters.to ? { to: zonedDayStart(nextDay(filters.to), PLATFORM_TIME_ZONE) } : {}),
+    ...(filters.to ? { to: zonedDayStart(addCalendarDays(filters.to, 1), PLATFORM_TIME_ZONE) } : {}),
     ...(filters.targetType ? { targetType: filters.targetType } : {}),
     ...(filters.action ? { action: filters.action } : {}),
   };

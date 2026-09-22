@@ -28,3 +28,30 @@ function formatInVenueZone(
     return date.toISOString();
   }
 }
+
+/**
+ * The calendar date of an instant on the venue's clock, `YYYY-MM-DD`, or `null` when the instant is
+ * not one. The browser's zone would shift a late evening into the next day.
+ */
+export function venueDate(iso: string, timeZone: string): string | null {
+  const instant = new Date(iso);
+  if (Number.isNaN(instant.getTime())) {
+    return null;
+  }
+  try {
+    // `en-CA` writes a date as `YYYY-MM-DD`.
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(instant);
+  } catch {
+    return instant.toISOString().slice(0, 10);
+  }
+}
+
+/** Today on the venue's clock — the day a screen opens on before anything is read. */
+export function venueToday(timeZone: string, now = new Date()): string {
+  return venueDate(now.toISOString(), timeZone) ?? now.toISOString().slice(0, 10);
+}

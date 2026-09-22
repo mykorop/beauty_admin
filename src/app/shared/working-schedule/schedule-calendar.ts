@@ -5,6 +5,7 @@ import type {
   TimeOffGroup,
   TimeSlot,
 } from '../../core/api/master-schedule.model';
+import { venueDate } from '../venue-date';
 
 /**
  * Why a day is or is not bookable — the backend's own `WorkingDayStatus` (`resolveWorkingDay`), so
@@ -120,30 +121,6 @@ function withinBounds(
     }),
   );
   return slots.length > 0 ? { ...day, slots } : { ...day, status: 'BOUNDS_CLOSED', slots: [] };
-}
-
-/** The calendar date of an instant on the venue's clock; the browser's zone would shift late evenings. */
-function venueDate(iso: string, timeZone: string): string | null {
-  const instant = new Date(iso);
-  if (Number.isNaN(instant.getTime())) {
-    return null;
-  }
-  try {
-    // `en-CA` writes a date as `YYYY-MM-DD`.
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(instant);
-  } catch {
-    return instant.toISOString().slice(0, 10);
-  }
-}
-
-/** Today on the venue's clock — the month a calendar opens on before any schedule is read. */
-export function venueToday(timeZone: string, now = new Date()): string {
-  return venueDate(now.toISOString(), timeZone) ?? now.toISOString().slice(0, 10);
 }
 
 /**

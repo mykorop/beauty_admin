@@ -23,6 +23,11 @@ const IMPLEMENTED: Routes = [
     path: 'services',
     loadComponent: () => import('./salon-master-services.tab').then((m) => m.SalonMasterServicesTab),
   },
+  {
+    path: 'appointments',
+    loadComponent: () =>
+      import('./salon-master-appointments.tab').then((m) => m.SalonMasterAppointmentsTab),
+  },
 ];
 
 export const SALON_MASTER_CARD_ROUTES: Routes = [

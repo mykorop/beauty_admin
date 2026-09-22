@@ -32,6 +32,10 @@ const IMPLEMENTED: Routes = [
     loadComponent: () => import('./salon-services.tab').then((m) => m.SalonServicesTab),
   },
   {
+    path: 'appointments',
+    loadComponent: () => import('./salon-appointments.tab').then((m) => m.SalonAppointmentsTab),
+  },
+  {
     path: 'invites',
     loadComponent: () => import('./salon-invites.tab').then((m) => m.SalonInvitesTab),
   },

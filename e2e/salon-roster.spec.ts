@@ -145,8 +145,8 @@ test.describe('salon roster', () => {
     await expect(page.getByTestId('field-commission')).toHaveText('40%');
     await expect(page.getByTestId('field-bookingHorizon')).toHaveText('14 дн.');
 
-    await page.getByTestId('card-tab').filter({ hasText: 'Записи' }).click();
-    await expect(page).toHaveURL(/\/salons\/s1\/masters\/m2\/appointments$/);
+    await page.getByTestId('card-tab').filter({ hasText: 'Відгуки' }).click();
+    await expect(page).toHaveURL(/\/salons\/s1\/masters\/m2\/reviews$/);
     await expect(page.getByTestId('card-tab-stub')).toBeVisible();
 
     // Back to the Ростер, not to the list of salons.
