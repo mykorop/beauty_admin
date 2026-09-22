@@ -111,10 +111,8 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'salon.edit.save': 'Salvează',
   'salon.edit.cancel': 'Anulează',
   'salon.edit.reason': 'Motivul modificării (opțional)',
-  'salon.edit.accountReadonly':
-    'Emailul, telefonul și parola contului le schimbă doar Proprietarul salonului.',
-  'salon.edit.cityCodeHint':
-    'Acum: {{city}}. Șapte cifre; codul poștal trebuie să aparțină acestei localități.',
+  'salon.edit.accountReadonly': 'Emailul, telefonul și parola contului le schimbă doar Proprietarul salonului.',
+  'salon.edit.cityCodeHint': 'Acum: {{city}}. Șapte cifre; codul poștal trebuie să aparțină acestei localități.',
   'salon.edit.brandColorHint': 'HEX, de exemplu #aa3366. Gol — fără culoare.',
   'salon.edit.conflict':
     'Datele s-au schimbat în timp ce editați. Reîncărcați formularul — modificările nesalvate se vor pierde.',
@@ -126,12 +124,14 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'hours.edit.dayOpen': 'Deschis',
   'hours.edit.from': 'Deschidere',
   'hours.edit.to': 'Închidere',
-  'hours.edit.splitDay': 'Proprietarul a setat mai multe intervale ({{slots}}). Ele se păstrează până modificați această zi; după modificare rămâne un singur interval.',
+  'hours.edit.splitDay':
+    'Proprietarul a setat mai multe intervale ({{slots}}). Ele se păstrează până modificați această zi; după modificare rămâne un singur interval.',
   'hours.edit.saved': 'Programul de lucru a fost salvat.',
   'hours.refusal.noOpenDay': 'Săptămâna trebuie să aibă cel puțin o zi deschisă.',
   'hours.refusal.shortWindow': '{{day}}: intervalul trebuie să dureze cel puțin 60 de minute.',
   'hours.refusal.startAfterEnd': '{{day}}: deschiderea trebuie să fie înainte de închidere.',
-  'hours.refusal.masterOutside': 'Programul Maestrului {{master}} iese din noul Program de lucru ({{day}}). Modificați mai întâi programul lui.',
+  'hours.refusal.masterOutside':
+    'Programul Maestrului {{master}} iese din noul Program de lucru ({{day}}). Modificați mai întâi programul lui.',
   'hours.edit.bounds': 'Programul de lucru al Salonului: {{bounds}}',
   'hours.edit.outsideBounds': 'în afara Programului de lucru al Salonului',
   'hours.refusal.outsideBounds': '{{day}}: {{slot}} iese din Programul de lucru al Salonului ({{bounds}}).',
@@ -162,7 +162,8 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'rotation.anchorDate': 'Data de referință',
   'rotation.cycleLength': 'Lungimea ciclului, zile',
   'rotation.workingDays': 'Zilele lucrătoare ale ciclului',
-  'rotation.hint': 'Ziua 1 este data de referință. Este nevoie de cel puțin o zi lucrătoare și cel puțin o zi liberă. Rotația doar scoate zile din orele săptămânale și nu deschide niciodată altele noi.',
+  'rotation.hint':
+    'Ziua 1 este data de referință. Este nevoie de cel puțin o zi lucrătoare și cel puțin o zi liberă. Rotația doar scoate zile din orele săptămânale și nu deschide niciodată altele noi.',
   'rotation.saved': 'Rotația a fost salvată.',
   'rotation.removed': 'Rotația a fost eliminată.',
   'timeOff.title': 'Absențe',
@@ -172,7 +173,8 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'timeOff.from': 'De la data',
   'timeOff.to': 'Până la data',
   'timeOff.window': 'Orele în care Maestrul lucrează',
-  'timeOff.window.hint': 'Acesta este intervalul care rămâne lucrător, nu timpul absenței. Orele speciale se aplică doar în zilele în care Maestrul lucrează conform săptămânii.',
+  'timeOff.window.hint':
+    'Acesta este intervalul care rămâne lucrător, nu timpul absenței. Orele speciale se aplică doar în zilele în care Maestrul lucrează conform săptămânii.',
   'timeOff.reason': 'Motivul Absenței — îl văd Maestrul și Salonul (opțional)',
   'timeOff.reason.column': 'Motiv',
   'timeOff.period': 'Perioadă',
@@ -191,7 +193,8 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'timeOff.issue.past': 'Perioada s-a încheiat deja.',
   'timeOff.issue.tooLong': 'O Absență poate acoperi cel mult 90 de zile.',
   'timeOff.issue.window': 'Începutul intervalului trebuie să fie înainte de sfârșit.',
-  'timeOff.conflict': 'În această perioadă există deja Programări active: {{count}} ({{dates}}). Absența nu anulează nimic — Programările rămân, iar altele noi în aceste zile nu vor fi.',
+  'timeOff.conflict':
+    'În această perioadă există deja Programări active: {{count}} ({{dates}}). Absența nu anulează nimic — Programările rămân, iar altele noi în aceste zile nu vor fi.',
   'timeOff.conflict.confirm': 'Creează oricum',
   'audit.action.salon.master.schedule-pattern.update': 'Modificarea Rotației Maestrului',
   'audit.action.salon.master.time-off.create': 'Crearea unei Absențe a Maestrului',
@@ -379,6 +382,15 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
     'Datele s-au schimbat în timp ce editați. Reîncărcați formularul — modificările nesalvate se vor pierde.',
   'master.history.empty': 'Încă nu există acțiuni asupra acestui Maestru.',
   'audit.action.master.profile.update': 'Modificarea profilului Maestrului',
+  'audit.action.master.service.create': 'Crearea serviciului Maestrului',
+  'audit.action.master.service.update': 'Modificarea serviciului Maestrului',
+  'audit.action.master.service.deactivate': 'Dezactivarea serviciului Maestrului',
+  'audit.action.master.hours.update': 'Modificarea orelor săptămânale ale Maestrului independent',
+  'audit.action.master.schedule-pattern.update': 'Modificarea Rotației Maestrului independent',
+  'audit.action.master.time-off.create': 'Crearea Absenței Maestrului independent',
+  'audit.action.master.time-off.remove': 'Ștergerea Absenței Maestrului independent',
+  'services.ownCatalogNote':
+    'Prețul și durata de aici sunt exact cele pe care Clientul le vede și le rezervă: un Maestru independent nu are Copii de serviciu.',
   'error.MASTER_DELETED': 'Maestrul a fost șters — nu poate fi modificat.',
   'error.MASTER_ON_ROSTER': 'Este un Maestru de salon — datele lui se editează în fișa din Roster.',
 
@@ -419,13 +431,12 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'error.UNAUTHORIZED': 'Trebuie să vă autentificați din nou.',
   'error.FORBIDDEN': 'Drepturi insuficiente pentru această acțiune.',
   'error.NOT_FOUND': 'Nu a fost găsit.',
-  'error.CONFLICT': 'Datele s-au schimbat sau intră în conflict cu cele existente. Reîncărcați pagina și încercați din nou.',
+  'error.CONFLICT':
+    'Datele s-au schimbat sau intră în conflict cu cele existente. Reîncărcați pagina și încercați din nou.',
   'error.EDIT_CONFLICT': 'Datele s-au schimbat. Reîncărcați formularul și încercați din nou.',
   'error.SALON_DELETED': 'Salonul este șters — nu poate fi modificat.',
-  'error.OWNER_MASTER_PROTECTED':
-    'Proprietarul-maestru nu poate fi exclus din Rosterul propriului Salon.',
-  'error.MASTER_HAS_ACTIVE_APPOINTMENTS':
-    'Maestrul are Programări active în acest Salon — mai întâi trebuie anulate.',
+  'error.OWNER_MASTER_PROTECTED': 'Proprietarul-maestru nu poate fi exclus din Rosterul propriului Salon.',
+  'error.MASTER_HAS_ACTIVE_APPOINTMENTS': 'Maestrul are Programări active în acest Salon — mai întâi trebuie anulate.',
   'error.ROSTER_HOURS_OUTSIDE_SALON_HOURS': 'Programul unui Maestru al salonului iese din noul Program de lucru.',
   'error.MASTER_HOURS_OUTSIDE_SALON_HOURS': 'Orele Maestrului ies din Programul de lucru al Salonului.',
   'error.VALIDATION_ERROR': 'Datele nu au trecut verificarea.',

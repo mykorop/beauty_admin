@@ -112,8 +112,7 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'salon.edit.cancel': 'Отмена',
   'salon.edit.reason': 'Причина изменения (необязательно)',
   'salon.edit.accountReadonly': 'Email, телефон и пароль аккаунта меняет только Владелец салона.',
-  'salon.edit.cityCodeHint':
-    'Сейчас: {{city}}. Семь цифр; индекс должен принадлежать этому населённому пункту.',
+  'salon.edit.cityCodeHint': 'Сейчас: {{city}}. Семь цифр; индекс должен принадлежать этому населённому пункту.',
   'salon.edit.brandColorHint': 'HEX, например #aa3366. Пусто — без цвета.',
   'salon.edit.conflict':
     'Данные изменились, пока вы редактировали. Перезагрузите форму — несохранённые изменения будут потеряны.',
@@ -125,12 +124,14 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'hours.edit.dayOpen': 'Открыто',
   'hours.edit.from': 'Открытие',
   'hours.edit.to': 'Закрытие',
-  'hours.edit.splitDay': 'Владелец задал несколько окон ({{slots}}). Они сохранятся, пока вы не измените этот день; после изменения останется одно окно.',
+  'hours.edit.splitDay':
+    'Владелец задал несколько окон ({{slots}}). Они сохранятся, пока вы не измените этот день; после изменения останется одно окно.',
   'hours.edit.saved': 'Часы работы сохранены.',
   'hours.refusal.noOpenDay': 'В неделе должен быть хотя бы один открытый день.',
   'hours.refusal.shortWindow': '{{day}}: окно должно длиться не менее 60 минут.',
   'hours.refusal.startAfterEnd': '{{day}}: открытие должно быть раньше закрытия.',
-  'hours.refusal.masterOutside': 'Рабочий график Мастера {{master}} выходит за новые Часы работы ({{day}}). Сначала измените его график.',
+  'hours.refusal.masterOutside':
+    'Рабочий график Мастера {{master}} выходит за новые Часы работы ({{day}}). Сначала измените его график.',
   'hours.edit.bounds': 'Часы работы Салона: {{bounds}}',
   'hours.edit.outsideBounds': 'вне Часов работы Салона',
   'hours.refusal.outsideBounds': '{{day}}: {{slot}} выходит за Часы работы Салона ({{bounds}}).',
@@ -161,7 +162,8 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'rotation.anchorDate': 'Дата отсчёта',
   'rotation.cycleLength': 'Длина цикла, дней',
   'rotation.workingDays': 'Рабочие дни цикла',
-  'rotation.hint': 'День 1 — дата отсчёта. Нужен хотя бы один рабочий и хотя бы один выходной день. Ротация только убирает дни из недельных часов и никогда не открывает новых.',
+  'rotation.hint':
+    'День 1 — дата отсчёта. Нужен хотя бы один рабочий и хотя бы один выходной день. Ротация только убирает дни из недельных часов и никогда не открывает новых.',
   'rotation.saved': 'Ротация сохранена.',
   'rotation.removed': 'Ротация убрана.',
   'timeOff.title': 'Отсутствия',
@@ -171,7 +173,8 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'timeOff.from': 'С даты',
   'timeOff.to': 'По дату',
   'timeOff.window': 'Часы, которые Мастер работает',
-  'timeOff.window.hint': 'Это окно, которое остаётся рабочим, а не время отсутствия. Особые часы подаются только на дни, когда Мастер работает по неделе.',
+  'timeOff.window.hint':
+    'Это окно, которое остаётся рабочим, а не время отсутствия. Особые часы подаются только на дни, когда Мастер работает по неделе.',
   'timeOff.reason': 'Причина Отсутствия — её видят Мастер и Салон (необязательно)',
   'timeOff.reason.column': 'Причина',
   'timeOff.period': 'Период',
@@ -190,7 +193,8 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'timeOff.issue.past': 'Период уже закончился.',
   'timeOff.issue.tooLong': 'Одно Отсутствие может охватывать не более 90 дней.',
   'timeOff.issue.window': 'Начало окна должно быть раньше конца.',
-  'timeOff.conflict': 'В этом периоде уже есть активные Записи: {{count}} ({{dates}}). Отсутствие ничего не отменяет — Записи останутся, новых на эти дни не будет.',
+  'timeOff.conflict':
+    'В этом периоде уже есть активные Записи: {{count}} ({{dates}}). Отсутствие ничего не отменяет — Записи останутся, новых на эти дни не будет.',
   'timeOff.conflict.confirm': 'Всё равно создать',
   'audit.action.salon.master.schedule-pattern.update': 'Изменение Ротации Мастера',
   'audit.action.salon.master.time-off.create': 'Создание Отсутствия Мастера',
@@ -377,6 +381,15 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
     'Данные изменились, пока вы редактировали. Перезагрузите форму — несохранённые изменения будут потеряны.',
   'master.history.empty': 'Действий над этим Мастером ещё не было.',
   'audit.action.master.profile.update': 'Изменение профиля Мастера',
+  'audit.action.master.service.create': 'Создание услуги Мастера',
+  'audit.action.master.service.update': 'Изменение услуги Мастера',
+  'audit.action.master.service.deactivate': 'Деактивация услуги Мастера',
+  'audit.action.master.hours.update': 'Изменение недельных часов Независимого мастера',
+  'audit.action.master.schedule-pattern.update': 'Изменение Ротации Независимого мастера',
+  'audit.action.master.time-off.create': 'Создание Отсутствия Независимого мастера',
+  'audit.action.master.time-off.remove': 'Удаление Отсутствия Независимого мастера',
+  'services.ownCatalogNote':
+    'Цена и длительность здесь — именно те, которые видит и бронирует Клиент: Копий мастера у Независимого мастера нет.',
   'error.MASTER_DELETED': 'Мастер удалён — изменять его нельзя.',
   'error.MASTER_ON_ROSTER': 'Это Мастер салона — его данные редактируются в карточке внутри Ростера.',
 
@@ -421,8 +434,7 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'error.EDIT_CONFLICT': 'Данные изменились. Перезагрузите форму и попробуйте ещё раз.',
   'error.SALON_DELETED': 'Салон удалён — изменять его нельзя.',
   'error.OWNER_MASTER_PROTECTED': 'Владельца-мастера нельзя исключить из Ростера его Салона.',
-  'error.MASTER_HAS_ACTIVE_APPOINTMENTS':
-    'У Мастера есть активные Записи в этом Салоне — сначала их нужно отменить.',
+  'error.MASTER_HAS_ACTIVE_APPOINTMENTS': 'У Мастера есть активные Записи в этом Салоне — сначала их нужно отменить.',
   'error.ROSTER_HOURS_OUTSIDE_SALON_HOURS': 'Рабочий график Мастера салона выходит за новые Часы работы.',
   'error.MASTER_HOURS_OUTSIDE_SALON_HOURS': 'Часы Мастера выходят за Часы работы Салона.',
   'error.VALIDATION_ERROR': 'Данные не прошли проверку.',

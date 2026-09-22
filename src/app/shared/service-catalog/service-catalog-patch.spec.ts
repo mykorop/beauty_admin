@@ -1,13 +1,13 @@
-import type { SalonService } from '../../core/api/salon-services.client';
 import {
-  buildSalonServicePatch,
-  EMPTY_SALON_SERVICE_FORM_VALUE,
+  buildCatalogServicePatch,
+  EMPTY_CATALOG_SERVICE_FORM_VALUE,
+  toCatalogServiceFields,
+  toCatalogServiceFormValue,
   touchesMasterOwnedFields,
-  toSalonServiceFields,
-  toSalonServiceFormValue,
-} from './salon-service-patch';
+} from './service-catalog-patch';
+import type { CatalogService } from './service-catalog.model';
 
-const SERVICE: SalonService = {
+const SERVICE: CatalogService = {
   serviceId: 'svc1',
   name: 'Haircut',
   description: 'Wash and cut',
@@ -22,27 +22,27 @@ const SERVICE: SalonService = {
   updatedAt: '2026-06-01T00:00:00.000Z',
 };
 
-describe('buildSalonServicePatch', () => {
+describe('buildCatalogServicePatch', () => {
   it('is empty for an untouched form', () => {
-    expect(buildSalonServicePatch(SERVICE, toSalonServiceFormValue(SERVICE))).toEqual({});
+    expect(buildCatalogServicePatch(SERVICE, toCatalogServiceFormValue(SERVICE))).toEqual({});
   });
 
   it('carries only what changed, with the name trimmed', () => {
-    const value = { ...toSalonServiceFormValue(SERVICE), name: '  Classic haircut ', price: 600 };
+    const value = { ...toCatalogServiceFormValue(SERVICE), name: '  Classic haircut ', price: 600 };
 
-    expect(buildSalonServicePatch(SERVICE, value)).toEqual({ name: 'Classic haircut', price: 600 });
+    expect(buildCatalogServicePatch(SERVICE, value)).toEqual({ name: 'Classic haircut', price: 600 });
   });
 
   it('treats an emptied number as untouched — the form refuses to save it anyway', () => {
-    const value = { ...toSalonServiceFormValue(SERVICE), durationMinutes: null };
+    const value = { ...toCatalogServiceFormValue(SERVICE), durationMinutes: null };
 
-    expect(buildSalonServicePatch(SERVICE, value)).toEqual({});
+    expect(buildCatalogServicePatch(SERVICE, value)).toEqual({});
   });
 
   it('lets the description be cleared', () => {
-    const value = { ...toSalonServiceFormValue(SERVICE), description: '' };
+    const value = { ...toCatalogServiceFormValue(SERVICE), description: '' };
 
-    expect(buildSalonServicePatch(SERVICE, value)).toEqual({ description: '' });
+    expect(buildCatalogServicePatch(SERVICE, value)).toEqual({ description: '' });
   });
 });
 
@@ -58,17 +58,17 @@ describe('touchesMasterOwnedFields', () => {
   });
 });
 
-describe('toSalonServiceFields', () => {
+describe('toCatalogServiceFields', () => {
   it('turns a filled new-service form into the body of the POST', () => {
     const value = {
-      ...EMPTY_SALON_SERVICE_FORM_VALUE,
+      ...EMPTY_CATALOG_SERVICE_FORM_VALUE,
       name: ' Beard trim ',
       category: 'beard_and_mustache',
       durationMinutes: 20,
       price: 250,
     };
 
-    expect(toSalonServiceFields(value)).toEqual({
+    expect(toCatalogServiceFields(value)).toEqual({
       name: 'Beard trim',
       description: '',
       category: 'beard_and_mustache',
@@ -80,6 +80,6 @@ describe('toSalonServiceFields', () => {
   });
 
   it('is null while a required number is empty', () => {
-    expect(toSalonServiceFields({ ...EMPTY_SALON_SERVICE_FORM_VALUE, name: 'X', category: 'haircut' })).toBeNull();
+    expect(toCatalogServiceFields({ ...EMPTY_CATALOG_SERVICE_FORM_VALUE, name: 'X', category: 'haircut' })).toBeNull();
   });
 });

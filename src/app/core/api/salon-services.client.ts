@@ -4,39 +4,23 @@ import { type Observable, shareReplay } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { EDIT_CONFLICT_CODE } from './api-error';
 import { adminApiUrl } from './admin-api-url';
+import type {
+  CatalogService,
+  CatalogServiceFields,
+  CatalogServicePatch,
+} from '../../shared/service-catalog/service-catalog.model';
 
-/** One послуга of a Каталог послуг as the table and the form read it. */
-export type SalonService = {
-  serviceId: string;
-  name: string;
-  description: string;
-  category: string;
-  durationMinutes: number;
-  /** The stored price as typed — per hour when `priceUnit` is `PER_HOUR`. */
-  price: number;
-  currency: string;
-  priceUnit: string;
-  isActive: boolean;
-  /** Майстри on the Ростер holding a Копія майстра of this service. */
-  masterCopyCount: number;
-  createdAt: string;
-  /** Goes back as-is with a PATCH. */
-  updatedAt: string;
-};
+/**
+ * One послуга of the Каталог послуг of a Салон: the shared catalog service, which always knows how
+ * many Майстри hold a Копія майстра of it — only a Салон has a Ростер under its Каталог.
+ */
+export type SalonService = CatalogService & { masterCopyCount: number };
 
 /** What the administrator may change on a service of the Каталог. */
-export type SalonServiceFields = {
-  name: string;
-  description: string;
-  category: string;
-  durationMinutes: number;
-  price: number;
-  currency: string;
-  isActive: boolean;
-};
+export type SalonServiceFields = CatalogServiceFields;
 
 /** Only the fields that changed, never the whole form. */
-export type SalonServicePatch = Partial<SalonServiceFields>;
+export type SalonServicePatch = CatalogServicePatch;
 
 /** Платформні довідники — stored labels, read-only; the panel translates them. */
 export type Dictionaries = {

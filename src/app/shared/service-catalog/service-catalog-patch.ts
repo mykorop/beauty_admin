@@ -1,10 +1,10 @@
-import type { SalonService, SalonServiceFields, SalonServicePatch } from '../../core/api/salon-services.client';
+import type { CatalogService, CatalogServiceFields, CatalogServicePatch } from './service-catalog.model';
 
 /** The only currency a new service may be priced in — the same rule as for the business. */
 export const NEW_SERVICE_CURRENCY = 'MDL';
 
 /** The service form as typed: numbers may be emptied. */
-export type SalonServiceFormValue = {
+export type CatalogServiceFormValue = {
   name: string;
   description: string;
   category: string;
@@ -14,7 +14,7 @@ export type SalonServiceFormValue = {
   isActive: boolean;
 };
 
-export const EMPTY_SALON_SERVICE_FORM_VALUE: SalonServiceFormValue = {
+export const EMPTY_CATALOG_SERVICE_FORM_VALUE: CatalogServiceFormValue = {
   name: '',
   description: '',
   category: '',
@@ -24,7 +24,7 @@ export const EMPTY_SALON_SERVICE_FORM_VALUE: SalonServiceFormValue = {
   isActive: true,
 };
 
-export function toSalonServiceFormValue(service: SalonService): SalonServiceFormValue {
+export function toCatalogServiceFormValue(service: CatalogService): CatalogServiceFormValue {
   return {
     name: service.name,
     description: service.description,
@@ -37,7 +37,7 @@ export function toSalonServiceFormValue(service: SalonService): SalonServiceForm
 }
 
 /** The body of the POST, or `null` while a required number is still empty. */
-export function toSalonServiceFields(value: SalonServiceFormValue): SalonServiceFields | null {
+export function toCatalogServiceFields(value: CatalogServiceFormValue): CatalogServiceFields | null {
   if (value.durationMinutes === null || value.price === null) {
     return null;
   }
@@ -54,8 +54,8 @@ export function toSalonServiceFields(value: SalonServiceFormValue): SalonService
  * What the form changed against the service it was opened with — the body of the PATCH. A field
  * typed over and put back is not a change.
  */
-export function buildSalonServicePatch(service: SalonService, value: SalonServiceFormValue): SalonServicePatch {
-  const after: SalonServiceFields = {
+export function buildCatalogServicePatch(service: CatalogService, value: CatalogServiceFormValue): CatalogServicePatch {
+  const after: CatalogServiceFields = {
     name: value.name.trim() || service.name,
     description: value.description.trim(),
     category: value.category || service.category,
@@ -65,14 +65,16 @@ export function buildSalonServicePatch(service: SalonService, value: SalonServic
     isActive: value.isActive,
   };
   return Object.fromEntries(
-    Object.entries(after).filter(([field, next]) => next !== service[field as keyof SalonServiceFields]),
+    Object.entries(after).filter(([field, next]) => next !== service[field as keyof CatalogServiceFields]),
   );
 }
 
 /**
- * Ціна й тривалість belong to each Копія майстра: changing them in the Каталог changes what a new
- * Копія starts from and nothing else. The form says so the moment either is touched.
+ * Ціна й тривалість belong to each Копія майстра: changing them in the Каталог Салону changes what
+ * a new Копія starts from and nothing else. The form says so the moment either is touched — but only
+ * where Копії can exist at all, which is why the warning is a property of the Каталог, not of the
+ * patch: a Незалежний майстер has no Ростер under him, so his own price is the one Клієнти book at.
  */
-export function touchesMasterOwnedFields(patch: SalonServicePatch): boolean {
+export function touchesMasterOwnedFields(patch: CatalogServicePatch): boolean {
   return patch.price !== undefined || patch.durationMinutes !== undefined;
 }

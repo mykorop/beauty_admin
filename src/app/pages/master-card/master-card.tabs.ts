@@ -18,6 +18,14 @@ const IMPLEMENTED: Routes = [
     loadComponent: () => import('./master-profile.tab').then((m) => m.MasterProfileTab),
   },
   {
+    path: 'schedule',
+    loadComponent: () => import('./master-schedule.tab').then((m) => m.MasterScheduleTab),
+  },
+  {
+    path: 'services',
+    loadComponent: () => import('./master-services.tab').then((m) => m.MasterServicesTab),
+  },
+  {
     path: 'history',
     loadComponent: () => import('./master-history.tab').then((m) => m.MasterHistoryTab),
   },

@@ -110,11 +110,9 @@ export const UK_TRANSLATIONS = {
   'salon.edit.cancel': 'Скасувати',
   'salon.edit.reason': 'Причина зміни (необов’язково)',
   'salon.edit.accountReadonly': 'Email, телефон і пароль акаунта змінює лише Власник салону.',
-  'salon.edit.cityCodeHint':
-    'Зараз: {{city}}. Сім цифр; індекс має належати цьому населеному пункту.',
+  'salon.edit.cityCodeHint': 'Зараз: {{city}}. Сім цифр; індекс має належати цьому населеному пункту.',
   'salon.edit.brandColorHint': 'HEX, наприклад #aa3366. Порожньо — без кольору.',
-  'salon.edit.conflict':
-    'Дані змінились, поки ви редагували. Перезавантажте форму — незбережені зміни буде втрачено.',
+  'salon.edit.conflict': 'Дані змінились, поки ви редагували. Перезавантажте форму — незбережені зміни буде втрачено.',
   'salon.edit.reload': 'Перезавантажити',
   'salon.edit.saved': 'Зміни збережено.',
   'hours.closed': 'Зачинено',
@@ -123,12 +121,14 @@ export const UK_TRANSLATIONS = {
   'hours.edit.dayOpen': 'Відкрито',
   'hours.edit.from': 'Відкриття',
   'hours.edit.to': 'Закриття',
-  'hours.edit.splitDay': 'Власник задав кілька вікон ({{slots}}). Вони збережуться, доки ви не зміните цей день; після зміни лишиться одне вікно.',
+  'hours.edit.splitDay':
+    'Власник задав кілька вікон ({{slots}}). Вони збережуться, доки ви не зміните цей день; після зміни лишиться одне вікно.',
   'hours.edit.saved': 'Години роботи збережено.',
   'hours.refusal.noOpenDay': 'У тижні має бути хоча б один відкритий день.',
   'hours.refusal.shortWindow': '{{day}}: вікно має тривати щонайменше 60 хвилин.',
   'hours.refusal.startAfterEnd': '{{day}}: відкриття має бути раніше за закриття.',
-  'hours.refusal.masterOutside': 'Робочий графік Майстра {{master}} виходить за нові Години роботи ({{day}}). Спершу змініть його графік.',
+  'hours.refusal.masterOutside':
+    'Робочий графік Майстра {{master}} виходить за нові Години роботи ({{day}}). Спершу змініть його графік.',
   'hours.edit.bounds': 'Години роботи Салону: {{bounds}}',
   'hours.edit.outsideBounds': 'поза Годинами роботи Салону',
   'hours.refusal.outsideBounds': '{{day}}: {{slot}} виходить за Години роботи Салону ({{bounds}}).',
@@ -159,7 +159,8 @@ export const UK_TRANSLATIONS = {
   'rotation.anchorDate': 'Дата відліку',
   'rotation.cycleLength': 'Довжина циклу, днів',
   'rotation.workingDays': 'Робочі дні циклу',
-  'rotation.hint': 'День 1 — дата відліку. Потрібен хоча б один робочий і хоча б один вихідний день. Ротація лише прибирає дні з тижневих годин і ніколи не відкриває нових.',
+  'rotation.hint':
+    'День 1 — дата відліку. Потрібен хоча б один робочий і хоча б один вихідний день. Ротація лише прибирає дні з тижневих годин і ніколи не відкриває нових.',
   'rotation.saved': 'Ротацію збережено.',
   'rotation.removed': 'Ротацію прибрано.',
   'timeOff.title': 'Відсутності',
@@ -169,7 +170,8 @@ export const UK_TRANSLATIONS = {
   'timeOff.from': 'З дати',
   'timeOff.to': 'По дату',
   'timeOff.window': 'Години, які Майстер працює',
-  'timeOff.window.hint': 'Це вікно, що лишається робочим, а не час відсутності. Особливі години подаються лише на дні, коли Майстер працює за тижнем.',
+  'timeOff.window.hint':
+    'Це вікно, що лишається робочим, а не час відсутності. Особливі години подаються лише на дні, коли Майстер працює за тижнем.',
   'timeOff.reason': 'Причина Відсутності — її бачать Майстер і Салон (необов’язково)',
   'timeOff.reason.column': 'Причина',
   'timeOff.period': 'Період',
@@ -188,7 +190,8 @@ export const UK_TRANSLATIONS = {
   'timeOff.issue.past': 'Період уже закінчився.',
   'timeOff.issue.tooLong': 'Одна Відсутність може охоплювати щонайбільше 90 днів.',
   'timeOff.issue.window': 'Початок вікна має бути раніше за кінець.',
-  'timeOff.conflict': 'У цьому періоді вже є активні Записи: {{count}} ({{dates}}). Відсутність нічого не скасовує — Записи лишаться, нових на ці дні не буде.',
+  'timeOff.conflict':
+    'У цьому періоді вже є активні Записи: {{count}} ({{dates}}). Відсутність нічого не скасовує — Записи лишаться, нових на ці дні не буде.',
   'timeOff.conflict.confirm': 'Усе одно створити',
   'audit.action.salon.master.schedule-pattern.update': 'Зміна Ротації Майстра',
   'audit.action.salon.master.time-off.create': 'Створення Відсутності Майстра',
@@ -370,10 +373,18 @@ export const UK_TRANSLATIONS = {
   'master.field.locationLongitude': 'Довгота',
   'master.field.locationAccuracy': 'Точність координат',
   'master.edit.accountReadonly': 'Email, телефон і пароль акаунта змінює лише сам Майстер.',
-  'master.edit.conflict':
-    'Дані змінились, поки ви редагували. Перезавантажте форму — незбережені зміни буде втрачено.',
+  'master.edit.conflict': 'Дані змінились, поки ви редагували. Перезавантажте форму — незбережені зміни буде втрачено.',
   'master.history.empty': 'Дій над цим Майстром ще не було.',
   'audit.action.master.profile.update': 'Зміна профілю Майстра',
+  'audit.action.master.service.create': 'Створення послуги Майстра',
+  'audit.action.master.service.update': 'Зміна послуги Майстра',
+  'audit.action.master.service.deactivate': 'Деактивація послуги Майстра',
+  'audit.action.master.hours.update': 'Зміна тижневих годин Незалежного майстра',
+  'audit.action.master.schedule-pattern.update': 'Зміна Ротації Незалежного майстра',
+  'audit.action.master.time-off.create': 'Створення Відсутності Незалежного майстра',
+  'audit.action.master.time-off.remove': 'Видалення Відсутності Незалежного майстра',
+  'services.ownCatalogNote':
+    'Ціна й тривалість тут — саме ті, які бачить і бронює Клієнт: Копій майстра в Незалежного майстра немає.',
   'error.MASTER_DELETED': 'Майстра видалено — змінювати його не можна.',
   'error.MASTER_ON_ROSTER': 'Це Майстер салону — його дані редагуються в картці всередині Ростеру.',
 
@@ -418,8 +429,7 @@ export const UK_TRANSLATIONS = {
   'error.EDIT_CONFLICT': 'Дані змінились. Перезавантажте форму й спробуйте ще раз.',
   'error.SALON_DELETED': 'Салон видалено — змінювати його не можна.',
   'error.OWNER_MASTER_PROTECTED': 'Власника-майстра не можна вилучити з Ростеру його Салону.',
-  'error.MASTER_HAS_ACTIVE_APPOINTMENTS':
-    'У Майстра є активні Записи в цьому Салоні — спершу їх треба скасувати.',
+  'error.MASTER_HAS_ACTIVE_APPOINTMENTS': 'У Майстра є активні Записи в цьому Салоні — спершу їх треба скасувати.',
   'error.ROSTER_HOURS_OUTSIDE_SALON_HOURS': 'Робочий графік Майстра салону виходить за нові Години роботи.',
   'error.MASTER_HOURS_OUTSIDE_SALON_HOURS': 'Години Майстра виходять за Години роботи Салону.',
   'error.VALIDATION_ERROR': 'Дані не пройшли перевірку.',

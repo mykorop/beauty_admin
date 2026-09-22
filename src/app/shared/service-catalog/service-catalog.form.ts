@@ -19,17 +19,18 @@ import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
 import { finalize } from 'rxjs';
 import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
-import { type Dictionaries, type SalonService, SalonServicesClient } from '../../core/api/salon-services.client';
+import type { Dictionaries } from '../../core/api/salon-services.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
-import { serviceCategoryLabel } from '../../shared/service-category';
+import { serviceCategoryLabel } from '../service-category';
 import {
-  buildSalonServicePatch,
-  EMPTY_SALON_SERVICE_FORM_VALUE,
+  buildCatalogServicePatch,
+  EMPTY_CATALOG_SERVICE_FORM_VALUE,
+  toCatalogServiceFields,
+  toCatalogServiceFormValue,
   touchesMasterOwnedFields,
-  toSalonServiceFields,
-  toSalonServiceFormValue,
-} from './salon-service-patch';
+} from './service-catalog-patch';
+import type { CatalogService, ServiceCatalogPort } from './service-catalog.model';
 
 const numberValidators = (min: number, max: number): ValidatorFn[] => [
   Validators.required,
@@ -43,12 +44,16 @@ const withStored = (values: readonly string[], stored: string | undefined): read
   stored && !values.includes(stored) ? [...values, stored] : values;
 
 /**
- * One послуга of the Каталог: a new one (MDL only) or an existing one, of which only the changed
- * fields are sent, under the `updatedAt` the form was opened with. The moment ціна or тривалість
- * differs from the stored one it warns that the Копії майстрів stay as they are.
+ * One послуга of a Каталог: a new one (MDL only) or an existing one, of which only the changed
+ * fields are sent, under the `updatedAt` the form was opened with.
+ *
+ * It knows neither whose Каталог this is nor where it lives — the `port` it is handed writes it.
+ * The one thing that differs between the two is `copies`: in a Салон, ціна and тривалість are the
+ * starting point for Копії майстрів that never follow, and the form says so the moment either is
+ * touched; a Незалежний майстер has no Копії, so the warning would name nothing.
  */
 @Component({
-  selector: 'app-salon-service-form',
+  selector: 'app-service-catalog-form',
   imports: [ReactiveFormsModule, ButtonDirective, Checkbox, InputText, Message, Select, Textarea, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -195,21 +200,23 @@ const withStored = (values: readonly string[], stored: string | undefined): read
     </form>
   `,
 })
-export class SalonServiceForm implements OnInit {
-  private readonly client = inject(SalonServicesClient);
+export class ServiceCatalogForm implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly messages = inject(MessageService);
 
-  readonly salonId = input.required<string>();
+  /** Whose Каталог this is — the four calls that write it. */
+  readonly port = input.required<ServiceCatalogPort>();
   /** The service to edit; `null` opens the form on a new one. */
-  readonly service = input.required<SalonService | null>();
+  readonly service = input.required<CatalogService | null>();
   readonly dictionaries = input.required<Dictionaries>();
+  /** Копії майстрів can exist in this Каталог, so a new ціна or тривалість is worth warning about. */
+  readonly copies = input(false);
 
   /** The saved service, or `null` when cancelled — either way the tab goes back to the table. */
-  readonly closed = output<SalonService | null>();
+  readonly closed = output<CatalogService | null>();
 
   /** What the form is open on: the input, until a conflict reload brings a fresher one. */
-  protected readonly current = signal<SalonService | null>(null);
+  protected readonly current = signal<CatalogService | null>(null);
   protected readonly busy = signal(false);
   protected readonly conflict = signal(false);
 
@@ -249,12 +256,12 @@ export class SalonServiceForm implements OnInit {
   private readonly patch = computed(() => {
     this.value();
     const service = this.current();
-    return service ? buildSalonServicePatch(service, this.form.getRawValue()) : null;
+    return service ? buildCatalogServicePatch(service, this.form.getRawValue()) : null;
   });
 
   protected readonly warnsAboutCopies = computed(() => {
     const patch = this.patch();
-    return !!patch && touchesMasterOwnedFields(patch);
+    return this.copies() && !!patch && touchesMasterOwnedFields(patch);
   });
 
   protected readonly canSave = computed(() => {
@@ -279,14 +286,14 @@ export class SalonServiceForm implements OnInit {
     }
     const service = this.current();
     const reason = this.reason.value.trim() || undefined;
-    const fields = toSalonServiceFields(this.form.getRawValue());
+    const fields = toCatalogServiceFields(this.form.getRawValue());
     const request = service
-      ? this.client.update(this.salonId(), service.serviceId, {
+      ? this.port().update(service.serviceId, {
           updatedAt: service.updatedAt,
           patch: this.patch() ?? {},
           reason,
         })
-      : fields && this.client.create(this.salonId(), { fields, reason });
+      : fields && this.port().create({ fields, reason });
     if (!request) {
       return;
     }
@@ -312,8 +319,8 @@ export class SalonServiceForm implements OnInit {
       return;
     }
     this.busy.set(true);
-    this.client
-      .get(this.salonId(), service.serviceId)
+    this.port()
+      .get(service.serviceId)
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
         next: (fresh) => {
@@ -324,11 +331,11 @@ export class SalonServiceForm implements OnInit {
       });
   }
 
-  private resetTo(service: SalonService | null): void {
+  private resetTo(service: CatalogService | null): void {
     this.current.set(service);
     // The currency decides how the stored price reads, and a Копія keeps its own: switching it on an
     // existing service would re-denominate a number nobody re-typed. It is chosen once, on creation.
     this.form.controls.currency[service ? 'disable' : 'enable']();
-    this.form.reset(service ? toSalonServiceFormValue(service) : EMPTY_SALON_SERVICE_FORM_VALUE);
+    this.form.reset(service ? toCatalogServiceFormValue(service) : EMPTY_CATALOG_SERVICE_FORM_VALUE);
   }
 }
