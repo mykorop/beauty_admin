@@ -126,6 +126,7 @@ test.describe('salon roster', () => {
       'GET /admin/salons/s1': apiOk(salon()),
       'GET /admin/salons/s1/masters': apiOk({ items: [OWNER, master()] }),
       [`GET ${MASTER_PATH}`]: apiOk(master()),
+      'GET /admin/reviews': apiOk({ items: [], nextCursor: null }),
     });
     await signIn(page, ADMIN, '/salons/s1/roster');
 
@@ -147,7 +148,7 @@ test.describe('salon roster', () => {
 
     await page.getByTestId('card-tab').filter({ hasText: 'Відгуки' }).click();
     await expect(page).toHaveURL(/\/salons\/s1\/masters\/m2\/reviews$/);
-    await expect(page.getByTestId('card-tab-stub')).toBeVisible();
+    await expect(page.getByTestId('reviews-empty')).toBeVisible();
 
     // Back to the Ростер, not to the list of salons.
     await page.getByTestId('card-back').click();

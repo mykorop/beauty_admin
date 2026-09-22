@@ -15,12 +15,12 @@ import {
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AuditEntryDetails } from '../../shared/audit/audit-entry-details';
+import { PLATFORM_TIME_ZONE } from '../../shared/platform-clock';
 import { formatVenueDateTime } from '../../shared/venue-date';
 import {
   type AuditLogFilters,
   NO_AUDIT_LOG_FILTERS,
   parseAuditLogFilters,
-  PLATFORM_TIME_ZONE,
   toApiFilters,
   toQueryParams,
 } from './audit-log-filters';

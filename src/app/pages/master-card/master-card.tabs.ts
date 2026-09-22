@@ -30,6 +30,10 @@ const IMPLEMENTED: Routes = [
     loadComponent: () => import('./master-appointments.tab').then((m) => m.MasterAppointmentsTab),
   },
   {
+    path: 'reviews',
+    loadComponent: () => import('./master-reviews.tab').then((m) => m.MasterReviewsTab),
+  },
+  {
     path: 'history',
     loadComponent: () => import('./master-history.tab').then((m) => m.MasterHistoryTab),
   },

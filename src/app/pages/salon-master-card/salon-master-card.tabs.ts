@@ -28,6 +28,10 @@ const IMPLEMENTED: Routes = [
     loadComponent: () =>
       import('./salon-master-appointments.tab').then((m) => m.SalonMasterAppointmentsTab),
   },
+  {
+    path: 'reviews',
+    loadComponent: () => import('./salon-master-reviews.tab').then((m) => m.SalonMasterReviewsTab),
+  },
 ];
 
 export const SALON_MASTER_CARD_ROUTES: Routes = [

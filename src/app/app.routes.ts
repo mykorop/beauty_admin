@@ -40,11 +40,15 @@ export const routes: Routes = [
         loadChildren: () => import('./pages/master-card/master-card.tabs').then((m) => m.MASTER_CARD_ROUTES),
       },
       {
+        path: 'reviews',
+        loadComponent: () => import('./pages/reviews/reviews.page').then((m) => m.ReviewsPage),
+      },
+      {
         path: 'audit-log',
         loadComponent: () => import('./pages/audit-log/audit-log.page').then((m) => m.AuditLogPage),
       },
       ...NAV_SECTIONS.filter(
-        (section) => !['salons', 'independent-masters', 'audit-log'].includes(section.path),
+        (section) => !['salons', 'independent-masters', 'reviews', 'audit-log'].includes(section.path),
       ).map((section) => ({
         path: section.path,
         loadComponent: () => import('./pages/section-stub/section-stub.page').then((m) => m.SectionStubPage),

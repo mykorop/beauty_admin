@@ -1,0 +1,172 @@
+<div class="mb-4 flex flex-wrap items-end gap-3">
+  <label class="flex flex-col gap-1 text-xs text-slate-600">
+    {{ 'reviews.filter.from' | t }}
+    <input
+      pInputText
+      type="date"
+      data-testid="reviews-filter-from"
+      [max]="filters().to ?? ''"
+      [value]="filters().from ?? ''"
+      (change)="setFilter({ from: $any($event.target).value })"
+    />
+  </label>
+  <label class="flex flex-col gap-1 text-xs text-slate-600">
+    {{ 'reviews.filter.to' | t }}
+    <input
+      pInputText
+      type="date"
+      data-testid="reviews-filter-to"
+      [min]="filters().from ?? ''"
+      [value]="filters().to ?? ''"
+      (change)="setFilter({ to: $any($event.target).value })"
+    />
+  </label>
+  <p-select
+    data-testid="reviews-filter-rating"
+    class="w-40"
+    optionLabel="label"
+    optionValue="value"
+    [options]="ratingOptions"
+    [showClear]="true"
+    [placeholder]="'reviews.filter.rating' | t"
+    [ariaLabel]="'reviews.filter.rating' | t"
+    [ngModel]="filters().rating"
+    (ngModelChange)="setFilter({ rating: $event })"
+  />
+  <p-select
+    data-testid="reviews-filter-state"
+    class="w-48"
+    optionLabel="label"
+    optionValue="value"
+    [options]="stateOptions()"
+    [showClear]="true"
+    [placeholder]="'reviews.filter.state' | t"
+    [ariaLabel]="'reviews.filter.state' | t"
+    [ngModel]="filters().state"
+    (ngModelChange)="setFilter({ state: $event })"
+  />
+  @if (filtered()) {
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      size="small"
+      data-testid="reviews-filter-reset"
+      [text]="true"
+      [label]="'reviews.filter.reset' | t"
+      (click)="resetFilters()"
+    ></button>
+  }
+  <span class="flex-1"></span>
+  <p-button
+    data-testid="reviews-refresh"
+    severity="secondary"
+    size="small"
+    icon="pi pi-refresh"
+    [label]="'list.refresh' | t"
+    [loading]="loading()"
+    (onClick)="reload.next()"
+  />
+</div>
+
+@if (rows(); as rows) {
+  <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <table class="w-full text-left text-sm" data-testid="reviews-table">
+      <thead class="bg-slate-50 text-xs text-slate-600">
+        <tr>
+          <th class="px-3 py-2 font-medium">{{ 'reviews.column.when' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'reviews.column.client' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'reviews.column.masterRating' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'reviews.column.salonRating' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'reviews.column.comment' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'reviews.column.state' | t }}</th>
+          <th class="px-3 py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows; track row.review.reviewId) {
+          <tr class="border-t border-slate-100 align-top" data-testid="review-row" [class.bg-slate-50]="row.hidden">
+            <td class="px-3 py-3 whitespace-nowrap" data-testid="review-when">{{ row.when }}</td>
+            <td class="px-3 py-3" data-testid="review-client">
+              {{ row.review.clientName || '—' }}
+            </td>
+            <td class="px-3 py-3 whitespace-nowrap" data-testid="review-master-rating">
+              {{ row.masterRating }}
+            </td>
+            <td class="px-3 py-3 whitespace-nowrap" data-testid="review-salon-rating">
+              {{ row.salonRating }}
+            </td>
+            <td class="max-w-md px-3 py-3 whitespace-pre-line" data-testid="review-comment">
+              {{ row.review.comment || '—' }}
+            </td>
+            <td class="px-3 py-3">
+              <p-tag
+                data-testid="review-state"
+                [severity]="row.hidden ? 'warn' : 'success'"
+                [value]="(row.hidden ? 'reviews.state.hidden' : 'reviews.state.visible') | t"
+              />
+              @if (row.hidden) {
+                <p class="mt-1 text-xs text-slate-500" data-testid="review-hidden-reason">
+                  {{ 'reviews.hiddenReason' | t: { reason: row.review.hiddenReason || '—' } }}
+                </p>
+              }
+            </td>
+            <td class="px-3 py-3 text-right">
+              <button
+                pButton
+                type="button"
+                size="small"
+                [outlined]="true"
+                [attr.data-testid]="row.hidden ? 'review-unhide' : 'review-hide'"
+                [severity]="row.hidden ? 'primary' : 'danger'"
+                [label]="(row.hidden ? 'reviews.action.unhide' : 'reviews.action.hide') | t"
+                [disabled]="busy()"
+                (click)="ask(row.review)"
+              ></button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-600" data-testid="reviews-empty">
+              {{ (nextCursor() ? 'reviews.emptyPage' : 'reviews.empty') | t }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="mt-2 text-xs text-slate-500" data-testid="reviews-readonly">
+    {{ 'reviews.readonly' | t }}
+  </p>
+  @if (nextCursor()) {
+    <div class="mt-3">
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        size="small"
+        data-testid="reviews-more"
+        [label]="'history.more' | t"
+        [loading]="loading()"
+        (click)="more.next()"
+      ></button>
+    </div>
+  }
+} @else if (failed()) {
+  <p class="text-slate-600" data-testid="reviews-failed">{{ 'list.failed' | t }}</p>
+}
+
+@if (asked(); as asked) {
+  <app-reason-dialog
+    [titleKey]="asked.hiddenAt ? 'reviews.unhide.title' : 'reviews.hide.title'"
+    [confirmLabelKey]="asked.hiddenAt ? 'reviews.unhide.confirm' : 'reviews.hide.confirm'"
+    [confirmSeverity]="asked.hiddenAt ? 'primary' : 'danger'"
+    [reasonRequired]="!asked.hiddenAt"
+    [busy]="busy()"
+    [visible]="true"
+    (visibleChange)="closeUnless($event)"
+    (confirmed)="apply(asked, $event)"
+  >
+    {{ (asked.hiddenAt ? 'reviews.unhide.message' : 'reviews.hide.message') | t: { client: asked.clientName || '—' } }}
+  </app-reason-dialog>
+}

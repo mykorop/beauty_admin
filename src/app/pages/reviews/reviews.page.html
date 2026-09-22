@@ -1,0 +1,48 @@
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.reviews' | t }}</h1>
+</div>
+
+<p class="mb-4 max-w-3xl text-sm text-slate-600" data-testid="reviews-scope-hint">
+  {{ 'reviews.scope.hint' | t }}
+</p>
+
+<div class="mb-5 flex flex-wrap items-end gap-3">
+  <label class="flex flex-col gap-1 text-xs text-slate-600">
+    {{ 'reviews.scope.salon' | t }}
+    <p-select
+      data-testid="reviews-scope-salon"
+      class="w-72"
+      optionLabel="label"
+      optionValue="value"
+      [options]="salonOptions()"
+      [filter]="true"
+      [showClear]="true"
+      [placeholder]="'reviews.scope.salonPlaceholder' | t"
+      [ariaLabel]="'reviews.scope.salon' | t"
+      [ngModel]="scope().salonId ?? null"
+      (ngModelChange)="pick({ salonId: $event, masterId: null })"
+    />
+  </label>
+  <label class="flex flex-col gap-1 text-xs text-slate-600">
+    {{ 'reviews.scope.master' | t }}
+    <p-select
+      data-testid="reviews-scope-master"
+      class="w-72"
+      optionLabel="label"
+      optionValue="value"
+      [options]="masterOptions()"
+      [filter]="true"
+      [showClear]="true"
+      [placeholder]="'reviews.scope.masterPlaceholder' | t"
+      [ariaLabel]="'reviews.scope.master' | t"
+      [ngModel]="scope().masterId ?? null"
+      (ngModelChange)="pick({ masterId: $event, salonId: null })"
+    />
+  </label>
+</div>
+
+@if (chosen(); as chosen) {
+  <app-reviews [scope]="chosen" [timezone]="platformTimeZone" />
+} @else {
+  <p class="text-slate-600" data-testid="reviews-scope-empty">{{ 'reviews.scope.empty' | t }}</p>
+}

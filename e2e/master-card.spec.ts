@@ -105,7 +105,7 @@ test.describe('independent master card', () => {
       'GET /admin/masters/nope': apiError(404, 'NOT_FOUND'),
     });
 
-    await signIn(page, ADMIN, '/independent-masters/m1/reviews');
+    await signIn(page, ADMIN, '/independent-masters/m1/media');
     await expect(page.getByTestId('card-tab-stub')).toBeVisible();
 
     await page.goto('/independent-masters/nope');

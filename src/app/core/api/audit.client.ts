@@ -41,6 +41,10 @@ export const AUDIT_ACTIONS = [
   'appointment.status.update',
   'appointment.reschedule',
   'appointment.bulk-cancel',
+  // Модерація відгуків, spelled by the decision for the same reason: one відгук belongs either to
+  // a Салон or to a Незалежний майстер, and `targetType` carries which.
+  'review.hide',
+  'review.unhide',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

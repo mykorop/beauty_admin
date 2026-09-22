@@ -46,10 +46,10 @@ test.describe('sign-in', () => {
   test('returns to the address that asked for the sign-in', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, { 'GET /admin/me': ME });
 
-    await signIn(page, ADMIN, '/reviews');
+    await signIn(page, ADMIN, '/clients');
 
-    await expect(page).toHaveURL(/\/reviews$/);
-    await expect(page.getByTestId('section-title')).toHaveText('Відгуки');
+    await expect(page).toHaveURL(/\/clients$/);
+    await expect(page.getByTestId('section-title')).toHaveText('Клієнти');
   });
 
   test('an account with another role is refused and signed out', async ({ page, mockBackend }) => {

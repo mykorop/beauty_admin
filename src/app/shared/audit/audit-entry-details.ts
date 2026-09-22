@@ -83,6 +83,16 @@ export class AuditEntryDetails {
         this.i18n.optional(`appointments.field.${part}`) ?? part,
       ].join(' · ');
     }
+    // `reviews.<reviewId>.<field>` — a відгук the panel hid or returned. The id stays in the
+    // label for the same reason the Запис's does: it is the only thing that tells two rows apart.
+    const review = REVIEW_FIELD.exec(field);
+    if (review) {
+      const [, reviewId, part] = review;
+      return [
+        `${this.i18n.t('reviews.auditField')} ${reviewId}`,
+        this.i18n.optional(`reviews.field.${part}`) ?? part,
+      ].join(' · ');
+    }
     const service = SERVICE_FIELD.exec(field);
     if (service) {
       const part = service[1];
@@ -172,6 +182,9 @@ const SERVICE_FIELD = /^services\.[^.]+(?:\.(\w+))?$/;
 
 /** `appointments.<appointmentId>.<field>` — one Запис moved by an action of the panel. */
 const APPOINTMENT_FIELD = /^appointments\.([^.]+)\.(\w+)$/;
+
+/** `reviews.<reviewId>.<field>` — one відгук hidden or returned by the panel. */
+const REVIEW_FIELD = /^reviews\.([^.]+)\.(\w+)$/;
 
 /** `timeOff.<groupId>` — one Відсутність, filed or removed whole. */
 const TIME_OFF_FIELD = /^timeOff\.[^.]+$/;
