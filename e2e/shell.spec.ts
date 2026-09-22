@@ -49,8 +49,9 @@ test.describe('session', () => {
     mockBackend,
   }) => {
     await mockBackend(ADMIN, { 'GET /admin/me': ME });
-    await signIn(page, ADMIN, '/clients');
-    await expect(page.getByTestId('section-title')).toHaveText('Клієнти');
+    // A section that reads nothing of its own: this is about the address the shell returns to.
+    await signIn(page, ADMIN, '/appointments');
+    await expect(page.getByTestId('section-title')).toHaveText('Записи');
 
     // What an expired refresh token leaves behind: no usable tokens in the browser.
     await page.evaluate(() => {
@@ -58,11 +59,11 @@ test.describe('session', () => {
         .filter((key) => key.startsWith('CognitoIdentityServiceProvider.'))
         .forEach((key) => localStorage.removeItem(key));
     });
-    await page.goto('/clients?city=Chisinau');
+    await page.goto('/appointments?city=Chisinau');
 
-    await expect(page).toHaveURL(/\/login\?returnUrl=%2Fclients%3Fcity%3DChisinau/);
+    await expect(page).toHaveURL(/\/login\?returnUrl=%2Fappointments%3Fcity%3DChisinau/);
 
     await signIn(page, ADMIN, page.url());
-    await expect(page).toHaveURL(/\/clients\?city=Chisinau$/);
+    await expect(page).toHaveURL(/\/appointments\?city=Chisinau$/);
   });
 });

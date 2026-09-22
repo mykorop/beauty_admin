@@ -1,50 +1,58 @@
 <div class="mb-4 flex flex-wrap items-end gap-3">
-  <label class="flex flex-col gap-1 text-xs text-slate-600">
-    {{ 'reviews.filter.from' | t }}
-    <input
-      pInputText
-      type="date"
-      data-testid="reviews-filter-from"
-      [max]="filters().to ?? ''"
-      [value]="filters().from ?? ''"
-      (change)="setFilter({ from: $any($event.target).value })"
+  @if (shows('from')) {
+    <label class="flex flex-col gap-1 text-xs text-slate-600">
+      {{ 'reviews.filter.from' | t }}
+      <input
+        pInputText
+        type="date"
+        data-testid="reviews-filter-from"
+        [max]="filters().to ?? ''"
+        [value]="filters().from ?? ''"
+        (change)="setFilter({ from: $any($event.target).value })"
+      />
+    </label>
+  }
+  @if (shows('to')) {
+    <label class="flex flex-col gap-1 text-xs text-slate-600">
+      {{ 'reviews.filter.to' | t }}
+      <input
+        pInputText
+        type="date"
+        data-testid="reviews-filter-to"
+        [min]="filters().from ?? ''"
+        [value]="filters().to ?? ''"
+        (change)="setFilter({ to: $any($event.target).value })"
+      />
+    </label>
+  }
+  @if (shows('rating')) {
+    <p-select
+      data-testid="reviews-filter-rating"
+      class="w-40"
+      optionLabel="label"
+      optionValue="value"
+      [options]="ratingOptions"
+      [showClear]="true"
+      [placeholder]="'reviews.filter.rating' | t"
+      [ariaLabel]="'reviews.filter.rating' | t"
+      [ngModel]="filters().rating"
+      (ngModelChange)="setFilter({ rating: $event })"
     />
-  </label>
-  <label class="flex flex-col gap-1 text-xs text-slate-600">
-    {{ 'reviews.filter.to' | t }}
-    <input
-      pInputText
-      type="date"
-      data-testid="reviews-filter-to"
-      [min]="filters().from ?? ''"
-      [value]="filters().to ?? ''"
-      (change)="setFilter({ to: $any($event.target).value })"
+  }
+  @if (shows('state')) {
+    <p-select
+      data-testid="reviews-filter-state"
+      class="w-48"
+      optionLabel="label"
+      optionValue="value"
+      [options]="stateOptions()"
+      [showClear]="true"
+      [placeholder]="'reviews.filter.state' | t"
+      [ariaLabel]="'reviews.filter.state' | t"
+      [ngModel]="filters().state"
+      (ngModelChange)="setFilter({ state: $event })"
     />
-  </label>
-  <p-select
-    data-testid="reviews-filter-rating"
-    class="w-40"
-    optionLabel="label"
-    optionValue="value"
-    [options]="ratingOptions"
-    [showClear]="true"
-    [placeholder]="'reviews.filter.rating' | t"
-    [ariaLabel]="'reviews.filter.rating' | t"
-    [ngModel]="filters().rating"
-    (ngModelChange)="setFilter({ rating: $event })"
-  />
-  <p-select
-    data-testid="reviews-filter-state"
-    class="w-48"
-    optionLabel="label"
-    optionValue="value"
-    [options]="stateOptions()"
-    [showClear]="true"
-    [placeholder]="'reviews.filter.state' | t"
-    [ariaLabel]="'reviews.filter.state' | t"
-    [ngModel]="filters().state"
-    (ngModelChange)="setFilter({ state: $event })"
-  />
+  }
   @if (filtered()) {
     <button
       pButton

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import type { ReviewsScope } from '../../core/api/reviews.client';
+import { ReviewsClient, type ReviewsScope } from '../../core/api/reviews.client';
+import { entityReviewsFeed } from '../../shared/reviews/reviews.feed';
 import { ReviewsTable } from '../../shared/reviews/reviews.table';
 import { MasterCardStore } from './master-card.store';
 
@@ -15,7 +16,7 @@ import { MasterCardStore } from './master-card.store';
   // Guarded on the id, like the Салон twin.
   template: `
     @if (scope.masterId) {
-      <app-reviews [scope]="scope" [timezone]="timezone" />
+      <app-reviews [feed]="feed" [timezone]="timezone" />
     }
   `,
 })
@@ -23,6 +24,7 @@ export class MasterReviewsTab {
   // The card renders its tabs only once the master is loaded, and rebuilds them for another one.
   private readonly master = inject(MasterCardStore).master();
   protected readonly scope: ReviewsScope = { masterId: this.master?.masterId ?? '' };
+  protected readonly feed = entityReviewsFeed(inject(ReviewsClient), this.scope);
   /** His own clock — he is his own place. */
   protected readonly timezone = this.master?.timezone ?? 'UTC';
 }

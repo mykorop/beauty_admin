@@ -40,6 +40,15 @@ export const routes: Routes = [
         loadChildren: () => import('./pages/master-card/master-card.tabs').then((m) => m.MASTER_CARD_ROUTES),
       },
       {
+        path: 'clients',
+        loadComponent: () => import('./pages/clients/clients.page').then((m) => m.ClientsPage),
+      },
+      {
+        path: 'clients/:clientId',
+        loadComponent: () => import('./pages/client-card/client-card.page').then((m) => m.ClientCardPage),
+        loadChildren: () => import('./pages/client-card/client-card.tabs').then((m) => m.CLIENT_CARD_ROUTES),
+      },
+      {
         path: 'reviews',
         loadComponent: () => import('./pages/reviews/reviews.page').then((m) => m.ReviewsPage),
       },
@@ -48,7 +57,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/audit-log/audit-log.page').then((m) => m.AuditLogPage),
       },
       ...NAV_SECTIONS.filter(
-        (section) => !['salons', 'independent-masters', 'reviews', 'audit-log'].includes(section.path),
+        (section) => !['salons', 'independent-masters', 'clients', 'reviews', 'audit-log'].includes(section.path),
       ).map((section) => ({
         path: section.path,
         loadComponent: () => import('./pages/section-stub/section-stub.page').then((m) => m.SectionStubPage),

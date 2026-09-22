@@ -30,7 +30,7 @@ export class SalonsPage extends ProfileTablePage<SalonListItem, SalonSortField> 
   private readonly client = inject(SalonsClient);
 
   constructor() {
-    super({ sortFields: SALON_SORT_FIELDS, defaults: DEFAULT_TABLE_STATE });
+    super({ sortFields: SALON_SORT_FIELDS, defaults: DEFAULT_TABLE_STATE, city: true });
   }
 
   protected fetch(options: { refresh: boolean }): Observable<ProfileList<SalonListItem>> {

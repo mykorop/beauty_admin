@@ -1,0 +1,109 @@
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.clients' | t }}</h1>
+  <span class="flex-1"></span>
+  @if (builtAt(); as builtAt) {
+    <span class="text-sm text-slate-600" data-testid="clients-built-at">{{
+      'list.updatedAt' | t: { time: builtAt }
+    }}</span>
+  }
+  <p-button
+    data-testid="clients-refresh"
+    severity="secondary"
+    size="small"
+    icon="pi pi-refresh"
+    [label]="'list.refresh' | t"
+    [loading]="loading()"
+    (onClick)="refresh()"
+  />
+</div>
+
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <p-iconfield class="w-80">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      data-testid="clients-search"
+      [attr.aria-label]="'clients.search' | t"
+      [placeholder]="'clients.search' | t"
+      [value]="searchText()"
+      (input)="onSearch($any($event.target).value)"
+    />
+  </p-iconfield>
+  <p-select
+    data-testid="clients-status-filter"
+    class="w-56"
+    [options]="statusOptions()"
+    optionLabel="label"
+    optionValue="value"
+    [showClear]="true"
+    [placeholder]="'salons.filter.status' | t"
+    [ariaLabel]="'salons.filter.status' | t"
+    [ngModel]="state().status"
+    (ngModelChange)="onStatus($event)"
+  />
+  <span class="text-sm text-slate-600" data-testid="clients-total">{{ 'list.total' | t: { count: view().total } }}</span>
+</div>
+
+<p-table
+  data-testid="clients-table"
+  [value]="view().rows"
+  dataKey="clientId"
+  [lazy]="true"
+  [lazyLoadOnInit]="false"
+  (onLazyLoad)="onLazyLoad($event)"
+  [sortField]="state().sort"
+  [sortOrder]="sortOrder()"
+  [paginator]="true"
+  [first]="first()"
+  [rows]="state().size"
+  [totalRecords]="view().total"
+  [rowsPerPageOptions]="pageSizes"
+  [loading]="loading()"
+  [rowHover]="true"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="name">{{ 'clients.column.name' | t }} <p-sortIcon field="name" /></th>
+      <th pSortableColumn="email">{{ 'clients.column.email' | t }} <p-sortIcon field="email" /></th>
+      <th pSortableColumn="phone">{{ 'clients.column.phone' | t }} <p-sortIcon field="phone" /></th>
+      <th pSortableColumn="status">{{ 'salons.column.status' | t }} <p-sortIcon field="status" /></th>
+      <th pSortableColumn="createdAt">{{ 'clients.column.registeredAt' | t }} <p-sortIcon field="createdAt" /></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-client>
+    <tr
+      class="cursor-pointer"
+      data-testid="client-row"
+      [attr.data-status]="client.status"
+      [class.bg-red-50]="client.status === 'deleted'"
+      [class.text-slate-500]="client.status === 'deleted'"
+      (click)="openClient(client.clientId, $event)"
+    >
+      <td>
+        <a class="font-medium hover:underline" data-testid="client-name" [routerLink]="['/clients', client.clientId]">{{
+          client.name || '—'
+        }}</a>
+      </td>
+      <td>{{ client.email || '—' }}</td>
+      <td>{{ client.phone || '—' }}</td>
+      <td>
+        <p-tag
+          data-testid="client-status"
+          [severity]="statusSeverity(client.status)"
+          [icon]="client.status === 'deleted' ? 'pi pi-trash' : undefined"
+          [value]="statusLabelKey(client.status) | t"
+        />
+      </td>
+      <td>{{ formatDate(client.createdAt) }}</td>
+    </tr>
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="5" class="py-8 text-center text-slate-600" data-testid="clients-empty">
+        {{ (failed() ? 'list.failed' : 'list.empty') | t }}
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import type { ReviewsScope } from '../../core/api/reviews.client';
+import { ReviewsClient, type ReviewsScope } from '../../core/api/reviews.client';
+import { entityReviewsFeed } from '../../shared/reviews/reviews.feed';
 import { ReviewsTable } from '../../shared/reviews/reviews.table';
 import { SalonCardStore } from './salon-card.store';
 
@@ -15,7 +16,7 @@ import { SalonCardStore } from './salon-card.store';
   // without one would ask for a feed the backend refuses.
   template: `
     @if (scope.salonId) {
-      <app-reviews [scope]="scope" [timezone]="timezone" />
+      <app-reviews [feed]="feed" [timezone]="timezone" />
     }
   `,
 })
@@ -23,6 +24,7 @@ export class SalonReviewsTab {
   // The card renders its tabs only once the salon is loaded, and rebuilds them for another one.
   private readonly salon = inject(SalonCardStore).salon();
   protected readonly scope: ReviewsScope = { salonId: this.salon?.salonId ?? '' };
+  protected readonly feed = entityReviewsFeed(inject(ReviewsClient), this.scope);
   /** The Салон's own clock: a review is dated by the day its Клієнт and its Салон both lived. */
   protected readonly timezone = this.salon?.timezone ?? 'UTC';
 }

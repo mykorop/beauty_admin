@@ -24,6 +24,7 @@ import {
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { formatVenueDateTime, venueToday } from '../venue-date';
+import { appointmentRowPatch } from './appointment-row';
 import { appointmentStatusLabel, formatPrice } from './appointment-wording';
 import { AppointmentDetailsPanel } from './appointment-details';
 import {
@@ -35,21 +36,6 @@ import {
   toQueryParams,
 } from './appointment-filters';
 import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.model';
-
-/** The card's answer, narrowed to what a table row shows — the card carries strictly more. */
-function toRow(details: AppointmentDetails): Partial<Appointment> {
-  return {
-    startTime: details.startTime,
-    endTime: details.endTime,
-    status: details.status,
-    masterId: details.masterId,
-    masterName: details.masterName,
-    serviceNames: details.services.map((service) => service.name),
-    totalPrice: details.totalPrice,
-    currency: details.currency,
-    isManual: details.isManual,
-  };
-}
 
 /**
  * Записи of a Салон or of a Майстер: the window the reader asked for, soonest first, each row
@@ -355,7 +341,7 @@ export class AppointmentsTab implements OnInit {
     this.appointments.update(
       (rows) =>
         rows?.map((row) =>
-          row.appointmentId === details.appointmentId ? { ...row, ...toRow(details) } : row,
+          row.appointmentId === details.appointmentId ? { ...row, ...appointmentRowPatch(details) } : row,
         ) ?? rows,
     );
   }

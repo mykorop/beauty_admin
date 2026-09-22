@@ -7,20 +7,22 @@ import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Tag } from 'primeng/tag';
 import { catchError, combineLatest, EMPTY, exhaustMap, map, startWith, Subject, switchMap } from 'rxjs';
-import { REVIEW_STATES, ReviewsClient, type Review, type ReviewsScope } from '../../core/api/reviews.client';
+import { REVIEW_STATES, ReviewsClient, type Review } from '../../core/api/reviews.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ReasonDialog } from '../reason-dialog/reason-dialog';
 import { formatVenueDateTime } from '../venue-date';
-import { NO_REVIEW_FILTERS, parseReviewFilters, toApiQuery, toQueryParams, type ReviewFilters } from './review-filters';
+import type { ReviewFilterName, ReviewsFeed } from './reviews.feed';
+import { NO_REVIEW_FILTERS, parseReviewFilters, toQueryParams, type ReviewFilters } from './review-filters';
 
 /**
- * Відгуки of one Салон, of one Майстер, or of one Майстер inside one Салон: the стрічка модерації
- * and the «Відгуки» tab of every card, which are the same table over the same endpoint.
+ * Відгуки of one Салон, of one Майстер, of one Майстер inside one Салон, or of one Клієнт: the
+ * стрічка модерації and the «Відгуки» tab of every card, which are the same table.
  *
- * Whose reviews these are lives entirely in `scope`; the filters live in the address, so a view can
- * be linked to. The one thing the table does **not** offer is editing: a review's words and scores
- * are the Клієнт's, and the platform may only take them off the shop window.
+ * Whose reviews these are lives entirely in `feed` — its address, and which of the filters it can
+ * be asked for; the filters themselves live in the address, so a view can be linked to. The one
+ * thing the table does **not** offer is editing: a review's words and scores are the Клієнт's, and
+ * the platform may only take them off the shop window.
  *
  * Every action answers with the whole review, so the row redraws from the answer rather than from a
  * re-read — a re-read under a state filter would make the row vanish from under the dialog that
@@ -33,8 +35,8 @@ import { NO_REVIEW_FILTERS, parseReviewFilters, toApiQuery, toQueryParams, type 
   templateUrl: './reviews.table.html',
 })
 export class ReviewsTable {
-  /** The Салон and / or the Майстер whose feed this is; the backend refuses a query naming neither. */
-  readonly scope = input.required<ReviewsScope>();
+  /** Whose reviews these are, and what the endpoint behind them accepts. */
+  readonly feed = input.required<ReviewsFeed>();
 
   /**
    * The clock every row is printed on, and the one the day filters are cut on.
@@ -45,16 +47,22 @@ export class ReviewsTable {
    */
   readonly timezone = input.required<string>();
 
+  /** Moderation is one address whatever feed the review was found in (`/admin/reviews/{id}/…`). */
   private readonly client = inject(ReviewsClient);
   private readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
+  /** A control is drawn only when the open feed can actually be asked for it. */
+  protected readonly shows = (filter: ReviewFilterName): boolean => this.feed().filters.includes(filter);
+
   private readonly filters$ = this.route.queryParamMap.pipe(map(parseReviewFilters));
   protected readonly filters = toSignal(this.filters$, {
     initialValue: parseReviewFilters(this.route.snapshot.queryParamMap),
   });
-  protected readonly filtered = computed(() => Object.values(this.filters()).some((value) => value !== null));
+  protected readonly filtered = computed(() =>
+    this.feed().filters.some((name) => this.filters()[name] !== null),
+  );
 
   private readonly reviews = signal<Review[] | null>(null);
   protected readonly nextCursor = signal<string | null>(null);
@@ -93,24 +101,23 @@ export class ReviewsTable {
 
   constructor() {
     combineLatest([
-      toObservable(this.scope),
+      toObservable(this.feed),
       toObservable(this.timezone),
       this.filters$,
       this.reload.pipe(startWith(undefined)),
     ])
       .pipe(
-        // A new scope or new filters start the feed over; an answer to the old question is dropped.
-        switchMap(([scope, timezone, filters]) => {
+        // A new feed or new filters start it over; an answer to the old question is dropped.
+        switchMap(([feed, timezone, filters]) => {
           this.reviews.set(null);
           this.nextCursor.set(null);
           this.asked.set(null);
-          const query = toApiQuery(scope, filters, timezone);
           return this.more.pipe(
             startWith(undefined),
             exhaustMap(() => {
               this.loading.set(true);
               this.failed.set(false);
-              return this.client.list(query, this.nextCursor() ?? undefined).pipe(
+              return feed.list(filters, timezone, this.nextCursor() ?? undefined).pipe(
                 // The interceptor has already worded the refusal as a toast; rows already shown stay.
                 catchError(() => {
                   this.failed.set(true);

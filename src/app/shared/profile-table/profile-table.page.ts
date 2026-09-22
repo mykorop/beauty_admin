@@ -25,6 +25,14 @@ const SEARCH_DEBOUNCE_MS = 250;
 export type ProfileTableConfig<Sort extends string> = {
   sortFields: readonly Sort[];
   defaults: ProfileTableState<Sort>;
+  /**
+   * Whether these profiles have a locality at all, and so whether the page draws the city filter.
+   *
+   * A page that draws no control for a filter must not be subject to it either: `?city=` on the
+   * Клієнти table would otherwise match nothing, empty the list, and leave no way on screen to
+   * clear it — a hand-typed or stale address turning into a table that looks simply broken.
+   */
+  city: boolean;
 };
 
 /**
@@ -104,8 +112,11 @@ export abstract class ProfileTablePage<Row extends ProfileRow, Sort extends keyo
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private readonly config: ProfileTableConfig<Sort>) {
-    const parse = (params: { get(name: string): string | null }) =>
-      parseProfileTableState(params, config.sortFields, config.defaults);
+    const parse = (params: { get(name: string): string | null }): ProfileTableState<Sort> => {
+      const state = parseProfileTableState(params, config.sortFields, config.defaults);
+      // An address is user input, and a page without the control cannot honour — or undo — this one.
+      return config.city ? state : { ...state, city: null };
+    };
     this.addressState = toSignal(this.route.queryParamMap.pipe(map(parse)), {
       initialValue: parse(this.route.snapshot.queryParamMap),
     });

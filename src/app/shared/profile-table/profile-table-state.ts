@@ -1,5 +1,5 @@
 /**
- * The table of every Салон and the table of every Незалежний майстер are the same table: the
+ * The table of every Салон, of every Незалежний майстер and of every Клієнт is the same table: the
  * backend hands over the whole list, and searching, filtering, sorting and paging happen here with
  * the address owning that state. Only the columns differ, so only the columns live in each page.
  */
@@ -9,15 +9,20 @@ export type ProfileStatus = 'active' | 'blocked' | 'deleted';
 export const PROFILE_STATUSES: readonly ProfileStatus[] = ['active', 'blocked', 'deleted'];
 export const PAGE_SIZES: readonly number[] = [25, 50, 100];
 
-/** What every profile row carries, whatever the profile is. A page adds its own columns. */
+/**
+ * What every profile row carries, whatever the profile is: who it is, how to reach them, what state
+ * they are in and since when — which is exactly what the search box and the state filter work on.
+ *
+ * The locality is optional because a Клієнт has none: he is a person with an account, not a place,
+ * and his table shows neither the column nor the filter. Rating, review count and everything else a
+ * business has live on the page's own row type, not here.
+ */
 export type ProfileRow = {
   name: string;
-  city: string;
-  cityCode: string;
+  city?: string;
+  cityCode?: string;
   email: string;
   phone: string;
-  rating: number;
-  reviewCount: number;
   status: ProfileStatus;
   createdAt: string;
 };
@@ -78,7 +83,8 @@ export function toProfileQueryParams<Sort extends string>(
 }
 
 /** Profiles older than the city directory carry a name but no code; the name is then the key. */
-export const cityKeyOf = (item: Pick<ProfileRow, 'city' | 'cityCode'>): string => item.cityCode || item.city;
+export const cityKeyOf = (item: Pick<ProfileRow, 'city' | 'cityCode'>): string =>
+  item.cityCode || item.city || '';
 
 export type CityOption = { key: string; label: string };
 

@@ -42,7 +42,7 @@
 </div>
 
 @if (chosen(); as chosen) {
-  <app-reviews [scope]="chosen" [timezone]="platformTimeZone" />
+  <app-reviews [feed]="chosen" [timezone]="platformTimeZone" />
 } @else {
   <p class="text-slate-600" data-testid="reviews-scope-empty">{{ 'reviews.scope.empty' | t }}</p>
 }

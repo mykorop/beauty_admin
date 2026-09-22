@@ -46,10 +46,11 @@ test.describe('sign-in', () => {
   test('returns to the address that asked for the sign-in', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, { 'GET /admin/me': ME });
 
-    await signIn(page, ADMIN, '/clients');
+    // A section that reads nothing of its own: this is about the address the shell returns to.
+    await signIn(page, ADMIN, '/appointments');
 
-    await expect(page).toHaveURL(/\/clients$/);
-    await expect(page.getByTestId('section-title')).toHaveText('Клієнти');
+    await expect(page).toHaveURL(/\/appointments$/);
+    await expect(page.getByTestId('section-title')).toHaveText('Записи');
   });
 
   test('an account with another role is refused and signed out', async ({ page, mockBackend }) => {

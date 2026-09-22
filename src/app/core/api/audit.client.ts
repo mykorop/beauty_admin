@@ -4,7 +4,7 @@ import type { Observable } from 'rxjs';
 import { adminApiUrl } from './admin-api-url';
 
 /** Mirrors of the backend's lists; they grow with every card that gains write actions. */
-export const AUDIT_TARGET_TYPES = ['salon', 'master'] as const;
+export const AUDIT_TARGET_TYPES = ['salon', 'master', 'client'] as const;
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 
 export const AUDIT_ACTIONS = [
@@ -52,6 +52,10 @@ export const AUDIT_ACTIONS = [
   'master.image.remove',
   'master.avatar.remove',
   'master.certificate.remove',
+  // The only two actions a Клієнт's card has: his profile is read-only and no endpoint edits it,
+  // so Блокування and its lifting are the whole of his «Історія».
+  'client.block',
+  'client.unblock',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

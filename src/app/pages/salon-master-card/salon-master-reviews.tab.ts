@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import type { ReviewsScope } from '../../core/api/reviews.client';
+import { ReviewsClient, type ReviewsScope } from '../../core/api/reviews.client';
+import { entityReviewsFeed } from '../../shared/reviews/reviews.feed';
 import { ReviewsTable } from '../../shared/reviews/reviews.table';
 import { SalonCardStore } from '../salon-card/salon-card.store';
 import { SalonMasterStore } from './salon-master.store';
@@ -15,7 +16,7 @@ import { SalonMasterStore } from './salon-master.store';
   // Guarded on both ids, like the rest of this card's tabs.
   template: `
     @if (scope.salonId && scope.masterId) {
-      <app-reviews [scope]="scope" [timezone]="timezone" />
+      <app-reviews [feed]="feed" [timezone]="timezone" />
     }
   `,
 })
@@ -26,6 +27,7 @@ export class SalonMasterReviewsTab {
     salonId: this.salon?.salonId ?? '',
     masterId: inject(SalonMasterStore).master()?.masterId ?? '',
   };
+  protected readonly feed = entityReviewsFeed(inject(ReviewsClient), this.scope);
   /** The Салон's clock: the visits these reviews are about happened on it. */
   protected readonly timezone = this.salon?.timezone ?? 'UTC';
 }

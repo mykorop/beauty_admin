@@ -5,10 +5,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Select } from 'primeng/select';
 import { catchError, map, of } from 'rxjs';
 import { MastersClient } from '../../core/api/masters.client';
-import type { ReviewsScope } from '../../core/api/reviews.client';
+import { ReviewsClient, type ReviewsScope } from '../../core/api/reviews.client';
 import { SalonsClient } from '../../core/api/salons.client';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { PLATFORM_TIME_ZONE } from '../../shared/platform-clock';
+import { entityReviewsFeed } from '../../shared/reviews/reviews.feed';
 import { ReviewsTable } from '../../shared/reviews/reviews.table';
 
 /**
@@ -51,10 +52,12 @@ export class ReviewsPage {
     { initialValue: {} as ReviewsScope },
   );
 
+  private readonly reviews = inject(ReviewsClient);
+
   /** `null` until a profile is chosen: the table would be refused without one. */
   protected readonly chosen = computed(() => {
     const scope = this.scope();
-    return scope.salonId || scope.masterId ? scope : null;
+    return scope.salonId || scope.masterId ? entityReviewsFeed(this.reviews, scope) : null;
   });
 
   // A list that failed to load leaves the other picker — and a scope already in the address —

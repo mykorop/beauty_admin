@@ -35,7 +35,7 @@ export class MastersPage extends ProfileTablePage<MasterListItem, MasterSortFiel
   private readonly client = inject(MastersClient);
 
   constructor() {
-    super({ sortFields: MASTER_SORT_FIELDS, defaults: DEFAULT_MASTERS_TABLE_STATE });
+    super({ sortFields: MASTER_SORT_FIELDS, defaults: DEFAULT_MASTERS_TABLE_STATE, city: true });
   }
 
   protected fetch(options: { refresh: boolean }): Observable<ProfileList<MasterListItem>> {
