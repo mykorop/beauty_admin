@@ -40,6 +40,19 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
 
   'stub.comingSoon': 'Această secțiune este încă în lucru.',
 
+  'dashboard.group.salons': 'Saloane',
+  'dashboard.group.independentMasters': 'Maeștri independenți',
+  'dashboard.group.salonMasters': 'Maeștri de salon',
+  'dashboard.group.clients': 'Clienți',
+  'dashboard.counter.total': 'Total',
+  'dashboard.counter.active': 'Activi',
+  'dashboard.counter.blocked': 'Blocați',
+  'dashboard.counter.deleted': 'Șterși',
+  'dashboard.salonMastersHint':
+    'Un maestru de salon se vede în Rosterul Salonului său — nu există o listă separată a platformei. Proprietarii-maeștri nu sunt numărați aici: ei sunt socotiți ca Saloanele lor.',
+  'dashboard.failed': 'Indicatorii nu au putut fi încărcați. Apăsați „Actualizează”.',
+  'dashboard.loading': 'Se calculează indicatorii…',
+
   'list.updatedAt': 'Actualizat la {{time}}',
   'list.refresh': 'Actualizează',
   'list.total': 'Găsite: {{count}}',
@@ -55,6 +68,7 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'salons.column.reviewCount': 'Recenzii',
   'salons.column.status': 'Stare',
   'salons.column.createdAt': 'Data înregistrării',
+  'profile.status.all': 'Toate, inclusiv cele Șterse',
   'profile.status.active': 'Activ',
   'profile.status.blocked': 'Blocat',
   'profile.status.deleted': 'Șters',

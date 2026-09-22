@@ -1,8 +1,25 @@
 import { expect, type Page, test as base } from '@playwright/test';
-import { type ApiMock, installApiMock, type MockRoutes } from './api-mock';
+import { apiOk, type ApiMock, installApiMock, type MockResponse, type MockRoutes } from './api-mock';
 import { type CognitoAccount, installCognitoMock, VALID_TOTP } from './cognito-mock';
 
 export const ADMIN: CognitoAccount = { email: 'admin@bookme.md', role: 'admin' };
+
+const NO_PROFILES = { total: 0, active: 0, blocked: 0, deleted: 0 };
+
+/**
+ * Базові показники with nothing on the platform.
+ *
+ * Signing in lands on the dashboard, so every spec that signs in at the default address loads it,
+ * whatever the spec is really about. A spec still has to name this route itself — an unmocked call
+ * stays an unmocked call — but one about the shell or the sign-in form need not invent figures.
+ */
+export const EMPTY_STATS: MockResponse = apiOk({
+  builtAt: '2026-09-20T10:00:00.000Z',
+  salons: NO_PROFILES,
+  independentMasters: NO_PROFILES,
+  salonMasters: NO_PROFILES,
+  clients: NO_PROFILES,
+});
 
 type AppFixtures = {
   /** Installs both mocks. Call before the first navigation. */

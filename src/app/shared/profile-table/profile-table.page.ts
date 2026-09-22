@@ -4,15 +4,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import type { TableLazyLoadEvent } from 'primeng/table';
 import { map, type Observable, type Subscription } from 'rxjs';
 import { I18nService } from '../../i18n/i18n.service';
+import { formatBuiltAt } from '../built-at';
 import {
   applyProfileTableState,
   cityOptionsOf,
   PAGE_SIZES,
   parseProfileTableState,
-  PROFILE_STATUSES,
+  PROFILE_STATUS_FILTERS,
   toProfileQueryParams,
   type ProfileRow,
-  type ProfileStatus,
+  type ProfileStatusFilter,
   type ProfileTableState,
 } from './profile-table-state';
 
@@ -81,17 +82,14 @@ export abstract class ProfileTablePage<Row extends ProfileRow, Sort extends keyo
   protected readonly first = computed(() => (this.view().page - 1) * this.state().size);
   protected readonly sortOrder = computed(() => (this.state().dir === 'asc' ? 1 : -1));
 
-  protected readonly builtAt = computed(() => {
-    const builtAt = this.list()?.builtAt;
-    return builtAt
-      ? new Intl.DateTimeFormat(this.i18n.locale(), { dateStyle: 'short', timeStyle: 'short' }).format(
-          new Date(builtAt),
-        )
-      : null;
-  });
+  protected readonly builtAt = computed(() => formatBuiltAt(this.list()?.builtAt, this.i18n.locale()));
 
+  /**
+   * `all` is an option and not only an address: a dashboard tile can put it there, and a filter the
+   * screen cannot show — or undo — is a table that just looks broken.
+   */
   protected readonly statusOptions = computed(() =>
-    PROFILE_STATUSES.map((status) => ({ value: status, label: this.i18n.t(`profile.status.${status}`) })),
+    PROFILE_STATUS_FILTERS.map((status) => ({ value: status, label: this.i18n.t(`profile.status.${status}`) })),
   );
 
   protected readonly cityOptions = computed(() => {
@@ -167,7 +165,7 @@ export abstract class ProfileTablePage<Row extends ProfileRow, Sort extends keyo
     }, SEARCH_DEBOUNCE_MS);
   }
 
-  protected onStatus(status: ProfileStatus | null): void {
+  protected onStatus(status: ProfileStatusFilter | null): void {
     this.patch({ status, page: 1 });
   }
 

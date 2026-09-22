@@ -38,6 +38,19 @@ export const UK_TRANSLATIONS = {
 
   'stub.comingSoon': 'Цей розділ ще в розробці.',
 
+  'dashboard.group.salons': 'Салони',
+  'dashboard.group.independentMasters': 'Незалежні майстри',
+  'dashboard.group.salonMasters': 'Майстри салону',
+  'dashboard.group.clients': 'Клієнти',
+  'dashboard.counter.total': 'Усього',
+  'dashboard.counter.active': 'Активних',
+  'dashboard.counter.blocked': 'Заблокованих',
+  'dashboard.counter.deleted': 'Видалених',
+  'dashboard.salonMastersHint':
+    'Майстра салону видно в Ростері його Салону — окремого списку платформи немає. Власники-майстри тут не рахуються: вони враховані як свої Салони.',
+  'dashboard.failed': 'Не вдалося завантажити показники. Натисніть «Оновити».',
+  'dashboard.loading': 'Рахуємо показники…',
+
   'list.updatedAt': 'Оновлено о {{time}}',
   'list.refresh': 'Оновити',
   'list.total': 'Знайдено: {{count}}',
@@ -53,6 +66,7 @@ export const UK_TRANSLATIONS = {
   'salons.column.reviewCount': 'Відгуки',
   'salons.column.status': 'Стан',
   'salons.column.createdAt': 'Дата реєстрації',
+  'profile.status.all': 'Усі, разом із Видаленими',
   'profile.status.active': 'Активний',
   'profile.status.blocked': 'Заблокований',
   'profile.status.deleted': 'Видалений',

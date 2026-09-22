@@ -77,6 +77,11 @@ describe('profile table state in the address', () => {
       DEFAULT_TABLE_STATE,
     );
   });
+
+  it('carries `all` — the census view a dashboard tile links to', () => {
+    expect(parse({ status: 'all' }).status).toBe('all');
+    expect(toProfileQueryParams(state({ status: 'all' }), DEFAULT_TABLE_STATE)).toEqual({ status: 'all' });
+  });
 });
 
 describe('profile table rows', () => {
@@ -90,6 +95,21 @@ describe('profile table rows', () => {
     expect(names(items, state({ sort: 'name', dir: 'asc' }))).toEqual(['Alive', 'Blocked']);
     expect(names(items, state({ status: 'deleted' }))).toEqual(['Gone']);
     expect(names(items, state({ status: 'blocked' }))).toEqual(['Blocked']);
+    expect(names(items, state({ status: 'active' }))).toEqual(['Alive']);
+  });
+
+  it('shows everyone, Видалені included, under `all`', () => {
+    const items = [
+      salon({ name: 'Alive' }),
+      salon({ name: 'Blocked', status: 'blocked' }),
+      salon({ name: 'Gone', status: 'deleted' }),
+    ];
+
+    expect(names(items, state({ status: 'all', sort: 'name', dir: 'asc' }))).toEqual([
+      'Alive',
+      'Blocked',
+      'Gone',
+    ]);
   });
 
   it('searches by name, email and phone, ignoring case and phone punctuation', () => {

@@ -1,11 +1,11 @@
 import { apiError, apiOk } from './fixtures/api-mock';
-import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
+import { ADMIN, EMPTY_STATS, expect, signIn, test } from './fixtures/app.fixture';
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
 
 test.describe('language', () => {
   test('switches the interface and survives a reload', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME });
+    await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/stats/basic': EMPTY_STATS });
     await signIn(page, ADMIN);
     const salons = page.getByTestId('sidebar').getByRole('link').nth(1);
     await expect(salons).toHaveText('Салони');
@@ -26,7 +26,10 @@ test.describe('language', () => {
 
 test.describe('backend refusals', () => {
   test('a known error code is shown in the interface language', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': apiError(500, 'INTERNAL_SERVER_ERROR', 'boom') });
+    await mockBackend(ADMIN, {
+      'GET /admin/me': apiError(500, 'INTERNAL_SERVER_ERROR', 'boom'),
+      'GET /admin/stats/basic': EMPTY_STATS,
+    });
 
     await signIn(page, ADMIN);
 
@@ -35,7 +38,10 @@ test.describe('backend refusals', () => {
   });
 
   test('an unknown error code is shown as it is', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': apiError(409, 'SOME_NEW_DOMAIN_LAW', 'english prose') });
+    await mockBackend(ADMIN, {
+      'GET /admin/me': apiError(409, 'SOME_NEW_DOMAIN_LAW', 'english prose'),
+      'GET /admin/stats/basic': EMPTY_STATS,
+    });
 
     await signIn(page, ADMIN);
 

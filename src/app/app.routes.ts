@@ -13,6 +13,11 @@ export const routes: Routes = [
     loadComponent: () => import('./shell/shell').then((m) => m.Shell),
     children: [
       { path: '', pathMatch: 'full', redirectTo: NAV_SECTIONS[0].path },
+      // The landing screen: `NAV_SECTIONS[0]` is what an empty address redirects to.
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./pages/dashboard/dashboard.page').then((m) => m.DashboardPage),
+      },
       {
         path: 'salons',
         loadComponent: () => import('./pages/salons/salons.page').then((m) => m.SalonsPage),
@@ -57,7 +62,8 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/audit-log/audit-log.page').then((m) => m.AuditLogPage),
       },
       ...NAV_SECTIONS.filter(
-        (section) => !['salons', 'independent-masters', 'clients', 'reviews', 'audit-log'].includes(section.path),
+        (section) =>
+          !['dashboard', 'salons', 'independent-masters', 'clients', 'reviews', 'audit-log'].includes(section.path),
       ).map((section) => ({
         path: section.path,
         loadComponent: () => import('./pages/section-stub/section-stub.page').then((m) => m.SectionStubPage),

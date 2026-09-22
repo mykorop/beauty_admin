@@ -102,6 +102,22 @@ test.describe('salons list', () => {
     await expect(page).toHaveURL(/city=0300000/);
   });
 
+  test('the census filter a dashboard tile links to is on the screen, and can be undone there', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/salons': SALONS });
+    // What «усього» on the dashboard opens: everyone, Видалені among them.
+    await signIn(page, ADMIN, '/salons?status=all');
+
+    await expect(rowNames(page)).toHaveCount(4);
+    await expect(page.getByTestId('salons-status-filter')).toContainText('Усі, разом із Видаленими');
+
+    await pick(page, 'salons-status-filter', 'Активний');
+    await expect(rowNames(page)).toHaveText(['Beauty Lab', 'Nails Bar']);
+    await expect(page).toHaveURL(/status=active/);
+  });
+
   test('sorts by a column header, both ways', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/salons': SALONS });
     await signIn(page, ADMIN, '/salons');

@@ -7,6 +7,17 @@
 export type ProfileStatus = 'active' | 'blocked' | 'deleted';
 
 export const PROFILE_STATUSES: readonly ProfileStatus[] = ['active', 'blocked', 'deleted'];
+
+/**
+ * What the state filter can be asked for, which is one more thing than a profile can be: `all` is
+ * the census view, Видалені included.
+ *
+ * It exists because the dashboard's «усього» tile counts them and has to open a list that shows the
+ * same number — a tile whose figure the screen behind it contradicts is worse than no tile.
+ */
+export type ProfileStatusFilter = ProfileStatus | 'all';
+
+export const PROFILE_STATUS_FILTERS: readonly ProfileStatusFilter[] = ['all', ...PROFILE_STATUSES];
 export const PAGE_SIZES: readonly number[] = [25, 50, 100];
 
 /**
@@ -31,7 +42,7 @@ export type ProfileRow = {
 export type ProfileTableState<Sort extends string> = {
   q: string;
   /** `null` is the everyday view: every profile except Видалені, which only an explicit filter shows. */
-  status: ProfileStatus | null;
+  status: ProfileStatusFilter | null;
   /** A `cityKeyOf` value: the CUATM code, so one locality spelled two ways is still one filter. */
   city: string | null;
   sort: Sort;
@@ -62,7 +73,7 @@ export function parseProfileTableState<Sort extends string>(
 
   return {
     q: params.get('q') ?? fallback.q,
-    status: includes(PROFILE_STATUSES, status) ? status : fallback.status,
+    status: includes(PROFILE_STATUS_FILTERS, status) ? status : fallback.status,
     city: params.get('city') || fallback.city,
     sort: includes(sortFields, sort) ? sort : fallback.sort,
     dir: dir === 'asc' || dir === 'desc' ? dir : fallback.dir,
@@ -128,9 +139,10 @@ export function applyProfileTableState<Row extends ProfileRow, Sort extends keyo
   { idOf, sortValueOf }: ProfileTableAccessors<Row, Sort>,
 ): ProfileTableView<Row> {
   const matchesSearch = searchMatcher<Row>(state.q);
+  const matchesStatus = statusMatcher(state.status);
   const filtered = items.filter(
     (item) =>
-      (state.status === null ? item.status !== 'deleted' : item.status === state.status) &&
+      matchesStatus(item.status) &&
       (state.city === null || cityKeyOf(item) === state.city) &&
       matchesSearch(item),
   );
@@ -143,6 +155,17 @@ export function applyProfileTableState<Row extends ProfileRow, Sort extends keyo
   const page = Math.min(state.page, Math.max(1, Math.ceil(filtered.length / state.size)));
   const first = (page - 1) * state.size;
   return { rows: filtered.slice(first, first + state.size), total: filtered.length, page };
+}
+
+/** `null` hides Видалені, `all` is the only view that shows them beside everyone else. */
+function statusMatcher(filter: ProfileStatusFilter | null): (status: ProfileStatus) => boolean {
+  if (filter === null) {
+    return (status) => status !== 'deleted';
+  }
+  if (filter === 'all') {
+    return () => true;
+  }
+  return (status) => status === filter;
 }
 
 const digitsOf = (value: string): string => value.replace(/\D/g, '');

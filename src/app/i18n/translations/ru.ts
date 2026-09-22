@@ -40,6 +40,19 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
 
   'stub.comingSoon': 'Этот раздел ещё в разработке.',
 
+  'dashboard.group.salons': 'Салоны',
+  'dashboard.group.independentMasters': 'Независимые мастера',
+  'dashboard.group.salonMasters': 'Мастера салона',
+  'dashboard.group.clients': 'Клиенты',
+  'dashboard.counter.total': 'Всего',
+  'dashboard.counter.active': 'Активных',
+  'dashboard.counter.blocked': 'Заблокированных',
+  'dashboard.counter.deleted': 'Удалённых',
+  'dashboard.salonMastersHint':
+    'Мастера салона видно в Ростере его Салона — отдельного списка платформы нет. Владельцы-мастера здесь не считаются: они учтены как свои Салоны.',
+  'dashboard.failed': 'Не удалось загрузить показатели. Нажмите «Обновить».',
+  'dashboard.loading': 'Считаем показатели…',
+
   'list.updatedAt': 'Обновлено в {{time}}',
   'list.refresh': 'Обновить',
   'list.total': 'Найдено: {{count}}',
@@ -55,6 +68,7 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'salons.column.reviewCount': 'Отзывы',
   'salons.column.status': 'Состояние',
   'salons.column.createdAt': 'Дата регистрации',
+  'profile.status.all': 'Все, включая Удалённых',
   'profile.status.active': 'Активный',
   'profile.status.blocked': 'Заблокирован',
   'profile.status.deleted': 'Удалён',
