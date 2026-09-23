@@ -21,6 +21,12 @@ export const EMPTY_STATS: MockResponse = apiOk({
   clients: NO_PROFILES,
 });
 
+/**
+ * Детальна статистика never computed: no run, no result. The dashboard asks for its state on every
+ * landing, so a spec that signs in at the default address names this route beside `EMPTY_STATS`.
+ */
+export const NO_DETAILED_STATS: MockResponse = apiOk({ run: null, result: null });
+
 type AppFixtures = {
   /** Installs both mocks. Call before the first navigation. */
   mockBackend: (account: CognitoAccount, routes: MockRoutes) => Promise<ApiMock>;

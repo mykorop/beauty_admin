@@ -1,11 +1,24 @@
 import { apiError, apiOk } from './fixtures/api-mock';
-import { ADMIN, EMPTY_STATS, expect, signIn, submitPassword, submitTotp, test } from './fixtures/app.fixture';
+import {
+  ADMIN,
+  EMPTY_STATS,
+  NO_DETAILED_STATS,
+  expect,
+  signIn,
+  submitPassword,
+  submitTotp,
+  test,
+} from './fixtures/app.fixture';
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
 
 test.describe('sign-in', () => {
   test('password, then TOTP, then the shell with the email from /admin/me', async ({ page, mockBackend }) => {
-    const api = await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/stats/basic': EMPTY_STATS });
+    const api = await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': EMPTY_STATS,
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
+    });
 
     await page.goto('/');
     await expect(page).toHaveURL(/\/login/);
@@ -29,7 +42,11 @@ test.describe('sign-in', () => {
   });
 
   test('a wrong TOTP code shows an error and does not let in', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/stats/basic': EMPTY_STATS });
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': EMPTY_STATS,
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
+    });
 
     await page.goto('/');
     await submitPassword(page, ADMIN.email);
@@ -101,7 +118,11 @@ test.describe('sign-in', () => {
   });
 
   test('sign-out leaves the shell closed', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/stats/basic': EMPTY_STATS });
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': EMPTY_STATS,
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
+    });
     await signIn(page, ADMIN);
 
     await page.getByTestId('sign-out').click();

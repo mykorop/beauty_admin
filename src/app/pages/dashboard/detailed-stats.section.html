@@ -1,0 +1,214 @@
+<section class="mt-10" data-testid="detailed-stats">
+  <div class="mb-3 flex flex-wrap items-center gap-3">
+    <h2 class="text-xl font-semibold">{{ 'stats.detailed.title' | t }}</h2>
+    <span class="flex-1"></span>
+    @if (builtAt(); as builtAt) {
+      <span class="text-sm text-slate-600" data-testid="detailed-stats-built-at">{{
+        'stats.detailed.builtAt' | t: { time: builtAt }
+      }}</span>
+    }
+    <p-button
+      data-testid="detailed-stats-run"
+      icon="pi pi-chart-bar"
+      size="small"
+      [label]="'stats.detailed.run' | t"
+      [loading]="busy()"
+      (onClick)="start()"
+    />
+  </div>
+
+  @if (running()) {
+    <div class="mb-4 max-w-xl" data-testid="detailed-stats-progress">
+      <p-progressbar
+        styleClass="h-2"
+        [mode]="progress() === null ? 'indeterminate' : 'determinate'"
+        [value]="progress() ?? 0"
+        [showValue]="false"
+      />
+      <p class="mt-1 text-sm text-slate-600" data-testid="detailed-stats-progress-text">
+        {{ progressText() }}
+      </p>
+    </div>
+  }
+
+  @if (failureKey(); as failureKey) {
+    <p-message class="mb-4 block" severity="warn" data-testid="detailed-stats-failed">
+      {{ failureKey | t }}
+      @if (result()) {
+        {{ 'stats.detailed.previousResult' | t }}
+      }
+    </p-message>
+  }
+
+  @if (followFailed()) {
+    <p-message class="mb-4 block" severity="warn" data-testid="detailed-stats-follow-failed">
+      {{ 'stats.detailed.followFailed' | t }}
+    </p-message>
+  }
+
+  @if (loadFailed() && !result()) {
+    <p class="text-slate-600" data-testid="detailed-stats-load-failed">
+      {{ 'stats.detailed.loadFailed' | t }}
+    </p>
+  }
+
+  @if (neverRun()) {
+    <p class="max-w-2xl text-slate-600" data-testid="detailed-stats-never">
+      {{ 'stats.detailed.never' | t }}
+    </p>
+  }
+
+  @if (view(); as view) {
+    <div
+      class="transition-opacity"
+      [class.opacity-60]="running()"
+      data-testid="detailed-stats-result"
+    >
+      <!-- One row of controls above everything it scopes: every chart and figure below is cut to it. -->
+      <div class="mb-4 flex flex-wrap items-end gap-4">
+        <label class="flex flex-col gap-1 text-xs text-slate-600">
+          {{ 'stats.period.label' | t }}
+          <p-selectbutton
+            data-testid="detailed-stats-period"
+            size="small"
+            optionLabel="label"
+            optionValue="value"
+            [options]="periodOptions()"
+            [allowEmpty]="false"
+            [ngModel]="period()"
+            (ngModelChange)="period.set($event)"
+          />
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-slate-600">
+          {{ 'stats.step.label' | t }}
+          <p-selectbutton
+            data-testid="detailed-stats-step"
+            size="small"
+            optionLabel="label"
+            optionValue="value"
+            [options]="stepOptions()"
+            [allowEmpty]="false"
+            [ngModel]="growthStep()"
+            (ngModelChange)="growthStep.set($event)"
+          />
+        </label>
+        @if (ratesNote(); as ratesNote) {
+          <span class="text-xs text-slate-500" data-testid="detailed-stats-rates">{{
+            ratesNote
+          }}</span>
+        }
+      </div>
+
+      <h3 class="mb-2 text-base font-semibold text-slate-800">{{ 'stats.growth.title' | t }}</h3>
+      <div class="mb-2 grid gap-4 lg:grid-cols-3">
+        @for (kind of view.growth; track kind.kind) {
+          <div
+            class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+            [attr.data-testid]="'detailed-stats-growth-' + kind.kind"
+          >
+            <div class="mb-2 flex items-baseline justify-between gap-2">
+              <span class="text-sm font-medium text-slate-700">{{ kind.label }}</span>
+              <span
+                class="text-xl font-semibold text-slate-900"
+                [attr.data-testid]="'growth-total-' + kind.kind"
+                >{{ 'stats.growth.total' | t: { count: kind.total } }}</span
+              >
+            </div>
+            <app-column-chart
+              [testId]="'chart-growth-' + kind.kind"
+              [name]="kind.label"
+              [points]="view.growthPoints"
+              [series]="kind.series"
+              [plotHeight]="110"
+              [formatValue]="view.formatCount"
+              [formatTick]="view.formatCount"
+            />
+          </div>
+        }
+      </div>
+      @if (view.growthUndated > 0) {
+        <p class="mb-2 text-xs text-slate-500">
+          {{ 'stats.growth.undated' | t: { count: view.growthUndated } }}
+        </p>
+      }
+
+      <div
+        class="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+        data-testid="detailed-stats-appointments"
+      >
+        <h3 class="mb-3 text-base font-semibold text-slate-800">
+          {{ 'stats.appointments.title' | t }}
+        </h3>
+        <div class="mb-4 flex flex-wrap gap-8">
+          <div>
+            <p class="text-xs text-slate-600">{{ 'stats.appointments.total' | t }}</p>
+            <p class="text-2xl font-semibold text-slate-900" data-testid="appointments-total">
+              {{ view.appointmentTotal }}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-600">{{ 'stats.appointments.cancellationShare' | t }}</p>
+            <p
+              class="text-2xl font-semibold text-slate-900"
+              data-testid="appointments-cancellation-share"
+            >
+              {{ view.cancellationShare }}
+            </p>
+          </div>
+        </div>
+        <app-column-chart
+          testId="chart-appointments"
+          [name]="'stats.appointments.title' | t"
+          [points]="view.appointmentPoints"
+          [series]="view.appointmentSeries"
+          [formatValue]="view.formatCount"
+          [formatTick]="view.formatCount"
+        />
+        <p class="mt-2 text-xs text-slate-500">{{ 'stats.appointments.pastBookedHint' | t }}</p>
+        @if (view.appointmentsUndated > 0) {
+          <p class="mt-1 text-xs text-slate-500">
+            {{ 'stats.appointments.undated' | t: { count: view.appointmentsUndated } }}
+          </p>
+        }
+      </div>
+
+      <div
+        class="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+        data-testid="detailed-stats-value"
+      >
+        <h3 class="mb-3 text-base font-semibold text-slate-800">{{ 'stats.value.title' | t }}</h3>
+        <div class="mb-4 flex flex-wrap gap-8">
+          <div>
+            <p class="text-xs text-slate-600">{{ 'stats.value.past' | t }}</p>
+            <p class="text-2xl font-semibold text-slate-900" data-testid="value-past">
+              {{ view.valuePast }}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-600">{{ 'stats.value.ahead' | t }}</p>
+            <p class="text-2xl font-semibold text-slate-900" data-testid="value-ahead">
+              {{ view.valueAhead }}
+            </p>
+          </div>
+        </div>
+        <app-column-chart
+          testId="chart-value"
+          [name]="'stats.value.title' | t"
+          [points]="view.valuePoints"
+          [series]="view.valueSeries"
+          [integer]="false"
+          [formatValue]="view.formatMdl"
+          [formatTick]="view.formatCompact"
+        />
+        <p class="mt-2 max-w-3xl text-xs text-slate-600" data-testid="value-not-revenue">
+          {{ 'stats.value.notRevenue' | t }}
+        </p>
+        @if (view.unconverted > 0) {
+          <p class="mt-1 text-xs text-slate-500">
+            {{ 'stats.value.unconverted' | t: { count: view.unconverted } }}
+          </p>
+        }
+      </div>
+    </div>
+  }
+</section>

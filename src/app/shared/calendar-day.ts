@@ -18,6 +18,12 @@ export function parseCalendarDay(raw: string | null | undefined): string | null 
   return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(raw) ? raw : null;
 }
 
+/**
+ * The day as an instant to hand `Intl` with `timeZone: 'UTC'` — how a day that is already some
+ * calendar's own is printed without the browser's zone moving it.
+ */
+export const calendarDayAsUtcDate = (day: string): Date => new Date(utcMidnight(day));
+
 export const addCalendarDays = (day: string, days: number): string =>
   new Date(utcMidnight(day) + days * DAY_MS).toISOString().slice(0, 10);
 

@@ -9,6 +9,7 @@ import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { formatBuiltAt } from '../../shared/built-at';
 import { dashboardGroups } from './dashboard-tiles';
+import { DetailedStatsSection } from './detailed-stats.section';
 
 /**
  * «Базові показники» — the screen the Адміністратор платформи lands on after signing in: the size
@@ -17,11 +18,12 @@ import { dashboardGroups } from './dashboard-tiles';
  * The backend tallies them from the very listings the three tables are served from, so a figure and
  * the list it opens can never disagree, and «Оновити» refreshes both at once — being the landing
  * screen, this is also what pays for those listings now, before any table is opened. What the tiles
- * mean and where they lead is `dashboard-tiles.ts`, which has the spec.
+ * mean and where they lead is `dashboard-tiles.ts`, which has the spec. Below them sits the
+ * Детальна статистика (`detailed-stats.section.ts`), which is computed only on demand.
  */
 @Component({
   selector: 'app-dashboard-page',
-  imports: [Button, NgTemplateOutlet, RouterLink, TranslatePipe],
+  imports: [Button, DetailedStatsSection, NgTemplateOutlet, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',
 })

@@ -1,5 +1,5 @@
 import { apiError, apiOk } from './fixtures/api-mock';
-import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
+import { ADMIN, NO_DETAILED_STATS, expect, signIn, test } from './fixtures/app.fixture';
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
 
@@ -61,7 +61,11 @@ const CLIENTS = apiOk({
 
 test.describe('dashboard', () => {
   test('is where signing in lands, with the counters and when they were built', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/stats/basic': STATS });
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': STATS,
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
+    });
 
     await signIn(page, ADMIN);
 
@@ -80,6 +84,7 @@ test.describe('dashboard', () => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/stats/basic': STATS,
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
       'GET /admin/salons': SALONS,
     });
     await signIn(page, ADMIN);
@@ -98,6 +103,7 @@ test.describe('dashboard', () => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/stats/basic': STATS,
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
       'GET /admin/salons': SALONS,
     });
     await signIn(page, ADMIN);
@@ -113,6 +119,7 @@ test.describe('dashboard', () => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/stats/basic': STATS,
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
       'GET /admin/clients': CLIENTS,
     });
     await signIn(page, ADMIN);
@@ -127,7 +134,11 @@ test.describe('dashboard', () => {
     page,
     mockBackend,
   }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME, 'GET /admin/stats/basic': STATS });
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': STATS,
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
+    });
     await signIn(page, ADMIN);
 
     await expect(page.getByTestId('tile-salonMasters-total')).toContainText('7');
@@ -150,6 +161,7 @@ test.describe('dashboard', () => {
               clients: counts(12, 11, 1, 0),
             })
           : (served++, STATS),
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
     });
     await signIn(page, ADMIN);
     await expect(page.getByTestId('tile-salons-total')).toContainText('4');
@@ -165,6 +177,7 @@ test.describe('dashboard', () => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/stats/basic': apiError(500, 'INTERNAL_SERVER_ERROR', 'boom'),
+      'GET /admin/stats/detailed': NO_DETAILED_STATS,
     });
 
     await signIn(page, ADMIN);
