@@ -22,7 +22,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
 import { AppointmentDetailsPanel } from '../../shared/appointments/appointment-details';
 import { isStaleBooking } from '../../shared/appointments/appointment-filters';
-import { appointmentRowPatch } from '../../shared/appointments/appointment-row';
+import { appointmentRowPatch } from '../../shared/appointments/appointment-interaction';
 import { appointmentStatusLabel, formatPrice } from '../../shared/appointments/appointment-wording';
 import { formatVenueDateTime } from '../../shared/venue-date';
 

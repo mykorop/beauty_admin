@@ -34,6 +34,5 @@ export class SalonMasterAppointmentsTab {
     timezone: this.salon?.timezone ?? 'UTC',
     masters: null,
     list: (query) => this.client.salon(this.salonId, { ...query, masterId: this.masterId }),
-    details: (appointmentId) => this.client.details(appointmentId),
   };
 }

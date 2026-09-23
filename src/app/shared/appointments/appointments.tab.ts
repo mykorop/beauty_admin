@@ -14,19 +14,18 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Tag } from 'primeng/tag';
-import { catchError, EMPTY, filter, map, Subject, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, filter, map, switchMap, tap } from 'rxjs';
 import {
   type Appointment,
   APPOINTMENT_STATUS_SEVERITY,
   APPOINTMENT_STATUSES,
-  type AppointmentDetails,
 } from '../../core/api/appointments.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { formatVenueDateTime, venueToday } from '../venue-date';
-import { appointmentRowPatch } from './appointment-row';
 import { appointmentStatusLabel, formatPrice } from './appointment-wording';
 import { AppointmentDetailsPanel } from './appointment-details';
+import { AppointmentInteraction } from './appointment-interaction';
 import {
   type AppointmentFilters,
   isStaleBooking,
@@ -43,8 +42,8 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
  *
  * A Запис is never **made** here — there is no «new» button and no endpoint behind one: a Запис is
  * made by a Клієнт or by the business, never by the platform. Acting on one that exists is the
- * open card's own business (`app-appointment-details`), and what comes back from an action is
- * absorbed into the row it came from rather than re-read.
+ * open card's own business (`app-appointment-details`); which Запис is open, its read and where an
+ * action's answer lands belong to `AppointmentInteraction`, and every new window is a new list.
  *
  * Whose Записи these are lives entirely in the `port`; the filters live in the address, so a view
  * can be linked to.
@@ -52,6 +51,7 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
 @Component({
   selector: 'app-appointments',
   imports: [AppointmentDetailsPanel, FormsModule, InputText, Select, Tag, TranslatePipe],
+  providers: [AppointmentInteraction],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (filters(); as filters) {
@@ -123,20 +123,21 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
           </thead>
           <tbody>
             @for (row of rows; track row.appointment.appointmentId) {
+              @let open = interaction.isOpen(row.appointment.appointmentId);
               <tr
                 class="cursor-pointer border-b border-divider last:border-0 hover:bg-raised"
                 data-testid="appointment-row"
                 [class.appointment-stale]="row.stale"
-                (click)="toggle(row.appointment)"
+                (click)="interaction.toggle(row.appointment.appointmentId)"
               >
                 <td class="px-3 py-3">
                   <button
                     type="button"
                     class="appointment-toggle pi text-muted"
                     data-testid="appointment-row-toggle"
-                    [class.pi-chevron-right]="!isOpen(row.appointment)"
-                    [class.pi-chevron-down]="isOpen(row.appointment)"
-                    [attr.aria-expanded]="isOpen(row.appointment)"
+                    [class.pi-chevron-right]="!open"
+                    [class.pi-chevron-down]="open"
+                    [attr.aria-expanded]="open"
                     [attr.aria-label]="'appointments.details.open' | t"
                   ></button>
                 </td>
@@ -167,13 +168,13 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
                   <p-tag data-testid="appointment-row-status" [severity]="row.statusSeverity" [value]="row.status" />
                 </td>
               </tr>
-              @if (isOpen(row.appointment)) {
+              @if (open) {
                 <tr class="border-b border-divider bg-raised" data-testid="appointment-details">
                   <td></td>
                   <td class="px-4 py-4" [attr.colspan]="columns()">
-                    @if (details(); as details) {
-                      <app-appointment-details [details]="details" (changed)="absorb($event)" />
-                    } @else if (detailsFailed()) {
+                    @if (interaction.opened()?.details; as details) {
+                      <app-appointment-details [details]="details" />
+                    } @else if (interaction.opened()?.failed) {
                       <p class="text-muted" data-testid="appointment-details-failed">{{ 'card.failed' | t }}</p>
                     } @else {
                       <p class="text-muted" data-testid="appointment-details-loading">{{ 'appointments.details.loading' | t }}</p>
@@ -200,8 +201,10 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
   `,
 })
 export class AppointmentsTab implements OnInit {
-  /** Whose Записи these are — both reads of the tab go through it. */
+  /** Whose Записи these are — the list and its Ростер are read through it. */
   readonly port = input.required<AppointmentsPort>();
+
+  protected readonly interaction: AppointmentInteraction<Appointment> = inject(AppointmentInteraction);
 
   private readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
@@ -210,16 +213,9 @@ export class AppointmentsTab implements OnInit {
 
   protected readonly filters = signal<AppointmentFilters | null>(null);
   protected readonly masters = signal<AppointmentsFilterMaster[] | null>(null);
-  private readonly appointments = signal<Appointment[] | null>(null);
   /** The clock the answered page was cut on — the venue's, as the backend states it. */
   private readonly timezone = signal('');
   protected readonly failed = signal(false);
-
-  /** The Запис whose card is open, or `null`; every change goes through `opened`. */
-  private readonly openId = signal<string | null>(null);
-  private readonly opened = new Subject<string | null>();
-  protected readonly details = signal<AppointmentDetails | null>(null);
-  protected readonly detailsFailed = signal(false);
 
   protected readonly statusOptions = computed(() =>
     APPOINTMENT_STATUSES.map((value) => ({ value, label: this.i18n.t(`appointments.status.${value}`) })),
@@ -241,7 +237,7 @@ export class AppointmentsTab implements OnInit {
     const money = new Intl.NumberFormat(locale);
     const now = new Date();
     return (
-      this.appointments()?.map((appointment) => ({
+      this.interaction.rows()?.map((appointment) => ({
         appointment,
         when: formatVenueDateTime(appointment.startTime, locale, timezone),
         services: appointment.serviceNames.join(', ') || '—',
@@ -263,26 +259,6 @@ export class AppointmentsTab implements OnInit {
       // The filter is a convenience; a Ростер that failed to load leaves the list itself standing.
       .subscribe({ next: (masters) => this.masters.set(masters), error: () => this.masters.set([]) });
 
-    // One card at a time: opening another drops the request for the last one, so a slow answer
-    // cannot land under the row that replaced it.
-    this.opened
-      .pipe(
-        tap(() => {
-          this.details.set(null);
-          this.detailsFailed.set(false);
-        }),
-        switchMap((appointmentId) =>
-          appointmentId === null
-            ? EMPTY
-            : this.port()
-                .details(appointmentId)
-                // Including a Запис that has since vanished: the row says so instead of a toast.
-                .pipe(catchError(() => (this.detailsFailed.set(true), EMPTY))),
-        ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((details) => this.details.set(details));
-
     this.route.queryParamMap
       .pipe(
         map((params) => ({ params, asked: parseAppointmentFilters(params, today) })),
@@ -301,9 +277,8 @@ export class AppointmentsTab implements OnInit {
         }),
         tap(({ asked }) => {
           this.filters.set(asked);
-          this.appointments.set(null);
           this.failed.set(false);
-          this.close();
+          this.interaction.show(null);
         }),
         // A new window starts the list over; the answer to the old one is dropped.
         switchMap(({ asked }) =>
@@ -316,34 +291,8 @@ export class AppointmentsTab implements OnInit {
       )
       .subscribe((page) => {
         this.timezone.set(page.timezone || this.port().timezone);
-        this.appointments.set(page.items);
+        this.interaction.show(page.items);
       });
-  }
-
-  protected isOpen(appointment: Appointment): boolean {
-    return this.openId() === appointment.appointmentId;
-  }
-
-  protected toggle(appointment: Appointment): void {
-    const next = this.isOpen(appointment) ? null : appointment.appointmentId;
-    this.openId.set(next);
-    this.opened.next(next);
-  }
-
-  /**
-   * A Запис an action just changed. The backend answers with the whole row, so the table redraws
-   * from that rather than re-reading the window: re-reading would drop rows the filters no longer
-   * match — a Запис just cancelled under a «заброньовано» filter would vanish from under the card
-   * still showing it.
-   */
-  protected absorb(details: AppointmentDetails): void {
-    this.details.set(details);
-    this.appointments.update(
-      (rows) =>
-        rows?.map((row) =>
-          row.appointmentId === details.appointmentId ? { ...row, ...appointmentRowPatch(details) } : row,
-        ) ?? rows,
-    );
   }
 
   protected setFilter(change: Partial<AppointmentFilters>): void {
@@ -351,10 +300,5 @@ export class AppointmentsTab implements OnInit {
     // a parameter the router drops, which is how a filter is unset.
     const asked = { ...this.filters(), ...change } as AppointmentFilters;
     void this.router.navigate([], { relativeTo: this.route, queryParams: toQueryParams(asked) });
-  }
-
-  private close(): void {
-    this.openId.set(null);
-    this.opened.next(null);
   }
 }

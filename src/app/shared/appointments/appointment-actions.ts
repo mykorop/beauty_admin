@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ButtonDirective } from 'primeng/button';
 import type { Observable } from 'rxjs';
 import {
@@ -9,6 +19,7 @@ import {
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ReasonDialog } from '../reason-dialog/reason-dialog';
 import type { TranslationKey } from '../../i18n/translations';
+import { AppointmentInteraction } from './appointment-interaction';
 import { AppointmentRescheduleDialog } from './appointment-reschedule-dialog';
 
 /**
@@ -22,7 +33,9 @@ import { AppointmentRescheduleDialog } from './appointment-reschedule-dialog';
  *
  * Nothing here decides *whose* Запис it is: the three actions are addressed by the Запис's own id,
  * so one component serves the Салон's tab, the Майстер салону's and the Незалежний майстер's alike
- * — the same reason the table itself takes a `port` instead of a venue.
+ * — the same reason the table itself takes a `port` instead of a venue. Where the answer lands is
+ * the list's business: this component sends the action through the list's
+ * `AppointmentInteraction`, which takes the answer in even if this card has closed by then.
  */
 type StatusOffer = {
   status: AppointmentActionStatus;
@@ -131,10 +144,15 @@ const OFFERS: StatusOffer[] = [
 export class AppointmentActions {
   readonly details = input.required<AppointmentDetails>();
 
-  /** The Запис as the backend answered it back — the row and the card both redraw from this. */
+  /**
+   * The Запис as the backend answered it back, for the Клієнт's history and the platform list: they
+   * provide no `AppointmentInteraction` yet and redraw their row and card from this themselves.
+   */
   readonly changed = output<AppointmentDetails>();
 
   private readonly client = inject(AppointmentsClient);
+  private readonly interaction = inject(AppointmentInteraction, { optional: true });
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly offers = OFFERS;
   protected readonly busy = signal(false);
@@ -184,7 +202,12 @@ export class AppointmentActions {
       return;
     }
     this.busy.set(true);
-    call.subscribe({
+    // The list takes the answer in whether or not this card is still open; the card only ends its
+    // own wait, and stops listening once it is gone.
+    const answer = this.interaction
+      ? this.interaction.act(call).pipe(takeUntilDestroyed(this.destroyRef))
+      : call;
+    answer.subscribe({
       next: (updated) => {
         this.busy.set(false);
         close();

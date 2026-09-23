@@ -1,6 +1,5 @@
 import type { Observable } from 'rxjs';
 import type {
-  AppointmentDetails,
   AppointmentQuery,
   AppointmentsPage,
   BulkCancelResult,
@@ -11,9 +10,10 @@ import type {
 export type AppointmentsFilterMaster = { masterId: string; masterName: string };
 
 /**
- * The two reads a Записи tab makes, bound to whose Записи it is. The table takes one of these
- * instead of a client and an id, so it knows neither whether it is showing a Салон, a Майстер
- * салону or a Незалежний майстер — which is what lets one tab serve all three cards.
+ * The reads of a Записи tab, bound to whose Записи it is. The table takes one of these instead of
+ * a client and an id, so it knows neither whether it is showing a Салон, a Майстер салону or a
+ * Незалежний майстер — which is what lets one tab serve all three cards. One Запис, once opened,
+ * is read by its own id (`AppointmentInteraction`), whoever's list it was opened from.
  */
 export type AppointmentsPort = {
   /** The venue's clock: every row is printed on it, and the default window is cut on its today. */
@@ -24,7 +24,6 @@ export type AppointmentsPort = {
    */
   masters: Observable<AppointmentsFilterMaster[]> | null;
   list(query: AppointmentQuery): Observable<AppointmentsPage>;
-  details(appointmentId: string): Observable<AppointmentDetails>;
 };
 
 /**

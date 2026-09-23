@@ -37,6 +37,5 @@ export class SalonAppointmentsTab {
       .roster(this.salonId)
       .pipe(map((roster) => roster.items.map(({ masterId, masterName }) => ({ masterId, masterName })))),
     list: (query) => this.client.salon(this.salonId, query),
-    details: (appointmentId) => this.client.details(appointmentId),
   };
 }

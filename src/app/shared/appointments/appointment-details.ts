@@ -103,7 +103,7 @@ import { appointmentStatusLabel, formatPrice } from './appointment-wording';
 export class AppointmentDetailsPanel {
   readonly details = input.required<AppointmentDetails>();
 
-  /** The Запис as an action left it — the table above redraws its row from this. */
+  /** The Запис as an action left it — see `AppointmentActions.changed`. */
   readonly changed = output<AppointmentDetails>();
 
   private readonly i18n = inject(I18nService);

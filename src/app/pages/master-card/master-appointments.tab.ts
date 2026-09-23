@@ -31,6 +31,5 @@ export class MasterAppointmentsTab {
     timezone: this.master?.timezone ?? 'UTC',
     masters: null,
     list: (query) => this.client.master(this.masterId, query),
-    details: (appointmentId) => this.client.details(appointmentId),
   };
 }

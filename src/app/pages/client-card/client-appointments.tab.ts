@@ -25,7 +25,7 @@ import { ClientsClient } from '../../core/api/clients.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AppointmentDetailsPanel } from '../../shared/appointments/appointment-details';
-import { appointmentRowPatch } from '../../shared/appointments/appointment-row';
+import { appointmentRowPatch } from '../../shared/appointments/appointment-interaction';
 import { appointmentStatusLabel, formatPrice } from '../../shared/appointments/appointment-wording';
 import { isStaleBooking } from '../../shared/appointments/appointment-filters';
 import { formatVenueDateTime } from '../../shared/venue-date';
