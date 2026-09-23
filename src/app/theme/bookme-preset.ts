@@ -53,11 +53,17 @@ export const BookMePreset = definePreset(Aura, {
     toast: feedback,
     button: {
       root: {
+        borderRadius: '0.5rem',
         secondary: {
           borderColor: 'light-dark({surface.100}, var(--bm-input-border))',
           hoverBorderColor: 'light-dark({surface.200}, var(--bm-text))',
           activeBackground: 'light-dark({surface.300}, var(--bm-border))',
         },
+      },
+      outlined: {
+        primary: { borderColor: 'light-dark({primary.200}, var(--bm-accent))' },
+        secondary: { borderColor: 'light-dark({surface.200}, var(--bm-input-border))' },
+        danger: { borderColor: 'light-dark({red.200}, {red.400})' },
       },
     },
     togglebutton: {

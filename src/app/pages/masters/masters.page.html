@@ -1,8 +1,10 @@
 <div class="mb-4 flex flex-wrap items-center gap-3">
-  <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.independentMasters' | t }}</h1>
+  <h1 class="text-2xl font-semibold" data-testid="section-title">
+    {{ 'nav.independentMasters' | t }}
+  </h1>
   <span class="flex-1"></span>
   @if (builtAt(); as builtAt) {
-    <span class="text-sm text-slate-600" data-testid="masters-built-at">{{
+    <span class="text-sm text-muted" data-testid="masters-built-at">{{
       'list.updatedAt' | t: { time: builtAt }
     }}</span>
   }
@@ -18,7 +20,7 @@
 </div>
 
 <div class="mb-4 flex flex-wrap items-center gap-3">
-  <p-iconfield class="w-80">
+  <p-iconfield class="w-80 max-w-full">
     <p-inputicon class="pi pi-search" />
     <input
       pInputText
@@ -33,7 +35,7 @@
   </p-iconfield>
   <p-select
     data-testid="masters-status-filter"
-    class="w-56"
+    class="w-56 max-w-full"
     [options]="statusOptions()"
     optionLabel="label"
     optionValue="value"
@@ -45,7 +47,7 @@
   />
   <p-select
     data-testid="masters-city-filter"
-    class="w-56"
+    class="w-56 max-w-full"
     [options]="cityOptions()"
     optionLabel="label"
     optionValue="key"
@@ -56,10 +58,13 @@
     [ngModel]="state().city"
     (ngModelChange)="onCity($event)"
   />
-  <span class="text-sm text-slate-600" data-testid="masters-total">{{ 'list.total' | t: { count: view().total } }}</span>
+  <span class="text-sm text-muted" data-testid="masters-total">{{
+    'list.total' | t: { count: view().total }
+  }}</span>
 </div>
 
 <p-table
+  styleClass="profile-table"
   data-testid="masters-table"
   [value]="view().rows"
   dataKey="masterId"
@@ -83,10 +88,18 @@
       <th pSortableColumn="specialization">
         {{ 'master.field.specialization' | t }} <p-sortIcon field="specialization" />
       </th>
-      <th pSortableColumn="rating">{{ 'salons.column.rating' | t }} <p-sortIcon field="rating" /></th>
-      <th pSortableColumn="reviewCount">{{ 'salons.column.reviewCount' | t }} <p-sortIcon field="reviewCount" /></th>
-      <th pSortableColumn="status">{{ 'salons.column.status' | t }} <p-sortIcon field="status" /></th>
-      <th pSortableColumn="createdAt">{{ 'salons.column.createdAt' | t }} <p-sortIcon field="createdAt" /></th>
+      <th pSortableColumn="rating">
+        {{ 'salons.column.rating' | t }} <p-sortIcon field="rating" />
+      </th>
+      <th pSortableColumn="reviewCount">
+        {{ 'salons.column.reviewCount' | t }} <p-sortIcon field="reviewCount" />
+      </th>
+      <th pSortableColumn="status">
+        {{ 'salons.column.status' | t }} <p-sortIcon field="status" />
+      </th>
+      <th pSortableColumn="createdAt">
+        {{ 'salons.column.createdAt' | t }} <p-sortIcon field="createdAt" />
+      </th>
     </tr>
   </ng-template>
   <ng-template #body let-master>
@@ -94,8 +107,8 @@
       class="cursor-pointer"
       data-testid="master-row"
       [attr.data-status]="master.status"
-      [class.bg-red-50]="master.status === 'deleted'"
-      [class.text-slate-500]="master.status === 'deleted'"
+      [class.profile-deleted]="master.status === 'deleted'"
+      [class.text-muted]="master.status === 'deleted'"
       (click)="openMaster(master.masterId, $event)"
     >
       <td>
@@ -105,8 +118,8 @@
           [routerLink]="['/independent-masters', master.masterId]"
           >{{ master.name || '—' }}</a
         >
-        <div class="text-xs text-slate-500">{{ master.email }}</div>
-        <div class="text-xs text-slate-500">{{ master.phone }}</div>
+        <div class="text-xs text-muted">{{ master.email }}</div>
+        <div class="text-xs text-muted">{{ master.phone }}</div>
       </td>
       <td>{{ master.city || '—' }}</td>
       <td>{{ specialization(master.specialization) }}</td>
@@ -125,7 +138,7 @@
   </ng-template>
   <ng-template #emptymessage>
     <tr>
-      <td colspan="7" class="py-8 text-center text-slate-600" data-testid="masters-empty">
+      <td colspan="7" class="py-8 text-center text-muted" data-testid="masters-empty">
         {{ (failed() ? 'list.failed' : 'list.empty') | t }}
       </td>
     </tr>

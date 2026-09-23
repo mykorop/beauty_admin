@@ -5,7 +5,12 @@
     backLink="/independent-masters"
     backLabelKey="master.backToList"
   >
-    <p-tag cardStatus data-testid="card-status" [severity]="statusSeverity()" [value]="statusLabelKey() | t" />
+    <p-tag
+      cardStatus
+      data-testid="card-status"
+      [severity]="statusSeverity()"
+      [value]="statusLabelKey() | t"
+    />
     @if (master.status !== 'deleted') {
       <app-block-action
         cardActions
@@ -19,19 +24,33 @@
       />
     }
     @if (master.salon; as salon) {
-      <p cardContext class="-mt-2 mb-4 text-sm text-slate-600" data-testid="card-former-salon">
+      <p cardContext class="-mt-2 mb-4 text-sm text-muted" data-testid="card-former-salon">
         {{ 'master.formerSalon' | t: { salon: salon.name || salon.salonId, date: leftAt() } }}
       </p>
     }
     @if (master.status === 'deleted') {
-      <p-message cardBanner class="mb-4 block" severity="error" icon="pi pi-trash" data-testid="card-deleted-banner">
+      <p-message
+        cardBanner
+        class="mb-4 block"
+        severity="error"
+        icon="pi pi-trash"
+        data-testid="card-deleted-banner"
+      >
         {{
-          master.deletedAt ? ('master.deletedBanner' | t: { date: deletedAt() }) : ('master.deletedBannerNoDate' | t)
+          master.deletedAt
+            ? ('master.deletedBanner' | t: { date: deletedAt() })
+            : ('master.deletedBannerNoDate' | t)
         }}
       </p-message>
     }
     @if (master.blockedAt) {
-      <p-message cardBanner class="mb-4 block" severity="warn" icon="pi pi-ban" data-testid="card-blocked-banner">
+      <p-message
+        cardBanner
+        class="mb-4 block"
+        severity="warn"
+        icon="pi pi-ban"
+        data-testid="card-blocked-banner"
+      >
         {{ 'master.blockedBanner' | t: { date: blockedAt(), reason: master.blockedReason || '—' } }}
       </p-message>
     }
@@ -46,7 +65,7 @@
     />
   </app-profile-card>
 } @else if (failure() === 'notFound') {
-  <p class="text-slate-600" data-testid="card-not-found">{{ 'master.notFound' | t }}</p>
+  <p class="text-muted" data-testid="card-not-found">{{ 'master.notFound' | t }}</p>
 } @else if (failure() === 'failed') {
-  <p class="text-slate-600" data-testid="card-failed">{{ 'card.failed' | t }}</p>
+  <p class="text-muted" data-testid="card-failed">{{ 'card.failed' | t }}</p>
 }

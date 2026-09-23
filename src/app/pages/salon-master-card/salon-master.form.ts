@@ -1,6 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  type ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
@@ -8,7 +21,11 @@ import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 import { finalize, type Observable, tap } from 'rxjs';
 import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
-import { MASTER_SPECIALIZATIONS, type SalonMaster, SalonMastersClient } from '../../core/api/salon-masters.client';
+import {
+  MASTER_SPECIALIZATIONS,
+  type SalonMaster,
+  SalonMastersClient,
+} from '../../core/api/salon-masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { specializationLabel } from '../../shared/specialization';
@@ -36,12 +53,14 @@ const numberValidators = (min: number, max: number, pattern: RegExp): ValidatorF
   template: `
     @if (master(); as master) {
       <form
-        class="grid max-w-4xl grid-cols-[14rem_1fr] items-start gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm"
+        class="profile-fields profile-form"
         data-testid="master-form"
         [formGroup]="form"
         (ngSubmit)="save()"
       >
-        <label class="pt-2 text-slate-500" for="edit-specialization">{{ 'master.field.specialization' | t }}</label>
+        <label class="pt-2 text-muted" for="edit-specialization">{{
+          'master.field.specialization' | t
+        }}</label>
         <p-select
           inputId="edit-specialization"
           data-testid="edit-specialization"
@@ -51,7 +70,7 @@ const numberValidators = (min: number, max: number, pattern: RegExp): ValidatorF
           [options]="specializationOptions()"
         />
 
-        <label class="pt-2 text-slate-500" for="edit-commissionPercent">{{
+        <label class="pt-2 text-muted" for="edit-commissionPercent">{{
           'master.field.commissionPercent' | t
         }}</label>
         <input
@@ -64,9 +83,12 @@ const numberValidators = (min: number, max: number, pattern: RegExp): ValidatorF
           step="any"
           formControlName="commissionPercent"
           [invalid]="invalid('commissionPercent')"
+          [attr.aria-invalid]="invalid('commissionPercent')"
         />
 
-        <label class="pt-2 text-slate-500" for="edit-bookingForwardDays">{{ 'master.field.bookingHorizon' | t }}</label>
+        <label class="pt-2 text-muted" for="edit-bookingForwardDays">{{
+          'master.field.bookingHorizon' | t
+        }}</label>
         <input
           pInputText
           id="edit-bookingForwardDays"
@@ -77,15 +99,27 @@ const numberValidators = (min: number, max: number, pattern: RegExp): ValidatorF
           step="1"
           formControlName="bookingForwardDays"
           [invalid]="invalid('bookingForwardDays')"
+          [attr.aria-invalid]="invalid('bookingForwardDays')"
         />
 
-        <label class="pt-2 text-slate-500" for="edit-reason">{{ 'salon.edit.reason' | t }}</label>
-        <input pInputText id="edit-reason" data-testid="edit-reason" maxlength="500" [formControl]="reason" />
+        <label class="pt-2 text-muted" for="edit-reason">{{ 'salon.edit.reason' | t }}</label>
+        <input
+          pInputText
+          id="edit-reason"
+          data-testid="edit-reason"
+          maxlength="500"
+          [formControl]="reason"
+        />
 
-        <p class="col-span-2 text-xs text-slate-500">{{ 'salonMaster.edit.statusHint' | t }}</p>
+        <p class="field-wide text-xs text-muted">{{ 'salonMaster.edit.statusHint' | t }}</p>
 
         @if (conflict()) {
-          <p-message class="col-span-2" severity="warn" icon="pi pi-exclamation-triangle" data-testid="edit-conflict">
+          <p-message
+            class="field-wide"
+            severity="warn"
+            icon="pi pi-exclamation-triangle"
+            data-testid="edit-conflict"
+          >
             <div class="flex flex-wrap items-center gap-3">
               <span>{{ 'salon.edit.conflict' | t }}</span>
               <button
@@ -102,7 +136,7 @@ const numberValidators = (min: number, max: number, pattern: RegExp): ValidatorF
           </p-message>
         }
 
-        <div class="col-span-2 flex gap-2 pt-2">
+        <div class="field-wide flex gap-2 pt-2">
           <button
             pButton
             type="submit"
@@ -142,7 +176,10 @@ export class SalonMasterForm {
 
   protected readonly form = new FormGroup({
     specialization: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    commissionPercent: new FormControl<number | null>(null, numberValidators(0, 100, /^\d+([.,]\d+)?$/)),
+    commissionPercent: new FormControl<number | null>(
+      null,
+      numberValidators(0, 100, /^\d+([.,]\d+)?$/),
+    ),
     // The backend still accepts the legacy `0` («as the salon»), but nothing should write it anew.
     bookingForwardDays: new FormControl<number | null>(null, numberValidators(1, 365, /^\d+$/)),
   });
@@ -172,7 +209,11 @@ export class SalonMasterForm {
   private readonly status = toSignal(this.form.statusChanges, { initialValue: this.form.status });
 
   protected readonly canSave = computed(
-    () => !this.busy() && !this.conflict() && this.status() === 'VALID' && Object.keys(this.patch()).length > 0,
+    () =>
+      !this.busy() &&
+      !this.conflict() &&
+      this.status() === 'VALID' &&
+      Object.keys(this.patch()).length > 0,
   );
 
   constructor() {
@@ -206,7 +247,8 @@ export class SalonMasterForm {
         this.closed.emit();
       },
       // Every refusal but this one has already been worded as a toast; the form stays as typed.
-      error: (error: unknown) => this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
+      error: (error: unknown) =>
+        this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
     });
   }
 

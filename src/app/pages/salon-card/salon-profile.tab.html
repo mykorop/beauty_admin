@@ -2,7 +2,7 @@
   <app-salon-profile-form (closed)="editing.set(false)" />
 } @else if (salon(); as salon) {
   @if (salon.status !== 'deleted') {
-    <div class="mb-3 flex max-w-4xl justify-end">
+    <div class="mb-3 flex flex-wrap max-w-4xl justify-end">
       <button
         pButton
         type="button"
@@ -14,17 +14,19 @@
       ></button>
     </div>
   }
-  <dl class="grid max-w-4xl grid-cols-[14rem_1fr] gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm">
-    <dt class="text-slate-500">{{ 'salon.field.name' | t }}</dt>
+  <dl class="profile-fields">
+    <dt class="text-muted">{{ 'salon.field.name' | t }}</dt>
     <dd data-testid="field-name">{{ salon.name || '—' }}</dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.owner' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.owner' | t }}</dt>
     <dd data-testid="field-owner">{{ salon.ownerName || '—' }}</dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.description' | t }}</dt>
-    <dd class="whitespace-pre-line" data-testid="field-description">{{ salon.description || '—' }}</dd>
+    <dt class="text-muted">{{ 'salon.field.description' | t }}</dt>
+    <dd class="whitespace-pre-line" data-testid="field-description">
+      {{ salon.description || '—' }}
+    </dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.address' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.address' | t }}</dt>
     <dd data-testid="field-address">
       @for (line of addressLines(); track $index) {
         <div>{{ line }}</div>
@@ -33,29 +35,33 @@
       }
     </dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.coordinates' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.coordinates' | t }}</dt>
     <dd data-testid="field-coordinates">{{ coordinates() }}</dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.phone' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.phone' | t }}</dt>
     <dd data-testid="field-phone">{{ salon.phone || '—' }}</dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.email' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.email' | t }}</dt>
     <dd data-testid="field-email">{{ salon.email || '—' }}</dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.timezone' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.timezone' | t }}</dt>
     <dd data-testid="field-timezone">{{ salon.timezone }}</dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.buffer' | t }}</dt>
-    <dd data-testid="field-buffer">{{ 'salon.value.minutes' | t: { count: salon.bufferMinutes } }}</dd>
+    <dt class="text-muted">{{ 'salon.field.buffer' | t }}</dt>
+    <dd data-testid="field-buffer">
+      {{ 'salon.value.minutes' | t: { count: salon.bufferMinutes } }}
+    </dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.bookingHorizon' | t }}</dt>
-    <dd data-testid="field-bookingHorizon">{{ 'salon.value.days' | t: { count: salon.bookingForwardDays } }}</dd>
+    <dt class="text-muted">{{ 'salon.field.bookingHorizon' | t }}</dt>
+    <dd data-testid="field-bookingHorizon">
+      {{ 'salon.value.days' | t: { count: salon.bookingForwardDays } }}
+    </dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.brandColor' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.brandColor' | t }}</dt>
     <dd class="flex items-center gap-2" data-testid="field-brandColor">
       @if (salon.brandColor) {
         <span
-          class="inline-block size-4 rounded border border-slate-300"
+          class="inline-block size-4 rounded border border-control"
           aria-hidden="true"
           [style.background-color]="salon.brandColor"
         ></span>
@@ -65,7 +71,7 @@
       }
     </dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.shortLink' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.shortLink' | t }}</dt>
     <dd data-testid="field-shortLink">
       @if (salon.shortLinks.random || salon.shortLinks.handle) {
         @if (salon.shortLinks.handle; as handle) {
@@ -79,14 +85,18 @@
       }
     </dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.rating' | t }}</dt>
-    <dd data-testid="field-rating">{{ rating() }} · {{ 'salon.value.reviews' | t: { count: salon.reviewCount } }}</dd>
+    <dt class="text-muted">{{ 'salon.field.rating' | t }}</dt>
+    <dd data-testid="field-rating">
+      {{ rating() }} · {{ 'salon.value.reviews' | t: { count: salon.reviewCount } }}
+    </dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.createdAt' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.createdAt' | t }}</dt>
     <dd data-testid="field-createdAt">{{ createdAt() }}</dd>
 
-    <dt class="text-slate-500">{{ 'salon.field.updatedAt' | t }}</dt>
+    <dt class="text-muted">{{ 'salon.field.updatedAt' | t }}</dt>
     <dd data-testid="field-updatedAt">{{ updatedAt() }}</dd>
   </dl>
-  <p class="mt-2 text-xs text-slate-500">{{ 'salon.datesInVenueZone' | t: { timezone: salon.timezone } }}</p>
+  <p class="mt-2 text-xs text-muted">
+    {{ 'salon.datesInVenueZone' | t: { timezone: salon.timezone } }}
+  </p>
 }

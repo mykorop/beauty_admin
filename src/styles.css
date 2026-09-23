@@ -6,6 +6,7 @@
 @import 'tailwindcss-primeui';
 @import 'primeicons/primeicons.css';
 @import './fonts.css';
+@import './profiles.css';
 
 @theme inline {
   --color-canvas: var(--bm-bg);
@@ -16,6 +17,8 @@
   --color-accent: var(--bm-accent);
   --color-divider: var(--bm-border);
   --color-control: var(--bm-input-border);
+  --color-warning: var(--bm-warning);
+  --color-danger: var(--bm-danger);
 }
 
 :root {
@@ -30,6 +33,8 @@
   --bm-accent-active: #dc8908;
   --bm-border: #474b53;
   --bm-input-border: #858992;
+  --bm-warning: #fcd34d;
+  --bm-danger: #fca5a5;
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 
@@ -228,7 +233,8 @@ body {
     background: #f8fafc;
     color: #0f172a;
   }
-  html.bookme-dark .shell-workspace {
+  html.bookme-dark .shell-workspace,
+  html.bookme-profile .shell-workspace {
     background: var(--bm-bg);
     color: var(--bm-text);
   }
@@ -330,6 +336,39 @@ body {
     font-weight: 600;
     text-decoration: underline;
     text-underline-offset: 0.2em;
+  }
+  .profile-table {
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--bm-border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  .profile-table .p-datatable-table {
+    min-width: 60rem;
+  }
+  .profile-table td,
+  .profile-table th {
+    overflow-wrap: break-word;
+  }
+  .profile-table a {
+    color: var(--bm-accent);
+  }
+  .profile-table .profile-deleted {
+    background: #35282d;
+    color: var(--bm-muted);
+  }
+  .profile-table .profile-deleted:hover {
+    background: #463039;
+  }
+  .profile-table .p-tag {
+    white-space: normal;
+  }
+  .bookme-dark .p-select-overlay {
+    max-width: calc(100vw - 2rem);
+  }
+  .bookme-dark .p-select-option {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   .p-toast {
     max-width: calc(100vw - 2rem);

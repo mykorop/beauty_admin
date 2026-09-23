@@ -1,10 +1,21 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Message } from 'primeng/message';
 import { Tag } from 'primeng/tag';
 import { forkJoin, type Subscription } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
-import { SALON_MASTER_STATUS_SEVERITY, SalonMastersClient } from '../../core/api/salon-masters.client';
+import {
+  SALON_MASTER_STATUS_SEVERITY,
+  SalonMastersClient,
+} from '../../core/api/salon-masters.client';
 import { SalonsClient } from '../../core/api/salons.client';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
@@ -31,13 +42,25 @@ import { SalonMasterStore } from './salon-master.store';
         [backLink]="rosterLink()"
         backLabelKey="salonMaster.backToRoster"
       >
-        <p-tag cardStatus data-testid="card-status" [severity]="statusSeverity()" [value]="statusLabelKey() | t" />
+        <p-tag
+          cardStatus
+          data-testid="card-status"
+          [severity]="statusSeverity()"
+          [value]="statusLabelKey() | t"
+        />
         @if (master.isOwner) {
-          <p-tag cardStatus severity="info" data-testid="card-owner" [value]="'roster.ownerMaster' | t" />
+          <p-tag
+            cardStatus
+            severity="info"
+            data-testid="card-owner"
+            [value]="'roster.ownerMaster' | t"
+          />
         }
-        <p cardContext class="-mt-2 mb-4 text-sm text-slate-600" data-testid="card-context">
+        <p cardContext class="-mt-2 mb-4 text-sm text-muted" data-testid="card-context">
           {{ 'salonMaster.inSalon' | t }}
-          <a class="font-medium hover:underline" [routerLink]="['/salons', salonId()]">{{ salon()?.name || '—' }}</a>
+          <a class="font-medium hover:underline" [routerLink]="['/salons', salonId()]">{{
+            salon()?.name || '—'
+          }}</a>
         </p>
         @if (salon()?.status === 'deleted') {
           <p-message
@@ -52,9 +75,9 @@ import { SalonMasterStore } from './salon-master.store';
         }
       </app-profile-card>
     } @else if (failure() === 'notFound') {
-      <p class="text-slate-600" data-testid="card-not-found">{{ 'salonMaster.notFound' | t }}</p>
+      <p class="text-muted" data-testid="card-not-found">{{ 'salonMaster.notFound' | t }}</p>
     } @else if (failure() === 'failed') {
-      <p class="text-slate-600" data-testid="card-failed">{{ 'card.failed' | t }}</p>
+      <p class="text-muted" data-testid="card-failed">{{ 'card.failed' | t }}</p>
     }
   `,
 })
@@ -73,7 +96,9 @@ export class SalonMasterCardPage {
   protected readonly master = this.store.master.asReadonly();
   protected readonly failure = signal<'notFound' | 'failed' | null>(null);
 
-  protected readonly rosterLink = computed(() => `/salons/${encodeURIComponent(this.salonId())}/roster`);
+  protected readonly rosterLink = computed(
+    () => `/salons/${encodeURIComponent(this.salonId())}/roster`,
+  );
   protected readonly statusSeverity = computed(
     () => SALON_MASTER_STATUS_SEVERITY[this.master()?.status ?? 'ACTIVE'] ?? 'secondary',
   );
@@ -100,7 +125,9 @@ export class SalonMasterCardPage {
         },
         // Any other refusal has already been worded as a toast by the interceptor.
         error: (error: unknown) =>
-          this.failure.set(error instanceof ApiError && error.code === 'NOT_FOUND' ? 'notFound' : 'failed'),
+          this.failure.set(
+            error instanceof ApiError && error.code === 'NOT_FOUND' ? 'notFound' : 'failed',
+          ),
       });
       onCleanup(() => subscription?.unsubscribe());
     });

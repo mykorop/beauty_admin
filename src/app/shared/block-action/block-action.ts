@@ -63,7 +63,7 @@ const UNBLOCK_COPY: BlockCopy = {
     >
       {{ messageKey() | t: { name: subject() } }}
       @if (upcomingStated()) {
-        <span class="mt-2 block font-medium text-amber-700" data-testid="block-upcoming">
+        <span class="mt-2 block font-medium text-warning" data-testid="block-upcoming">
           {{ 'block.upcoming' | t: { count: upcomingCount() } }}
         </span>
         <button

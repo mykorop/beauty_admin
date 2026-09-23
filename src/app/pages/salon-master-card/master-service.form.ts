@@ -9,7 +9,13 @@ import {
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  type ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
@@ -18,7 +24,10 @@ import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 import { finalize } from 'rxjs';
 import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
-import { type MasterService, SalonMasterServicesClient } from '../../core/api/salon-master-services.client';
+import {
+  type MasterService,
+  SalonMasterServicesClient,
+} from '../../core/api/salon-master-services.client';
 import type { SalonService } from '../../core/api/salon-services.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
@@ -45,20 +54,28 @@ const numberValidators = (min: number, max: number): ValidatorFn[] => [
  */
 @Component({
   selector: 'app-master-service-form',
-  imports: [ReactiveFormsModule, ButtonDirective, Checkbox, InputText, Message, Select, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    ButtonDirective,
+    Checkbox,
+    InputText,
+    Message,
+    Select,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      class="grid max-w-4xl grid-cols-[14rem_1fr] items-start gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm"
+      class="profile-fields profile-form"
       data-testid="copy-form"
       [formGroup]="form"
       (ngSubmit)="save()"
     >
-      <h2 class="col-span-2 text-base font-medium" data-testid="copy-form-title">
+      <h2 class="field-wide text-base font-medium" data-testid="copy-form-title">
         {{ (current() ? 'copies.form.editTitle' : 'copies.form.newTitle') | t }}
       </h2>
 
-      <label class="pt-2 text-slate-500" for="copy-service">{{ 'copies.field.service' | t }}</label>
+      <label class="pt-2 text-muted" for="copy-service">{{ 'copies.field.service' | t }}</label>
       @if (current(); as copy) {
         <p class="pt-2 font-medium" data-testid="copy-service-name">{{ copy.name || '—' }}</p>
       } @else {
@@ -75,7 +92,9 @@ const numberValidators = (min: number, max: number): ValidatorFn[] => [
         />
       }
 
-      <label class="pt-2 text-slate-500" for="copy-duration">{{ 'services.field.durationMinutes' | t }}</label>
+      <label class="pt-2 text-muted" for="copy-duration">{{
+        'services.field.durationMinutes' | t
+      }}</label>
       <div>
         <input
           pInputText
@@ -88,16 +107,17 @@ const numberValidators = (min: number, max: number): ValidatorFn[] => [
           step="1"
           formControlName="durationMinutes"
           [invalid]="invalid('durationMinutes')"
+          [attr.aria-invalid]="invalid('durationMinutes')"
         />
         @if (catalogValues(); as catalog) {
-          <p class="mt-1 text-xs text-slate-500" data-testid="copy-catalog-duration">
+          <p class="mt-1 text-xs text-muted" data-testid="copy-catalog-duration">
             {{ 'copies.form.inCatalog' | t }}:
             {{ 'services.value.minutes' | t: { count: catalog.durationMinutes } }}
           </p>
         }
       </div>
 
-      <label class="pt-2 text-slate-500" for="copy-price">{{ 'services.field.price' | t }}</label>
+      <label class="pt-2 text-muted" for="copy-price">{{ 'services.field.price' | t }}</label>
       <div>
         <div class="flex items-center gap-2">
           <input
@@ -110,33 +130,50 @@ const numberValidators = (min: number, max: number): ValidatorFn[] => [
             step="1"
             formControlName="price"
             [invalid]="invalid('price')"
+            [attr.aria-invalid]="invalid('price')"
           />
-          <span class="text-slate-500" data-testid="copy-currency">{{ currency() }}</span>
+          <span class="text-muted" data-testid="copy-currency">{{ currency() }}</span>
         </div>
         @if (catalogValues(); as catalog) {
-          <p class="mt-1 text-xs text-slate-500" data-testid="copy-catalog-price">
+          <p class="mt-1 text-xs text-muted" data-testid="copy-catalog-price">
             {{ 'copies.form.inCatalog' | t }}: {{ catalog.price }} {{ currency() }}
           </p>
         }
         @if (perHour()) {
-          <p class="mt-1 text-xs text-slate-500">{{ 'services.form.perHourHint' | t }}</p>
+          <p class="mt-1 text-xs text-muted">{{ 'services.form.perHourHint' | t }}</p>
         }
       </div>
 
       @if (current()) {
-        <label class="pt-2 text-slate-500" for="copy-active">{{ 'services.field.isActive' | t }}</label>
-        <p-checkbox inputId="copy-active" data-testid="copy-active" formControlName="isActive" [binary]="true" />
+        <label class="pt-2 text-muted" for="copy-active">{{ 'services.field.isActive' | t }}</label>
+        <p-checkbox
+          inputId="copy-active"
+          data-testid="copy-active"
+          formControlName="isActive"
+          [binary]="true"
+        />
       }
 
-      <label class="pt-2 text-slate-500" for="copy-reason">{{ 'salon.edit.reason' | t }}</label>
-      <input pInputText id="copy-reason" data-testid="copy-reason" maxlength="500" [formControl]="reason" />
+      <label class="pt-2 text-muted" for="copy-reason">{{ 'salon.edit.reason' | t }}</label>
+      <input
+        pInputText
+        id="copy-reason"
+        data-testid="copy-reason"
+        maxlength="500"
+        [formControl]="reason"
+      />
 
-      <p class="col-span-2 text-xs text-slate-500" data-testid="copy-client-note">
+      <p class="field-wide text-xs text-muted" data-testid="copy-client-note">
         {{ 'copies.form.clientNote' | t }}
       </p>
 
       @if (conflict()) {
-        <p-message class="col-span-2" severity="warn" icon="pi pi-exclamation-triangle" data-testid="edit-conflict">
+        <p-message
+          class="field-wide"
+          severity="warn"
+          icon="pi pi-exclamation-triangle"
+          data-testid="edit-conflict"
+        >
           <div class="flex flex-wrap items-center gap-3">
             <span>{{ 'salon.edit.conflict' | t }}</span>
             <button
@@ -153,7 +190,7 @@ const numberValidators = (min: number, max: number): ValidatorFn[] => [
         </p-message>
       }
 
-      <div class="col-span-2 flex gap-2 pt-2">
+      <div class="field-wide flex gap-2 pt-2">
         <button
           pButton
           type="submit"
@@ -212,7 +249,9 @@ export class MasterServiceForm implements OnInit {
   protected readonly serviceOptions = computed(() =>
     this.available().map((service) => ({
       value: service.serviceId,
-      label: service.isActive ? service.name : `${service.name} · ${this.i18n.t('services.active.no')}`,
+      label: service.isActive
+        ? service.name
+        : `${service.name} · ${this.i18n.t('services.active.no')}`,
     })),
   );
 
@@ -226,9 +265,13 @@ export class MasterServiceForm implements OnInit {
     const serviceId = this.value().serviceId;
     return this.available().find((service) => service.serviceId === serviceId) ?? null;
   });
-  protected readonly catalogValues = computed(() => (this.current() ? this.current()?.catalog : this.chosen()) ?? null);
+  protected readonly catalogValues = computed(
+    () => (this.current() ? this.current()?.catalog : this.chosen()) ?? null,
+  );
   protected readonly currency = computed(() => (this.current() ?? this.chosen())?.currency ?? '');
-  protected readonly perHour = computed(() => (this.current() ?? this.chosen())?.priceUnit === 'PER_HOUR');
+  protected readonly perHour = computed(
+    () => (this.current() ?? this.chosen())?.priceUnit === 'PER_HOUR',
+  );
 
   private readonly patch = computed(() => {
     this.value();
@@ -239,7 +282,10 @@ export class MasterServiceForm implements OnInit {
   protected readonly canSave = computed(() => {
     const patch = this.patch();
     return (
-      !this.busy() && !this.conflict() && this.status() === 'VALID' && (patch === null || Object.keys(patch).length > 0)
+      !this.busy() &&
+      !this.conflict() &&
+      this.status() === 'VALID' &&
+      (patch === null || Object.keys(patch).length > 0)
     );
   });
 
@@ -282,7 +328,9 @@ export class MasterServiceForm implements OnInit {
       next: (saved) => {
         // The POST never overwrites: a Копія added meanwhile comes back as stored, not as typed.
         const kept =
-          !copy && !!fresh && (saved.price !== fresh.price || saved.durationMinutes !== fresh.durationMinutes);
+          !copy &&
+          !!fresh &&
+          (saved.price !== fresh.price || saved.durationMinutes !== fresh.durationMinutes);
         this.messages.add(
           kept
             ? { severity: 'warn', summary: this.i18n.t('copies.form.alreadyHeld'), life: 8000 }

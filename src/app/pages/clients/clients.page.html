@@ -2,7 +2,7 @@
   <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.clients' | t }}</h1>
   <span class="flex-1"></span>
   @if (builtAt(); as builtAt) {
-    <span class="text-sm text-slate-600" data-testid="clients-built-at">{{
+    <span class="text-sm text-muted" data-testid="clients-built-at">{{
       'list.updatedAt' | t: { time: builtAt }
     }}</span>
   }
@@ -18,7 +18,7 @@
 </div>
 
 <div class="mb-4 flex flex-wrap items-center gap-3">
-  <p-iconfield class="w-80">
+  <p-iconfield class="w-80 max-w-full">
     <p-inputicon class="pi pi-search" />
     <input
       pInputText
@@ -33,7 +33,7 @@
   </p-iconfield>
   <p-select
     data-testid="clients-status-filter"
-    class="w-56"
+    class="w-56 max-w-full"
     [options]="statusOptions()"
     optionLabel="label"
     optionValue="value"
@@ -43,10 +43,13 @@
     [ngModel]="state().status"
     (ngModelChange)="onStatus($event)"
   />
-  <span class="text-sm text-slate-600" data-testid="clients-total">{{ 'list.total' | t: { count: view().total } }}</span>
+  <span class="text-sm text-muted" data-testid="clients-total">{{
+    'list.total' | t: { count: view().total }
+  }}</span>
 </div>
 
 <p-table
+  styleClass="profile-table"
   data-testid="clients-table"
   [value]="view().rows"
   dataKey="clientId"
@@ -68,8 +71,12 @@
       <th pSortableColumn="name">{{ 'clients.column.name' | t }} <p-sortIcon field="name" /></th>
       <th pSortableColumn="email">{{ 'clients.column.email' | t }} <p-sortIcon field="email" /></th>
       <th pSortableColumn="phone">{{ 'clients.column.phone' | t }} <p-sortIcon field="phone" /></th>
-      <th pSortableColumn="status">{{ 'salons.column.status' | t }} <p-sortIcon field="status" /></th>
-      <th pSortableColumn="createdAt">{{ 'clients.column.registeredAt' | t }} <p-sortIcon field="createdAt" /></th>
+      <th pSortableColumn="status">
+        {{ 'salons.column.status' | t }} <p-sortIcon field="status" />
+      </th>
+      <th pSortableColumn="createdAt">
+        {{ 'clients.column.registeredAt' | t }} <p-sortIcon field="createdAt" />
+      </th>
     </tr>
   </ng-template>
   <ng-template #body let-client>
@@ -77,14 +84,17 @@
       class="cursor-pointer"
       data-testid="client-row"
       [attr.data-status]="client.status"
-      [class.bg-red-50]="client.status === 'deleted'"
-      [class.text-slate-500]="client.status === 'deleted'"
+      [class.profile-deleted]="client.status === 'deleted'"
+      [class.text-muted]="client.status === 'deleted'"
       (click)="openClient(client.clientId, $event)"
     >
       <td>
-        <a class="font-medium hover:underline" data-testid="client-name" [routerLink]="['/clients', client.clientId]">{{
-          client.name || '—'
-        }}</a>
+        <a
+          class="font-medium hover:underline"
+          data-testid="client-name"
+          [routerLink]="['/clients', client.clientId]"
+          >{{ client.name || '—' }}</a
+        >
       </td>
       <td>{{ client.email || '—' }}</td>
       <td>{{ client.phone || '—' }}</td>
@@ -101,7 +111,7 @@
   </ng-template>
   <ng-template #emptymessage>
     <tr>
-      <td colspan="5" class="py-8 text-center text-slate-600" data-testid="clients-empty">
+      <td colspan="5" class="py-8 text-center text-muted" data-testid="clients-empty">
         {{ (failed() ? 'list.failed' : 'list.empty') | t }}
       </td>
     </tr>

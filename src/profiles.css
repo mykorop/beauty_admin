@@ -1,0 +1,182 @@
+@layer components {
+  .profile-card {
+    display: block;
+    min-width: 0;
+    color: var(--bm-text);
+  }
+  .profile-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--bm-muted);
+    font-size: 0.875rem;
+  }
+  .profile-back:hover {
+    color: var(--bm-accent-hover);
+    text-decoration: underline;
+  }
+  .profile-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--bm-border);
+  }
+  .profile-tab {
+    max-width: 100%;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem;
+    color: var(--bm-muted);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+  .profile-tab:hover {
+    background: var(--bm-panel);
+    color: var(--bm-text);
+  }
+  .profile-tab.is-active {
+    border-bottom-color: var(--bm-accent);
+    background: var(--bm-panel);
+    color: var(--bm-accent);
+    font-weight: 600;
+  }
+  .profile-content,
+  .profile-card [cardContext],
+  .profile-card .p-message {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  /* Staged migration: tickets 03/04 own the remaining tab bodies. Keep their original
+     colours and body-mounted overlays readable inside the new frame until then. */
+  html:not(.bookme-dark) .profile-content {
+    color-scheme: light;
+    background: #f8fafc;
+    color: #0f172a;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  html:not(.bookme-dark) .profile-content :focus-visible:not(.reason-dialog *) {
+    outline-color: #92400e;
+  }
+  .profile-fields {
+    display: grid;
+    grid-template-columns: 14rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem 1.5rem;
+    max-width: 56rem;
+    border: 1px solid var(--bm-border);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    background: var(--bm-panel);
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .profile-fields > *,
+  .profile-form input,
+  .profile-form textarea,
+  .profile-form .p-select {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .profile-form > input,
+  .profile-form > textarea,
+  .profile-form > .p-select {
+    width: 100%;
+  }
+  .profile-form .p-select-label {
+    white-space: normal;
+  }
+  .profile-fields .field-wide {
+    grid-column: 1 / -1;
+  }
+  .profile-fields .field-hint {
+    grid-column: 2;
+  }
+  .profile-fields .field-wide.flex {
+    flex-wrap: wrap;
+  }
+  .profile-card .p-button-label,
+  .reason-dialog .p-button-label {
+    white-space: normal;
+  }
+  .profile-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--bm-border);
+    border-radius: 0.5rem;
+  }
+  .profile-data-table {
+    width: 100%;
+    min-width: 60rem;
+    background: var(--bm-panel);
+    text-align: left;
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .profile-data-table thead {
+    background: var(--bm-raised);
+  }
+  .profile-data-table td,
+  .profile-data-table th {
+    overflow-wrap: break-word;
+  }
+  .profile-data-table a,
+  .profile-fields a,
+  .profile-card [cardContext] a {
+    color: var(--bm-accent);
+  }
+  .profile-data-table .table-actions {
+    width: 15rem;
+  }
+  .profile-data-table .p-tag {
+    white-space: normal;
+  }
+  .profile-data-table img,
+  .profile-data-table [aria-hidden='true'] {
+    flex-shrink: 0;
+  }
+  .reason-dialog {
+    width: 32rem;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 2rem);
+    background: var(--bm-raised);
+    color: var(--bm-text);
+    overflow-wrap: anywhere;
+  }
+  .reason-dialog .p-dialog-header {
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .reason-dialog .p-dialog-title {
+    min-width: 0;
+  }
+  .reason-dialog .p-dialog-header-actions {
+    flex-shrink: 0;
+  }
+  .reason-dialog textarea {
+    width: 100%;
+    min-width: 0;
+    resize: vertical;
+  }
+  .reason-dialog .p-dialog-footer {
+    flex-wrap: wrap;
+  }
+  @media (max-width: 47.999rem) {
+    .profile-fields {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.5rem;
+      padding: 1rem;
+    }
+    .profile-fields dt:not(:first-child),
+    .profile-fields label {
+      padding-top: 0.5rem;
+    }
+    .profile-fields .field-hint {
+      grid-column: 1;
+    }
+  }
+}

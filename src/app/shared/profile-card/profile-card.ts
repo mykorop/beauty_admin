@@ -17,37 +17,38 @@ export type ProfileCardTab = { path: string; labelKey: TranslationKey };
   selector: 'app-profile-card',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'profile-card bookme-dark' },
   template: `
-    <a
-      class="mb-3 inline-flex items-center gap-2 text-sm text-slate-600 hover:underline"
-      data-testid="card-back"
-      [routerLink]="backLink()"
-    >
+    <a class="profile-back" data-testid="card-back" [routerLink]="backLink()">
       <i class="pi pi-arrow-left" aria-hidden="true"></i>
       {{ backLabelKey() | t }}
     </a>
     <div class="mb-4 flex flex-wrap items-center gap-3">
-      <h1 class="text-2xl font-semibold" data-testid="card-title">{{ title() || '—' }}</h1>
+      <h1 class="min-w-0 text-2xl font-semibold [overflow-wrap:anywhere]" data-testid="card-title">
+        {{ title() || '—' }}
+      </h1>
       <ng-content select="[cardStatus]" />
-      <div class="ml-auto flex items-center gap-2">
+      <div class="ml-auto flex flex-wrap items-center gap-2">
         <ng-content select="[cardActions]" />
       </div>
     </div>
     <ng-content select="[cardContext]" />
     <ng-content select="[cardBanner]" />
-    <nav class="mb-6 flex flex-wrap gap-1 border-b border-slate-200">
+    <nav class="profile-tabs">
       @for (tab of tabs(); track tab.path) {
         <a
-          class="-mb-px border-b-2 border-transparent px-3 py-2 text-sm text-slate-600 hover:text-slate-900"
+          class="profile-tab"
           data-testid="card-tab"
           [routerLink]="[tab.path]"
-          routerLinkActive="!border-slate-900 font-semibold !text-slate-900"
+          routerLinkActive="is-active"
           ariaCurrentWhenActive="page"
           >{{ tab.labelKey | t }}</a
         >
       }
     </nav>
-    <router-outlet />
+    <section class="profile-content">
+      <router-outlet />
+    </section>
   `,
 })
 export class ProfileCard {

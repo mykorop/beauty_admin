@@ -1,6 +1,16 @@
 @if (client(); as client) {
-  <app-profile-card [title]="client.name" [tabs]="tabs" backLink="/clients" backLabelKey="client.backToList">
-    <p-tag cardStatus data-testid="card-status" [severity]="statusSeverity()" [value]="statusLabelKey() | t" />
+  <app-profile-card
+    [title]="client.name"
+    [tabs]="tabs"
+    backLink="/clients"
+    backLabelKey="client.backToList"
+  >
+    <p-tag
+      cardStatus
+      data-testid="card-status"
+      [severity]="statusSeverity()"
+      [value]="statusLabelKey() | t"
+    />
     @if (client.status !== 'deleted') {
       <app-block-action
         cardActions
@@ -12,20 +22,34 @@
       />
     }
     @if (client.status === 'deleted') {
-      <p-message cardBanner class="mb-4 block" severity="error" icon="pi pi-trash" data-testid="card-deleted-banner">
+      <p-message
+        cardBanner
+        class="mb-4 block"
+        severity="error"
+        icon="pi pi-trash"
+        data-testid="card-deleted-banner"
+      >
         {{
-          client.deletedAt ? ('client.deletedBanner' | t: { date: deletedAt() }) : ('client.deletedBannerNoDate' | t)
+          client.deletedAt
+            ? ('client.deletedBanner' | t: { date: deletedAt() })
+            : ('client.deletedBannerNoDate' | t)
         }}
       </p-message>
     }
     @if (client.blockedAt) {
-      <p-message cardBanner class="mb-4 block" severity="warn" icon="pi pi-ban" data-testid="card-blocked-banner">
+      <p-message
+        cardBanner
+        class="mb-4 block"
+        severity="warn"
+        icon="pi pi-ban"
+        data-testid="card-blocked-banner"
+      >
         {{ 'client.blockedBanner' | t: { date: blockedAt(), reason: client.blockedReason || '—' } }}
       </p-message>
     }
   </app-profile-card>
 } @else if (failure() === 'notFound') {
-  <p class="text-slate-600" data-testid="card-not-found">{{ 'client.notFound' | t }}</p>
+  <p class="text-muted" data-testid="card-not-found">{{ 'client.notFound' | t }}</p>
 } @else if (failure() === 'failed') {
-  <p class="text-slate-600" data-testid="card-failed">{{ 'card.failed' | t }}</p>
+  <p class="text-muted" data-testid="card-failed">{{ 'card.failed' | t }}</p>
 }

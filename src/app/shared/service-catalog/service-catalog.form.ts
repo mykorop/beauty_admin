@@ -9,7 +9,13 @@ import {
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  type ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
@@ -54,20 +60,29 @@ const withStored = (values: readonly string[], stored: string | undefined): read
  */
 @Component({
   selector: 'app-service-catalog-form',
-  imports: [ReactiveFormsModule, ButtonDirective, Checkbox, InputText, Message, Select, Textarea, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    ButtonDirective,
+    Checkbox,
+    InputText,
+    Message,
+    Select,
+    Textarea,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      class="grid max-w-4xl grid-cols-[14rem_1fr] items-start gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm"
+      class="profile-fields profile-form"
       data-testid="service-form"
       [formGroup]="form"
       (ngSubmit)="save()"
     >
-      <h2 class="col-span-2 text-base font-medium" data-testid="service-form-title">
+      <h2 class="field-wide text-base font-medium" data-testid="service-form-title">
         {{ (current() ? 'services.form.editTitle' : 'services.form.newTitle') | t }}
       </h2>
 
-      <label class="pt-2 text-slate-500" for="service-name">{{ 'services.field.name' | t }}</label>
+      <label class="pt-2 text-muted" for="service-name">{{ 'services.field.name' | t }}</label>
       <input
         pInputText
         id="service-name"
@@ -75,9 +90,12 @@ const withStored = (values: readonly string[], stored: string | undefined): read
         maxlength="200"
         formControlName="name"
         [invalid]="invalid('name')"
+        [attr.aria-invalid]="invalid('name')"
       />
 
-      <label class="pt-2 text-slate-500" for="service-description">{{ 'services.field.description' | t }}</label>
+      <label class="pt-2 text-muted" for="service-description">{{
+        'services.field.description' | t
+      }}</label>
       <textarea
         pTextarea
         id="service-description"
@@ -87,7 +105,9 @@ const withStored = (values: readonly string[], stored: string | undefined): read
         formControlName="description"
       ></textarea>
 
-      <label class="pt-2 text-slate-500" for="service-category">{{ 'services.field.category' | t }}</label>
+      <label class="pt-2 text-muted" for="service-category">{{
+        'services.field.category' | t
+      }}</label>
       <p-select
         inputId="service-category"
         data-testid="service-category"
@@ -99,7 +119,9 @@ const withStored = (values: readonly string[], stored: string | undefined): read
         [placeholder]="'services.field.categoryPlaceholder' | t"
       />
 
-      <label class="pt-2 text-slate-500" for="service-duration">{{ 'services.field.durationMinutes' | t }}</label>
+      <label class="pt-2 text-muted" for="service-duration">{{
+        'services.field.durationMinutes' | t
+      }}</label>
       <input
         pInputText
         id="service-duration"
@@ -110,9 +132,10 @@ const withStored = (values: readonly string[], stored: string | undefined): read
         step="1"
         formControlName="durationMinutes"
         [invalid]="invalid('durationMinutes')"
+        [attr.aria-invalid]="invalid('durationMinutes')"
       />
 
-      <label class="pt-2 text-slate-500" for="service-price">{{ 'services.field.price' | t }}</label>
+      <label class="pt-2 text-muted" for="service-price">{{ 'services.field.price' | t }}</label>
       <div class="flex gap-2">
         <input
           pInputText
@@ -124,6 +147,7 @@ const withStored = (values: readonly string[], stored: string | undefined): read
           step="1"
           formControlName="price"
           [invalid]="invalid('price')"
+          [attr.aria-invalid]="invalid('price')"
         />
         <p-select
           inputId="service-currency"
@@ -134,23 +158,36 @@ const withStored = (values: readonly string[], stored: string | undefined): read
         />
       </div>
       @if (current()?.priceUnit === 'PER_HOUR') {
-        <p class="col-start-2 text-xs text-slate-500">{{ 'services.form.perHourHint' | t }}</p>
+        <p class="field-hint text-xs text-muted">{{ 'services.form.perHourHint' | t }}</p>
       }
       @if (!current()) {
-        <p class="col-start-2 text-xs text-slate-500" data-testid="service-mdl-only">
+        <p class="field-hint text-xs text-muted" data-testid="service-mdl-only">
           {{ 'services.form.mdlOnly' | t }}
         </p>
       }
 
-      <label class="pt-2 text-slate-500" for="service-active">{{ 'services.field.isActive' | t }}</label>
-      <p-checkbox inputId="service-active" data-testid="service-active" formControlName="isActive" [binary]="true" />
+      <label class="pt-2 text-muted" for="service-active">{{
+        'services.field.isActive' | t
+      }}</label>
+      <p-checkbox
+        inputId="service-active"
+        data-testid="service-active"
+        formControlName="isActive"
+        [binary]="true"
+      />
 
-      <label class="pt-2 text-slate-500" for="service-reason">{{ 'salon.edit.reason' | t }}</label>
-      <input pInputText id="service-reason" data-testid="service-reason" maxlength="500" [formControl]="reason" />
+      <label class="pt-2 text-muted" for="service-reason">{{ 'salon.edit.reason' | t }}</label>
+      <input
+        pInputText
+        id="service-reason"
+        data-testid="service-reason"
+        maxlength="500"
+        [formControl]="reason"
+      />
 
       @if (warnsAboutCopies()) {
         <p-message
-          class="col-span-2"
+          class="field-wide"
           severity="warn"
           icon="pi pi-exclamation-triangle"
           data-testid="service-copies-warning"
@@ -160,7 +197,12 @@ const withStored = (values: readonly string[], stored: string | undefined): read
       }
 
       @if (conflict()) {
-        <p-message class="col-span-2" severity="warn" icon="pi pi-exclamation-triangle" data-testid="edit-conflict">
+        <p-message
+          class="field-wide"
+          severity="warn"
+          icon="pi pi-exclamation-triangle"
+          data-testid="edit-conflict"
+        >
           <div class="flex flex-wrap items-center gap-3">
             <span>{{ 'salon.edit.conflict' | t }}</span>
             <button
@@ -177,7 +219,7 @@ const withStored = (values: readonly string[], stored: string | undefined): read
         </p-message>
       }
 
-      <div class="col-span-2 flex gap-2 pt-2">
+      <div class="field-wide flex gap-2 pt-2">
         <button
           pButton
           type="submit"
@@ -267,7 +309,10 @@ export class ServiceCatalogForm implements OnInit {
   protected readonly canSave = computed(() => {
     const patch = this.patch();
     return (
-      !this.busy() && !this.conflict() && this.status() === 'VALID' && (patch === null || Object.keys(patch).length > 0)
+      !this.busy() &&
+      !this.conflict() &&
+      this.status() === 'VALID' &&
+      (patch === null || Object.keys(patch).length > 0)
     );
   });
 
@@ -308,7 +353,8 @@ export class ServiceCatalogForm implements OnInit {
         this.closed.emit(saved);
       },
       // Every refusal but this one has already been worded as a toast; the form stays as typed.
-      error: (error: unknown) => this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
+      error: (error: unknown) =>
+        this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
     });
   }
 
@@ -336,6 +382,8 @@ export class ServiceCatalogForm implements OnInit {
     // The currency decides how the stored price reads, and a Копія keeps its own: switching it on an
     // existing service would re-denominate a number nobody re-typed. It is chosen once, on creation.
     this.form.controls.currency[service ? 'disable' : 'enable']();
-    this.form.reset(service ? toCatalogServiceFormValue(service) : EMPTY_CATALOG_SERVICE_FORM_VALUE);
+    this.form.reset(
+      service ? toCatalogServiceFormValue(service) : EMPTY_CATALOG_SERVICE_FORM_VALUE,
+    );
   }
 }

@@ -47,7 +47,7 @@ import type { CatalogService, ServiceCatalogPort } from './service-catalog.model
       }
     } @else if (rows(); as rows) {
       @if (writable()) {
-        <div class="mb-3 flex max-w-6xl justify-end">
+        <div class="mb-3 flex flex-wrap max-w-6xl justify-end">
           <button
             pButton
             type="button"
@@ -59,108 +59,121 @@ import type { CatalogService, ServiceCatalogPort } from './service-catalog.model
           ></button>
         </div>
       }
-      <table class="w-full max-w-6xl rounded-lg border border-slate-200 bg-white text-left text-sm">
-        <thead class="text-xs text-slate-500">
-          <tr class="border-b border-slate-200">
-            <th class="px-4 py-3 font-normal">{{ 'services.field.name' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.field.category' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.column.duration' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.field.price' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.field.currency' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.field.isActive' | t }}</th>
-            @if (copies()) {
-              <th class="px-4 py-3 font-normal">{{ 'services.column.masterCopies' | t }}</th>
-            }
-            <th class="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows; track row.service.serviceId) {
-            <tr class="border-b border-slate-100 last:border-0" data-testid="service-row">
-              <td class="px-4 py-3 font-medium" data-testid="service-row-name">
-                {{ row.service.name || '—' }}
-              </td>
-              <td class="px-4 py-3" data-testid="service-row-category">{{ row.category }}</td>
-              <td class="px-4 py-3" data-testid="service-row-duration">
-                {{ 'services.value.minutes' | t: { count: row.service.durationMinutes } }}
-              </td>
-              <td class="px-4 py-3" data-testid="service-row-price">
-                {{ row.price }}
-                @if (row.service.priceUnit === 'PER_HOUR') {
-                  <span class="text-slate-500">{{ 'services.value.perHour' | t }}</span>
-                }
-              </td>
-              <td class="px-4 py-3" data-testid="service-row-currency">
-                {{ row.service.currency }}
-              </td>
-              <td class="px-4 py-3">
-                <p-tag
-                  data-testid="service-row-active"
-                  [severity]="row.service.isActive ? 'success' : 'secondary'"
-                  [value]="(row.service.isActive ? 'services.active.yes' : 'services.active.no') | t"
-                />
-              </td>
+      <div
+        class="profile-table-scroll"
+        tabindex="0"
+        role="region"
+        [attr.aria-label]="'salon.tab.services' | t"
+      >
+        <table class="profile-data-table">
+          <thead class="text-xs text-muted">
+            <tr class="border-b border-divider">
+              <th class="px-4 py-3 font-normal">{{ 'services.field.name' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.field.category' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.column.duration' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.field.price' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.field.currency' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.field.isActive' | t }}</th>
               @if (copies()) {
-                <td class="px-4 py-3" data-testid="service-row-copies">
-                  {{ row.service.masterCopyCount }}
-                </td>
+                <th class="px-4 py-3 font-normal">{{ 'services.column.masterCopies' | t }}</th>
               }
-              <td class="px-4 py-3 text-right whitespace-nowrap">
-                @if (writable()) {
-                  <button
-                    pButton
-                    type="button"
-                    size="small"
-                    icon="pi pi-pencil"
-                    data-testid="service-edit"
-                    [text]="true"
-                    [label]="'salon.edit.open' | t"
-                    [disabled]="busy()"
-                    (click)="editing.set({ service: row.service })"
-                  ></button>
-                  @if (row.service.isActive) {
-                    <button
-                      pButton
-                      type="button"
-                      size="small"
-                      severity="danger"
-                      icon="pi pi-ban"
-                      data-testid="service-deactivate"
-                      [text]="true"
-                      [label]="'services.deactivate' | t"
-                      [disabled]="busy()"
-                      (click)="deactivate(row.service)"
-                    ></button>
-                  } @else {
-                    <button
-                      pButton
-                      type="button"
-                      size="small"
-                      icon="pi pi-check"
-                      data-testid="service-activate"
-                      [text]="true"
-                      [label]="'services.activate' | t"
-                      [disabled]="busy()"
-                      (click)="activate(row.service)"
-                    ></button>
+              <th class="table-actions px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track row.service.serviceId) {
+              <tr class="border-b border-divider last:border-0" data-testid="service-row">
+                <td class="px-4 py-3 font-medium" data-testid="service-row-name">
+                  {{ row.service.name || '—' }}
+                </td>
+                <td class="px-4 py-3" data-testid="service-row-category">{{ row.category }}</td>
+                <td class="px-4 py-3" data-testid="service-row-duration">
+                  {{ 'services.value.minutes' | t: { count: row.service.durationMinutes } }}
+                </td>
+                <td class="px-4 py-3" data-testid="service-row-price">
+                  {{ row.price }}
+                  @if (row.service.priceUnit === 'PER_HOUR') {
+                    <span class="text-muted">{{ 'services.value.perHour' | t }}</span>
                   }
+                </td>
+                <td class="px-4 py-3" data-testid="service-row-currency">
+                  {{ row.service.currency }}
+                </td>
+                <td class="px-4 py-3">
+                  <p-tag
+                    data-testid="service-row-active"
+                    [severity]="row.service.isActive ? 'success' : 'secondary'"
+                    [value]="
+                      (row.service.isActive ? 'services.active.yes' : 'services.active.no') | t
+                    "
+                  />
+                </td>
+                @if (copies()) {
+                  <td class="px-4 py-3" data-testid="service-row-copies">
+                    {{ row.service.masterCopyCount }}
+                  </td>
                 }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td [attr.colspan]="columns()" class="py-8 text-center text-slate-600" data-testid="services-empty">
-                {{ 'services.empty' | t }}
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-      <p class="mt-2 max-w-6xl text-xs text-slate-500" [attr.data-testid]="noteTestId()">
+                <td class="table-actions px-4 py-3 text-right">
+                  @if (writable()) {
+                    <button
+                      pButton
+                      type="button"
+                      size="small"
+                      icon="pi pi-pencil"
+                      data-testid="service-edit"
+                      [text]="true"
+                      [label]="'salon.edit.open' | t"
+                      [disabled]="busy()"
+                      (click)="editing.set({ service: row.service })"
+                    ></button>
+                    @if (row.service.isActive) {
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        severity="danger"
+                        icon="pi pi-ban"
+                        data-testid="service-deactivate"
+                        [text]="true"
+                        [label]="'services.deactivate' | t"
+                        [disabled]="busy()"
+                        (click)="deactivate(row.service)"
+                      ></button>
+                    } @else {
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        icon="pi pi-check"
+                        data-testid="service-activate"
+                        [text]="true"
+                        [label]="'services.activate' | t"
+                        [disabled]="busy()"
+                        (click)="activate(row.service)"
+                      ></button>
+                    }
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td
+                  [attr.colspan]="columns()"
+                  class="py-8 text-center text-muted"
+                  data-testid="services-empty"
+                >
+                  {{ 'services.empty' | t }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 max-w-6xl text-xs text-muted" [attr.data-testid]="noteTestId()">
         {{ (copies() ? 'services.copiesNote' : 'services.ownCatalogNote') | t }}
       </p>
     } @else if (failed()) {
-      <p class="text-slate-600" data-testid="services-failed">{{ 'card.failed' | t }}</p>
+      <p class="text-muted" data-testid="services-failed">{{ 'card.failed' | t }}</p>
     }
   `,
 })
@@ -235,7 +248,10 @@ export class ServiceCatalogTab implements OnInit {
     );
   }
 
-  private toggle(request: Observable<CatalogService>, doneKey: 'services.deactivated' | 'services.activated'): void {
+  private toggle(
+    request: Observable<CatalogService>,
+    doneKey: 'services.deactivated' | 'services.activated',
+  ): void {
     if (this.busy()) {
       return;
     }
@@ -264,7 +280,9 @@ export class ServiceCatalogTab implements OnInit {
     this.services.update((services) => {
       const known = services?.some((service) => service.serviceId === saved.serviceId);
       return known
-        ? (services ?? []).map((service) => (service.serviceId === saved.serviceId ? saved : service))
+        ? (services ?? []).map((service) =>
+            service.serviceId === saved.serviceId ? saved : service,
+          )
         : [...(services ?? []), saved];
     });
   }

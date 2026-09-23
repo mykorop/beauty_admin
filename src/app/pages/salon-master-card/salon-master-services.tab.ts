@@ -5,7 +5,10 @@ import { ButtonDirective } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import { finalize, forkJoin } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
-import { type MasterService, SalonMasterServicesClient } from '../../core/api/salon-master-services.client';
+import {
+  type MasterService,
+  SalonMasterServicesClient,
+} from '../../core/api/salon-master-services.client';
 import { type SalonService, SalonServicesClient } from '../../core/api/salon-services.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
@@ -36,9 +39,11 @@ import { SalonMasterStore } from './salon-master.store';
       />
     } @else if (rows(); as rows) {
       @if (writable()) {
-        <div class="mb-3 flex max-w-6xl items-center justify-end gap-3">
+        <div class="mb-3 flex flex-wrap max-w-6xl items-center justify-end gap-3">
           @if (available().length === 0) {
-            <span class="text-xs text-slate-500" data-testid="copy-new-none">{{ 'copies.new.none' | t }}</span>
+            <span class="text-xs text-muted" data-testid="copy-new-none">{{
+              'copies.new.none' | t
+            }}</span>
           }
           <button
             pButton
@@ -52,124 +57,141 @@ import { SalonMasterStore } from './salon-master.store';
           ></button>
         </div>
       }
-      <table class="w-full max-w-6xl rounded-lg border border-slate-200 bg-white text-left text-sm">
-        <thead class="text-xs text-slate-500">
-          <tr class="border-b border-slate-200">
-            <th class="px-4 py-3 font-normal">{{ 'services.field.name' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.field.category' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.column.duration' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'copies.column.catalogDuration' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.field.price' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'copies.column.catalogPrice' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'services.field.isActive' | t }}</th>
-            <th class="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows; track row.copy.serviceId) {
-            <tr class="border-b border-slate-100 last:border-0" data-testid="copy-row">
-              <td class="px-4 py-3 font-medium" data-testid="copy-row-name">
-                {{ row.copy.name || '—' }}
-              </td>
-              <td class="px-4 py-3" data-testid="copy-row-category">{{ row.category }}</td>
-              <td class="px-4 py-3" data-testid="copy-row-duration" [class.font-medium]="row.durationDiffers">
-                {{ 'services.value.minutes' | t: { count: row.copy.durationMinutes } }}
-              </td>
-              <td class="px-4 py-3 text-slate-500" data-testid="copy-row-catalog-duration">
-                @if (row.copy.catalog; as catalog) {
-                  {{ 'services.value.minutes' | t: { count: catalog.durationMinutes } }}
-                } @else {
-                  —
-                }
-              </td>
-              <td class="px-4 py-3" data-testid="copy-row-price" [class.font-medium]="row.priceDiffers">
-                {{ row.price }} {{ row.copy.currency }}
-                @if (row.copy.priceUnit === 'PER_HOUR') {
-                  <span class="text-slate-500">{{ 'services.value.perHour' | t }}</span>
-                }
-              </td>
-              <td class="px-4 py-3 text-slate-500" data-testid="copy-row-catalog-price">
-                {{ row.catalogPrice ?? '—' }}
-              </td>
-              <td class="px-4 py-3">
-                <p-tag
-                  data-testid="copy-row-active"
-                  [severity]="row.copy.isActive ? 'success' : 'secondary'"
-                  [value]="(row.copy.isActive ? 'services.active.yes' : 'services.active.no') | t"
-                />
-                @if (row.notOfferedKey; as key) {
-                  <p class="mt-1 text-xs text-amber-700" data-testid="copy-row-not-offered">
-                    {{ key | t }}
-                  </p>
-                }
-              </td>
-              <td class="px-4 py-3 text-right whitespace-nowrap">
-                @if (writable()) {
-                  @if (removing() === row.copy.serviceId) {
-                    <span class="mr-2 text-xs text-slate-600">{{ 'copies.remove.confirmText' | t }}</span>
-                    <button
-                      pButton
-                      type="button"
-                      size="small"
-                      severity="danger"
-                      data-testid="copy-remove-confirm"
-                      [label]="'copies.remove' | t"
-                      [loading]="busy()"
-                      (click)="remove(row.copy)"
-                    ></button>
-                    <button
-                      pButton
-                      type="button"
-                      size="small"
-                      severity="secondary"
-                      data-testid="copy-remove-cancel"
-                      [text]="true"
-                      [label]="'salon.edit.cancel' | t"
-                      [disabled]="busy()"
-                      (click)="removing.set(null)"
-                    ></button>
+      <div
+        class="profile-table-scroll"
+        tabindex="0"
+        role="region"
+        [attr.aria-label]="'salonMaster.tab.services' | t"
+      >
+        <table class="profile-data-table">
+          <thead class="text-xs text-muted">
+            <tr class="border-b border-divider">
+              <th class="px-4 py-3 font-normal">{{ 'services.field.name' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.field.category' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.column.duration' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'copies.column.catalogDuration' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.field.price' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'copies.column.catalogPrice' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'services.field.isActive' | t }}</th>
+              <th class="table-actions px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track row.copy.serviceId) {
+              <tr class="border-b border-divider last:border-0" data-testid="copy-row">
+                <td class="px-4 py-3 font-medium" data-testid="copy-row-name">
+                  {{ row.copy.name || '—' }}
+                </td>
+                <td class="px-4 py-3" data-testid="copy-row-category">{{ row.category }}</td>
+                <td
+                  class="px-4 py-3"
+                  data-testid="copy-row-duration"
+                  [class.font-medium]="row.durationDiffers"
+                >
+                  {{ 'services.value.minutes' | t: { count: row.copy.durationMinutes } }}
+                </td>
+                <td class="px-4 py-3 text-muted" data-testid="copy-row-catalog-duration">
+                  @if (row.copy.catalog; as catalog) {
+                    {{ 'services.value.minutes' | t: { count: catalog.durationMinutes } }}
                   } @else {
-                    <button
-                      pButton
-                      type="button"
-                      size="small"
-                      icon="pi pi-pencil"
-                      data-testid="copy-edit"
-                      [text]="true"
-                      [label]="'salon.edit.open' | t"
-                      [disabled]="busy()"
-                      (click)="editing.set({ copy: row.copy })"
-                    ></button>
-                    <button
-                      pButton
-                      type="button"
-                      size="small"
-                      severity="danger"
-                      icon="pi pi-times"
-                      data-testid="copy-remove"
-                      [text]="true"
-                      [label]="'copies.remove' | t"
-                      [disabled]="busy()"
-                      (click)="removing.set(row.copy.serviceId)"
-                    ></button>
+                    —
                   }
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" class="py-8 text-center text-slate-600" data-testid="copies-empty">
-                {{ 'copies.empty' | t }}
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-      <p class="mt-2 max-w-6xl text-xs text-slate-500" data-testid="copies-note">
+                </td>
+                <td
+                  class="px-4 py-3"
+                  data-testid="copy-row-price"
+                  [class.font-medium]="row.priceDiffers"
+                >
+                  {{ row.price }} {{ row.copy.currency }}
+                  @if (row.copy.priceUnit === 'PER_HOUR') {
+                    <span class="text-muted">{{ 'services.value.perHour' | t }}</span>
+                  }
+                </td>
+                <td class="px-4 py-3 text-muted" data-testid="copy-row-catalog-price">
+                  {{ row.catalogPrice ?? '—' }}
+                </td>
+                <td class="px-4 py-3">
+                  <p-tag
+                    data-testid="copy-row-active"
+                    [severity]="row.copy.isActive ? 'success' : 'secondary'"
+                    [value]="(row.copy.isActive ? 'services.active.yes' : 'services.active.no') | t"
+                  />
+                  @if (row.notOfferedKey; as key) {
+                    <p class="mt-1 text-xs text-warning" data-testid="copy-row-not-offered">
+                      {{ key | t }}
+                    </p>
+                  }
+                </td>
+                <td class="table-actions px-4 py-3 text-right">
+                  @if (writable()) {
+                    @if (removing() === row.copy.serviceId) {
+                      <span class="mr-2 text-xs text-muted">{{
+                        'copies.remove.confirmText' | t
+                      }}</span>
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        severity="danger"
+                        data-testid="copy-remove-confirm"
+                        [label]="'copies.remove' | t"
+                        [loading]="busy()"
+                        (click)="remove(row.copy)"
+                      ></button>
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        severity="secondary"
+                        data-testid="copy-remove-cancel"
+                        [text]="true"
+                        [label]="'salon.edit.cancel' | t"
+                        [disabled]="busy()"
+                        (click)="removing.set(null)"
+                      ></button>
+                    } @else {
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        icon="pi pi-pencil"
+                        data-testid="copy-edit"
+                        [text]="true"
+                        [label]="'salon.edit.open' | t"
+                        [disabled]="busy()"
+                        (click)="editing.set({ copy: row.copy })"
+                      ></button>
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        severity="danger"
+                        icon="pi pi-times"
+                        data-testid="copy-remove"
+                        [text]="true"
+                        [label]="'copies.remove' | t"
+                        [disabled]="busy()"
+                        (click)="removing.set(row.copy.serviceId)"
+                      ></button>
+                    }
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="py-8 text-center text-muted" data-testid="copies-empty">
+                  {{ 'copies.empty' | t }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 max-w-6xl text-xs text-muted" data-testid="copies-note">
         {{ 'copies.note' | t }}
       </p>
     } @else if (failed()) {
-      <p class="text-slate-600" data-testid="copies-failed">{{ 'card.failed' | t }}</p>
+      <p class="text-muted" data-testid="copies-failed">{{ 'card.failed' | t }}</p>
     }
   `,
 })

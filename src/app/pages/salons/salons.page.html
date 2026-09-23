@@ -2,7 +2,7 @@
   <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.salons' | t }}</h1>
   <span class="flex-1"></span>
   @if (builtAt(); as builtAt) {
-    <span class="text-sm text-slate-600" data-testid="salons-built-at">{{
+    <span class="text-sm text-muted" data-testid="salons-built-at">{{
       'list.updatedAt' | t: { time: builtAt }
     }}</span>
   }
@@ -18,7 +18,7 @@
 </div>
 
 <div class="mb-4 flex flex-wrap items-center gap-3">
-  <p-iconfield class="w-80">
+  <p-iconfield class="w-80 max-w-full">
     <p-inputicon class="pi pi-search" />
     <input
       pInputText
@@ -33,7 +33,7 @@
   </p-iconfield>
   <p-select
     data-testid="salons-status-filter"
-    class="w-56"
+    class="w-56 max-w-full"
     [options]="statusOptions()"
     optionLabel="label"
     optionValue="value"
@@ -45,7 +45,7 @@
   />
   <p-select
     data-testid="salons-city-filter"
-    class="w-56"
+    class="w-56 max-w-full"
     [options]="cityOptions()"
     optionLabel="label"
     optionValue="key"
@@ -56,10 +56,13 @@
     [ngModel]="state().city"
     (ngModelChange)="onCity($event)"
   />
-  <span class="text-sm text-slate-600" data-testid="salons-total">{{ 'list.total' | t: { count: view().total } }}</span>
+  <span class="text-sm text-muted" data-testid="salons-total">{{
+    'list.total' | t: { count: view().total }
+  }}</span>
 </div>
 
 <p-table
+  styleClass="profile-table"
   data-testid="salons-table"
   [value]="view().rows"
   dataKey="salonId"
@@ -80,11 +83,21 @@
     <tr>
       <th pSortableColumn="name">{{ 'salons.column.name' | t }} <p-sortIcon field="name" /></th>
       <th pSortableColumn="city">{{ 'salons.column.city' | t }} <p-sortIcon field="city" /></th>
-      <th pSortableColumn="ownerName">{{ 'salons.column.owner' | t }} <p-sortIcon field="ownerName" /></th>
-      <th pSortableColumn="rating">{{ 'salons.column.rating' | t }} <p-sortIcon field="rating" /></th>
-      <th pSortableColumn="reviewCount">{{ 'salons.column.reviewCount' | t }} <p-sortIcon field="reviewCount" /></th>
-      <th pSortableColumn="status">{{ 'salons.column.status' | t }} <p-sortIcon field="status" /></th>
-      <th pSortableColumn="createdAt">{{ 'salons.column.createdAt' | t }} <p-sortIcon field="createdAt" /></th>
+      <th pSortableColumn="ownerName">
+        {{ 'salons.column.owner' | t }} <p-sortIcon field="ownerName" />
+      </th>
+      <th pSortableColumn="rating">
+        {{ 'salons.column.rating' | t }} <p-sortIcon field="rating" />
+      </th>
+      <th pSortableColumn="reviewCount">
+        {{ 'salons.column.reviewCount' | t }} <p-sortIcon field="reviewCount" />
+      </th>
+      <th pSortableColumn="status">
+        {{ 'salons.column.status' | t }} <p-sortIcon field="status" />
+      </th>
+      <th pSortableColumn="createdAt">
+        {{ 'salons.column.createdAt' | t }} <p-sortIcon field="createdAt" />
+      </th>
     </tr>
   </ng-template>
   <ng-template #body let-salon>
@@ -92,20 +105,23 @@
       class="cursor-pointer"
       data-testid="salon-row"
       [attr.data-status]="salon.status"
-      [class.bg-red-50]="salon.status === 'deleted'"
-      [class.text-slate-500]="salon.status === 'deleted'"
+      [class.profile-deleted]="salon.status === 'deleted'"
+      [class.text-muted]="salon.status === 'deleted'"
       (click)="openSalon(salon.salonId, $event)"
     >
       <td>
-        <a class="font-medium hover:underline" data-testid="salon-name" [routerLink]="['/salons', salon.salonId]">{{
-          salon.name || '—'
-        }}</a>
+        <a
+          class="font-medium hover:underline"
+          data-testid="salon-name"
+          [routerLink]="['/salons', salon.salonId]"
+          >{{ salon.name || '—' }}</a
+        >
       </td>
       <td>{{ salon.city || '—' }}</td>
       <td>
         <div>{{ salon.ownerName || '—' }}</div>
-        <div class="text-xs text-slate-500">{{ salon.email }}</div>
-        <div class="text-xs text-slate-500">{{ salon.phone }}</div>
+        <div class="text-xs text-muted">{{ salon.email }}</div>
+        <div class="text-xs text-muted">{{ salon.phone }}</div>
       </td>
       <td>{{ salon.reviewCount > 0 ? formatRating(salon.rating) : '—' }}</td>
       <td>{{ salon.reviewCount }}</td>
@@ -122,7 +138,7 @@
   </ng-template>
   <ng-template #emptymessage>
     <tr>
-      <td colspan="7" class="py-8 text-center text-slate-600" data-testid="salons-empty">
+      <td colspan="7" class="py-8 text-center text-muted" data-testid="salons-empty">
         {{ (failed() ? 'list.failed' : 'list.empty') | t }}
       </td>
     </tr>

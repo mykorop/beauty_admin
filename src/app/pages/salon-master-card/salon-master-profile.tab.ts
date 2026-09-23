@@ -27,7 +27,7 @@ import { SalonMasterStore } from './salon-master.store';
     @if (editing()) {
       <app-salon-master-form (closed)="editing.set(false)" />
     } @else if (master(); as master) {
-      <div class="mb-3 flex max-w-4xl justify-end gap-2">
+      <div class="mb-3 flex flex-wrap max-w-4xl justify-end gap-2">
         @if (canRemove()) {
           <button
             pButton
@@ -60,12 +60,13 @@ import { SalonMasterStore } from './salon-master.store';
         [(visible)]="removing"
         (confirmed)="remove($event)"
       >
-        {{ 'salonMaster.remove.message' | t: { master: master.masterName, salon: salon()?.name ?? '' } }}
+        {{
+          'salonMaster.remove.message'
+            | t: { master: master.masterName, salon: salon()?.name ?? '' }
+        }}
       </app-reason-dialog>
-      <dl
-        class="grid max-w-4xl grid-cols-[14rem_1fr] gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm"
-      >
-        <dt class="text-slate-500">{{ 'master.field.name' | t }}</dt>
+      <dl class="profile-fields">
+        <dt class="text-muted">{{ 'master.field.name' | t }}</dt>
         <dd class="flex items-center gap-3" data-testid="field-name">
           @if (master.masterAvatar) {
             <img class="size-10 rounded-full object-cover" alt="" [src]="master.masterAvatar" />
@@ -73,36 +74,36 @@ import { SalonMasterStore } from './salon-master.store';
           {{ master.masterName || '—' }}
         </dd>
 
-        <dt class="text-slate-500">{{ 'master.field.email' | t }}</dt>
+        <dt class="text-muted">{{ 'master.field.email' | t }}</dt>
         <dd data-testid="field-email">{{ master.email || '—' }}</dd>
 
-        <dt class="text-slate-500">{{ 'master.field.specialization' | t }}</dt>
+        <dt class="text-muted">{{ 'master.field.specialization' | t }}</dt>
         <dd data-testid="field-specialization">{{ specialization() }}</dd>
 
-        <dt class="text-slate-500">{{ 'master.field.status' | t }}</dt>
+        <dt class="text-muted">{{ 'master.field.status' | t }}</dt>
         <dd data-testid="field-status">{{ statusKey() | t }}</dd>
 
-        <dt class="text-slate-500">{{ 'master.field.commissionPercent' | t }}</dt>
+        <dt class="text-muted">{{ 'master.field.commissionPercent' | t }}</dt>
         <dd data-testid="field-commission">{{ master.commissionPercent }}%</dd>
 
-        <dt class="text-slate-500">{{ 'master.field.bookingHorizon' | t }}</dt>
+        <dt class="text-muted">{{ 'master.field.bookingHorizon' | t }}</dt>
         <dd data-testid="field-bookingHorizon">
           {{ 'salon.value.days' | t: { count: master.bookingForwardDays } }}
         </dd>
 
-        <dt class="text-slate-500">{{ 'salon.field.rating' | t }}</dt>
+        <dt class="text-muted">{{ 'salon.field.rating' | t }}</dt>
         <dd data-testid="field-rating">
           {{ rating() }} · {{ 'salon.value.reviews' | t: { count: master.reviewCount } }}
         </dd>
 
-        <dt class="text-slate-500">{{ 'master.field.joinedAt' | t }}</dt>
+        <dt class="text-muted">{{ 'master.field.joinedAt' | t }}</dt>
         <dd data-testid="field-joinedAt">{{ joinedAt() }}</dd>
 
-        <dt class="text-slate-500">{{ 'salon.field.updatedAt' | t }}</dt>
+        <dt class="text-muted">{{ 'salon.field.updatedAt' | t }}</dt>
         <dd data-testid="field-updatedAt">{{ updatedAt() }}</dd>
       </dl>
       @if (salon(); as salon) {
-        <p class="mt-2 text-xs text-slate-500">
+        <p class="mt-2 text-xs text-muted">
           {{ 'salon.datesInVenueZone' | t: { timezone: salon.timezone } }}
         </p>
       }
@@ -131,13 +132,17 @@ export class SalonMasterProfileTab {
   protected readonly specialization = computed(() =>
     specializationLabel(this.i18n, this.master()?.specialization ?? ''),
   );
-  protected readonly statusKey = computed<TranslationKey>(() => `roster.status.${this.master()?.status ?? 'ACTIVE'}`);
+  protected readonly statusKey = computed<TranslationKey>(
+    () => `roster.status.${this.master()?.status ?? 'ACTIVE'}`,
+  );
   protected readonly rating = computed(() => {
     const master = this.master();
     return master ? formatRating(this.i18n.locale(), master.rating, master.reviewCount) : '—';
   });
   protected readonly joinedAt = computed(() => this.salonStore.venueDay(this.master()?.joinedAt));
-  protected readonly updatedAt = computed(() => this.salonStore.venueDate(this.master()?.updatedAt));
+  protected readonly updatedAt = computed(() =>
+    this.salonStore.venueDate(this.master()?.updatedAt),
+  );
 
   protected remove(reason: string): void {
     const salon = this.salon();
@@ -154,7 +159,11 @@ export class SalonMasterProfileTab {
           // The link stays on the Ростер as an ended one, so the card stays open on it.
           this.store.master.set({ ...master, status });
           this.removing.set(false);
-          this.messages.add({ severity: 'success', summary: this.i18n.t('salonMaster.remove.done'), life: 4000 });
+          this.messages.add({
+            severity: 'success',
+            summary: this.i18n.t('salonMaster.remove.done'),
+            life: 4000,
+          });
         },
         // Already worded as a toast; the dialog stays open with the reason as typed.
         error: () => undefined,

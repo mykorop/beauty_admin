@@ -24,84 +24,95 @@ import { SalonCardStore } from './salon-card.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (rows(); as rows) {
-      <table class="w-full max-w-6xl rounded-lg border border-slate-200 bg-white text-left text-sm">
-        <thead class="text-xs text-slate-500">
-          <tr class="border-b border-slate-200">
-            <th class="px-4 py-3 font-normal">{{ 'roster.column.master' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'master.field.specialization' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'roster.column.status' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'master.field.commissionPercent' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'salon.field.rating' | t }}</th>
-            <th class="px-4 py-3 font-normal">{{ 'master.field.joinedAt' | t }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows; track row.master.masterId) {
-            <tr class="border-b border-slate-100 last:border-0" data-testid="roster-row">
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  @if (row.master.masterAvatar) {
-                    <img
-                      class="size-9 rounded-full object-cover"
-                      alt=""
-                      data-testid="roster-avatar"
-                      [src]="row.master.masterAvatar"
-                    />
-                  } @else {
-                    <span
-                      class="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-400"
-                      aria-hidden="true"
-                      ><i class="pi pi-user"></i
-                    ></span>
-                  }
-                  <div>
-                    <a
-                      class="font-medium hover:underline"
-                      data-testid="roster-name"
-                      [routerLink]="['/salons', salonId, 'masters', row.master.masterId]"
-                      >{{ row.master.masterName || '—' }}</a
-                    >
-                    @if (row.master.isOwner) {
-                      <p-tag
-                        class="ml-2"
-                        severity="info"
-                        data-testid="roster-owner"
-                        [value]="'roster.ownerMaster' | t"
+      <div
+        class="profile-table-scroll"
+        tabindex="0"
+        role="region"
+        [attr.aria-label]="'salon.tab.roster' | t"
+      >
+        <table class="profile-data-table">
+          <thead class="text-xs text-muted">
+            <tr class="border-b border-divider">
+              <th class="px-4 py-3 font-normal">{{ 'roster.column.master' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'master.field.specialization' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'roster.column.status' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'master.field.commissionPercent' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'salon.field.rating' | t }}</th>
+              <th class="px-4 py-3 font-normal">{{ 'master.field.joinedAt' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track row.master.masterId) {
+              <tr class="border-b border-divider last:border-0" data-testid="roster-row">
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    @if (row.master.masterAvatar) {
+                      <img
+                        class="size-9 rounded-full object-cover"
+                        alt=""
+                        data-testid="roster-avatar"
+                        [src]="row.master.masterAvatar"
                       />
+                    } @else {
+                      <span
+                        class="flex size-9 items-center justify-center rounded-full bg-raised text-muted"
+                        aria-hidden="true"
+                        ><i class="pi pi-user"></i
+                      ></span>
                     }
-                    <div class="text-xs text-slate-500">{{ row.master.email }}</div>
+                    <div>
+                      <a
+                        class="font-medium hover:underline"
+                        data-testid="roster-name"
+                        [routerLink]="['/salons', salonId, 'masters', row.master.masterId]"
+                        >{{ row.master.masterName || '—' }}</a
+                      >
+                      @if (row.master.isOwner) {
+                        <p-tag
+                          class="ml-2"
+                          severity="info"
+                          data-testid="roster-owner"
+                          [value]="'roster.ownerMaster' | t"
+                        />
+                      }
+                      <div class="text-xs text-muted">{{ row.master.email }}</div>
+                    </div>
                   </div>
-                </div>
-              </td>
-              <td class="px-4 py-3">{{ row.specialization }}</td>
-              <td class="px-4 py-3">
-                <p-tag data-testid="roster-status" [severity]="row.statusSeverity" [value]="row.statusKey | t" />
-              </td>
-              <td class="px-4 py-3">{{ row.master.commissionPercent }}%</td>
-              <td class="px-4 py-3">
-                <span data-testid="roster-rating">{{ row.rating }}</span>
-                @if (row.master.reviewCount > 0) {
-                  <span class="text-slate-500">
-                    · {{ 'salon.value.reviews' | t: { count: row.master.reviewCount } }}</span
-                  >
-                }
-              </td>
-              <td class="px-4 py-3">{{ row.joinedAt }}</td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="6" class="py-8 text-center text-slate-600" data-testid="roster-empty">
-                {{ 'roster.empty' | t }}
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-      <p class="mt-2 text-xs text-slate-500" data-testid="roster-invite-only">
+                </td>
+                <td class="px-4 py-3">{{ row.specialization }}</td>
+                <td class="px-4 py-3">
+                  <p-tag
+                    data-testid="roster-status"
+                    [severity]="row.statusSeverity"
+                    [value]="row.statusKey | t"
+                  />
+                </td>
+                <td class="px-4 py-3">{{ row.master.commissionPercent }}%</td>
+                <td class="px-4 py-3">
+                  <span data-testid="roster-rating">{{ row.rating }}</span>
+                  @if (row.master.reviewCount > 0) {
+                    <span class="text-muted">
+                      · {{ 'salon.value.reviews' | t: { count: row.master.reviewCount } }}</span
+                    >
+                  }
+                </td>
+                <td class="px-4 py-3">{{ row.joinedAt }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="py-8 text-center text-muted" data-testid="roster-empty">
+                  {{ 'roster.empty' | t }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-xs text-muted" data-testid="roster-invite-only">
         {{ 'roster.inviteOnly' | t }}
       </p>
     } @else if (failed()) {
-      <p class="text-slate-600" data-testid="roster-failed">{{ 'card.failed' | t }}</p>
+      <p class="text-muted" data-testid="roster-failed">{{ 'card.failed' | t }}</p>
     }
   `,
 })

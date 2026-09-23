@@ -15,33 +15,31 @@ import { ClientCardStore } from './client-card.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (client(); as client) {
-      <dl
-        class="grid max-w-4xl grid-cols-[14rem_1fr] gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-6 text-sm"
-      >
-        <dt class="text-slate-500">{{ 'client.field.name' | t }}</dt>
+      <dl class="profile-fields">
+        <dt class="text-muted">{{ 'client.field.name' | t }}</dt>
         <dd data-testid="field-name">{{ client.name || '—' }}</dd>
 
-        <dt class="text-slate-500">{{ 'client.field.email' | t }}</dt>
+        <dt class="text-muted">{{ 'client.field.email' | t }}</dt>
         <dd data-testid="field-email">{{ client.email || '—' }}</dd>
 
-        <dt class="text-slate-500">{{ 'client.field.phone' | t }}</dt>
+        <dt class="text-muted">{{ 'client.field.phone' | t }}</dt>
         <dd data-testid="field-phone">{{ client.phone || '—' }}</dd>
 
-        <dt class="text-slate-500">{{ 'client.field.language' | t }}</dt>
+        <dt class="text-muted">{{ 'client.field.language' | t }}</dt>
         <dd data-testid="field-language">{{ client.language || '—' }}</dd>
 
-        <dt class="text-slate-500">{{ 'client.field.registeredAt' | t }}</dt>
+        <dt class="text-muted">{{ 'client.field.registeredAt' | t }}</dt>
         <dd data-testid="field-createdAt">{{ createdAt() }}</dd>
 
         @if (client.blockedAt) {
-          <dt class="text-slate-500">{{ 'client.field.blockedAt' | t }}</dt>
+          <dt class="text-muted">{{ 'client.field.blockedAt' | t }}</dt>
           <dd data-testid="field-blockedAt">{{ blockedAt() }}</dd>
 
-          <dt class="text-slate-500">{{ 'client.field.blockedReason' | t }}</dt>
+          <dt class="text-muted">{{ 'client.field.blockedReason' | t }}</dt>
           <dd data-testid="field-blockedReason">{{ client.blockedReason || '—' }}</dd>
         }
       </dl>
-      <p class="mt-2 max-w-4xl text-xs text-slate-500" data-testid="client-readonly">
+      <p class="mt-2 max-w-4xl text-xs text-muted" data-testid="client-readonly">
         {{ 'client.readonly' | t }}
       </p>
     }
