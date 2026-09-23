@@ -3,6 +3,7 @@ import type { TranslationKey } from './uk';
 export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'app.title': 'BookMe · Админка',
 
+  'nav.menu': 'Навигация',
   'nav.dashboard': 'Дашборд',
   'nav.salons': 'Салоны',
   'nav.independentMasters': 'Независимые мастера',

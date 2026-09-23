@@ -1,6 +1,7 @@
 export const UK_TRANSLATIONS = {
   'app.title': 'BookMe · Адмінка',
 
+  'nav.menu': 'Навігація',
   'nav.dashboard': 'Дашборд',
   'nav.salons': 'Салони',
   'nav.independentMasters': 'Незалежні майстри',

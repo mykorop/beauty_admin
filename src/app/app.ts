@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { DOCUMENT } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Toast } from 'primeng/toast';
 
 @Component({
@@ -12,4 +14,20 @@ import { Toast } from 'primeng/toast';
     <router-outlet />
   `,
 })
-export class App {}
+export class App {
+  constructor() {
+    const document = inject(DOCUMENT);
+    const router = inject(Router);
+    // Temporary route scope until ticket 05: legacy pages AND their body-mounted overlays stay
+    // light. Shell chrome carries its own dark scope on every route. No OS/theme preference.
+    const syncTheme = (url: string) =>
+      document.documentElement.classList.toggle(
+        'bookme-dark',
+        /^\/(login|dashboard)([?;#]|$)/.test(url),
+      );
+    syncTheme(router.url);
+    router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event instanceof NavigationEnd) syncTheme(event.urlAfterRedirects);
+    });
+  }
+}

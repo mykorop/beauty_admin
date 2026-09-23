@@ -3,7 +3,7 @@
     <h2 class="text-xl font-semibold">{{ 'stats.detailed.title' | t }}</h2>
     <span class="flex-1"></span>
     @if (builtAt(); as builtAt) {
-      <span class="text-sm text-slate-600" data-testid="detailed-stats-built-at">{{
+      <span class="text-sm text-muted" data-testid="detailed-stats-built-at">{{
         'stats.detailed.builtAt' | t: { time: builtAt }
       }}</span>
     }
@@ -25,7 +25,7 @@
         [value]="runs.progress() ?? 0"
         [showValue]="false"
       />
-      <p class="mt-1 text-sm text-slate-600" data-testid="detailed-stats-progress-text">
+      <p class="mt-1 text-sm text-muted" data-testid="detailed-stats-progress-text">
         {{ progressText() }}
       </p>
     </div>
@@ -47,27 +47,23 @@
   }
 
   @if (runs.loadFailed() && !result()) {
-    <p class="text-slate-600" data-testid="detailed-stats-load-failed">
+    <p class="text-muted" data-testid="detailed-stats-load-failed">
       {{ 'stats.detailed.loadFailed' | t }}
     </p>
   }
 
   @if (neverRun()) {
-    <p class="max-w-2xl text-slate-600" data-testid="detailed-stats-never">
+    <p class="max-w-2xl text-muted" data-testid="detailed-stats-never">
       {{ 'stats.detailed.never' | t }}
     </p>
   }
 
   @if (view(); as view) {
-    <div
-      class="transition-opacity"
-      [class.opacity-60]="runs.running()"
-      data-testid="detailed-stats-result"
-    >
+    <div [attr.aria-busy]="runs.running()" data-testid="detailed-stats-result">
       <!-- One row of controls above everything it scopes: every chart below is cut to it. The tops,
            the quality block and «Потребують уваги» further down read windows of their own. -->
       <div class="mb-4 flex flex-wrap items-end gap-4">
-        <label class="flex flex-col gap-1 text-xs text-slate-600">
+        <label class="flex flex-col gap-1 text-xs text-muted">
           {{ 'stats.period.label' | t }}
           <p-selectbutton
             data-testid="detailed-stats-period"
@@ -80,7 +76,7 @@
             (ngModelChange)="period.set($event)"
           />
         </label>
-        <label class="flex flex-col gap-1 text-xs text-slate-600">
+        <label class="flex flex-col gap-1 text-xs text-muted">
           {{ 'stats.step.label' | t }}
           <p-selectbutton
             data-testid="detailed-stats-step"
@@ -94,23 +90,21 @@
           />
         </label>
         @if (ratesNote(); as ratesNote) {
-          <span class="text-xs text-slate-500" data-testid="detailed-stats-rates">{{
-            ratesNote
-          }}</span>
+          <span class="text-xs text-muted" data-testid="detailed-stats-rates">{{ ratesNote }}</span>
         }
       </div>
 
-      <h3 class="mb-2 text-base font-semibold text-slate-800">{{ 'stats.growth.title' | t }}</h3>
+      <h3 class="mb-2 text-base font-semibold text-ink">{{ 'stats.growth.title' | t }}</h3>
       <div class="mb-2 grid gap-4 lg:grid-cols-3">
         @for (kind of view.growth; track kind.kind) {
           <div
-            class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+            class="rounded-lg border border-divider bg-panel p-4 shadow-sm"
             [attr.data-testid]="'detailed-stats-growth-' + kind.kind"
           >
             <div class="mb-2 flex items-baseline justify-between gap-2">
-              <span class="text-sm font-medium text-slate-700">{{ kind.label }}</span>
+              <span class="text-sm font-medium text-ink">{{ kind.label }}</span>
               <span
-                class="text-xl font-semibold text-slate-900"
+                class="text-xl font-semibold text-ink"
                 [attr.data-testid]="'growth-total-' + kind.kind"
                 >{{ 'stats.growth.total' | t: { count: kind.total } }}</span
               >
@@ -128,29 +122,29 @@
         }
       </div>
       @if (view.growthUndated > 0) {
-        <p class="mb-2 text-xs text-slate-500">
+        <p class="mb-2 text-xs text-muted">
           {{ 'stats.growth.undated' | t: { count: view.growthUndated } }}
         </p>
       }
 
       <div
-        class="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+        class="mt-6 rounded-lg border border-divider bg-panel p-4 shadow-sm"
         data-testid="detailed-stats-appointments"
       >
-        <h3 class="mb-3 text-base font-semibold text-slate-800">
+        <h3 class="mb-3 text-base font-semibold text-ink">
           {{ 'stats.appointments.title' | t }}
         </h3>
         <div class="mb-4 flex flex-wrap gap-8">
           <div>
-            <p class="text-xs text-slate-600">{{ 'stats.appointments.total' | t }}</p>
-            <p class="text-2xl font-semibold text-slate-900" data-testid="appointments-total">
+            <p class="text-xs text-muted">{{ 'stats.appointments.total' | t }}</p>
+            <p class="text-2xl font-semibold text-ink" data-testid="appointments-total">
               {{ view.appointmentTotal }}
             </p>
           </div>
           <div>
-            <p class="text-xs text-slate-600">{{ 'stats.appointments.cancellationShare' | t }}</p>
+            <p class="text-xs text-muted">{{ 'stats.appointments.cancellationShare' | t }}</p>
             <p
-              class="text-2xl font-semibold text-slate-900"
+              class="text-2xl font-semibold text-ink"
               data-testid="appointments-cancellation-share"
             >
               {{ view.cancellationShare }}
@@ -165,29 +159,29 @@
           [formatValue]="view.formatCount"
           [formatTick]="view.formatCount"
         />
-        <p class="mt-2 text-xs text-slate-500">{{ 'stats.appointments.pastBookedHint' | t }}</p>
+        <p class="mt-2 text-xs text-muted">{{ 'stats.appointments.pastBookedHint' | t }}</p>
         @if (view.appointmentsUndated > 0) {
-          <p class="mt-1 text-xs text-slate-500">
+          <p class="mt-1 text-xs text-muted">
             {{ 'stats.appointments.undated' | t: { count: view.appointmentsUndated } }}
           </p>
         }
       </div>
 
       <div
-        class="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+        class="mt-6 rounded-lg border border-divider bg-panel p-4 shadow-sm"
         data-testid="detailed-stats-value"
       >
-        <h3 class="mb-3 text-base font-semibold text-slate-800">{{ 'stats.value.title' | t }}</h3>
+        <h3 class="mb-3 text-base font-semibold text-ink">{{ 'stats.value.title' | t }}</h3>
         <div class="mb-4 flex flex-wrap gap-8">
           <div>
-            <p class="text-xs text-slate-600">{{ 'stats.value.past' | t }}</p>
-            <p class="text-2xl font-semibold text-slate-900" data-testid="value-past">
+            <p class="text-xs text-muted">{{ 'stats.value.past' | t }}</p>
+            <p class="text-2xl font-semibold text-ink" data-testid="value-past">
               {{ view.valuePast }}
             </p>
           </div>
           <div>
-            <p class="text-xs text-slate-600">{{ 'stats.value.ahead' | t }}</p>
-            <p class="text-2xl font-semibold text-slate-900" data-testid="value-ahead">
+            <p class="text-xs text-muted">{{ 'stats.value.ahead' | t }}</p>
+            <p class="text-2xl font-semibold text-ink" data-testid="value-ahead">
               {{ view.valueAhead }}
             </p>
           </div>
@@ -201,11 +195,11 @@
           [formatValue]="view.formatMdl"
           [formatTick]="view.formatCompact"
         />
-        <p class="mt-2 max-w-3xl text-xs text-slate-600" data-testid="value-not-revenue">
+        <p class="mt-2 max-w-3xl text-xs text-muted" data-testid="value-not-revenue">
           {{ 'stats.value.notRevenue' | t }}
         </p>
         @if (view.unconverted > 0) {
-          <p class="mt-1 text-xs text-slate-500">
+          <p class="mt-1 text-xs text-muted">
             {{ 'stats.value.unconverted' | t: { count: view.unconverted } }}
           </p>
         }
@@ -214,21 +208,21 @@
       @if (standing(); as standing) {
         <div class="mt-8" data-testid="detailed-stats-tops">
           <div class="mb-1 flex flex-wrap items-baseline gap-x-3">
-            <h3 class="text-base font-semibold text-slate-800">{{ 'stats.tops.title' | t }}</h3>
-            <span class="text-sm text-slate-600" data-testid="tops-window">{{
+            <h3 class="text-base font-semibold text-ink">{{ 'stats.tops.title' | t }}</h3>
+            <span class="text-sm text-muted" data-testid="tops-window">{{
               standing.topsWindow
             }}</span>
           </div>
-          <p class="mb-3 max-w-3xl text-xs text-slate-500">{{ 'stats.tops.hint' | t }}</p>
+          <p class="mb-3 max-w-3xl text-xs text-muted">{{ 'stats.tops.hint' | t }}</p>
           <div class="grid gap-4 lg:grid-cols-3">
             @for (top of standing.tops; track top.key) {
               <div
-                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                class="rounded-lg border border-divider bg-panel p-4 shadow-sm"
                 [attr.data-testid]="'top-' + top.key"
               >
-                <h4 class="mb-2 text-sm font-medium text-slate-700">{{ top.titleKey | t }}</h4>
+                <h4 class="mb-2 text-sm font-medium text-ink">{{ top.titleKey | t }}</h4>
                 @if (top.rows.length === 0) {
-                  <p class="text-sm text-slate-500">{{ 'stats.tops.empty' | t }}</p>
+                  <p class="text-sm text-muted">{{ 'stats.tops.empty' | t }}</p>
                 } @else {
                   <table class="w-full text-left text-sm">
                     <thead class="sr-only">
@@ -241,10 +235,10 @@
                     <tbody>
                       @for (row of top.rows; track row.key; let place = $index) {
                         <tr
-                          class="border-b border-slate-100 last:border-0"
+                          class="border-b border-divider last:border-0"
                           [attr.data-testid]="'top-' + top.key + '-row'"
                         >
-                          <td class="w-6 py-1.5 align-top text-xs tabular-nums text-slate-400">
+                          <td class="w-6 py-1.5 align-top text-xs tabular-nums text-muted">
                             {{ place + 1 }}
                           </td>
                           <td class="py-1.5 pr-2">
@@ -256,7 +250,7 @@
                               <span class="font-medium">{{ row.name }}</span>
                             }
                             @if (row.city) {
-                              <div class="text-xs text-slate-500">{{ row.city }}</div>
+                              <div class="text-xs text-muted">{{ row.city }}</div>
                             }
                           </td>
                           <td class="py-1.5 text-right align-top font-semibold tabular-nums">
@@ -273,15 +267,15 @@
         </div>
 
         <div
-          class="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+          class="mt-6 rounded-lg border border-divider bg-panel p-4 shadow-sm"
           data-testid="detailed-stats-quality"
         >
           <div class="mb-3 flex flex-wrap items-baseline gap-x-3">
-            <h3 class="text-base font-semibold text-slate-800">{{ 'stats.quality.title' | t }}</h3>
-            <span class="text-sm text-slate-600">{{ standing.quality.window }}</span>
+            <h3 class="text-base font-semibold text-ink">{{ 'stats.quality.title' | t }}</h3>
+            <span class="text-sm text-muted">{{ standing.quality.window }}</span>
             <span class="flex-1"></span>
             <a
-              class="text-sm text-sky-700 hover:underline"
+              class="text-sm text-accent hover:underline"
               routerLink="/reviews"
               data-testid="quality-open-feed"
               >{{ 'stats.quality.openFeed' | t }}</a
@@ -289,35 +283,35 @@
           </div>
           <div class="mb-3 flex flex-wrap gap-8">
             <div>
-              <p class="text-xs text-slate-600">{{ 'stats.quality.reviews' | t }}</p>
-              <p class="text-2xl font-semibold text-slate-900" data-testid="quality-reviews">
+              <p class="text-xs text-muted">{{ 'stats.quality.reviews' | t }}</p>
+              <p class="text-2xl font-semibold text-ink" data-testid="quality-reviews">
                 {{ standing.quality.reviews }}
               </p>
             </div>
             <div>
-              <p class="text-xs text-slate-600">{{ 'stats.quality.average' | t }}</p>
-              <p class="text-2xl font-semibold text-slate-900" data-testid="quality-average">
+              <p class="text-xs text-muted">{{ 'stats.quality.average' | t }}</p>
+              <p class="text-2xl font-semibold text-ink" data-testid="quality-average">
                 {{ standing.quality.averageRating }}
               </p>
             </div>
             <div>
-              <p class="text-xs text-slate-600">{{ 'stats.quality.lowRated' | t }}</p>
-              <p class="text-2xl font-semibold text-slate-900" data-testid="quality-low-rated">
+              <p class="text-xs text-muted">{{ 'stats.quality.lowRated' | t }}</p>
+              <p class="text-2xl font-semibold text-ink" data-testid="quality-low-rated">
                 {{ standing.quality.lowRated }}
               </p>
             </div>
           </div>
-          <p class="mb-3 max-w-3xl text-xs text-slate-500">{{ 'stats.quality.hint' | t }}</p>
+          <p class="mb-3 max-w-3xl text-xs text-muted">{{ 'stats.quality.hint' | t }}</p>
           @if (standing.quality.profiles.length === 0) {
-            <p class="text-sm text-slate-500" data-testid="quality-none">
+            <p class="text-sm text-muted" data-testid="quality-none">
               {{ 'stats.quality.none' | t }}
             </p>
           } @else {
-            <h4 class="mb-1 text-sm font-medium text-slate-700">{{ 'stats.quality.where' | t }}</h4>
+            <h4 class="mb-1 text-sm font-medium text-ink">{{ 'stats.quality.where' | t }}</h4>
             <ul class="max-w-xl">
               @for (profile of standing.quality.profiles; track profile.key) {
                 <li
-                  class="flex items-baseline gap-2 border-b border-slate-100 py-1.5 text-sm last:border-0"
+                  class="flex items-baseline gap-2 border-b border-divider py-1.5 text-sm last:border-0"
                   data-testid="quality-profile"
                 >
                   <a
@@ -326,7 +320,7 @@
                     [queryParams]="profile.feed"
                     >{{ profile.name }}</a
                   >
-                  <span class="text-xs text-slate-500">{{ profile.kindKey | t }}</span>
+                  <span class="text-xs text-muted">{{ profile.kindKey | t }}</span>
                   <span class="flex-1"></span>
                   <span class="font-semibold tabular-nums">{{ profile.lowRated }}</span>
                 </li>
@@ -337,11 +331,11 @@
 
         <div class="mt-6" data-testid="detailed-stats-attention">
           <div class="mb-1 flex flex-wrap items-baseline gap-x-3">
-            <h3 class="text-base font-semibold text-slate-800">
+            <h3 class="text-base font-semibold text-ink">
               {{ 'stats.attention.title' | t }}
             </h3>
           </div>
-          <p class="mb-3 max-w-3xl text-xs text-slate-500">{{ 'stats.attention.hint' | t }}</p>
+          <p class="mb-3 max-w-3xl text-xs text-muted">{{ 'stats.attention.hint' | t }}</p>
           <p-selectbutton
             class="mb-3 block"
             data-testid="attention-filters"
@@ -354,7 +348,7 @@
             (ngModelChange)="attentionChosen.set($event ?? [])"
           />
           @if (standing.attention.rows.length === 0) {
-            <p class="text-sm text-slate-600" data-testid="attention-empty">
+            <p class="text-sm text-muted" data-testid="attention-empty">
               {{
                 (standing.attention.empty
                   ? 'stats.attention.empty'
@@ -365,10 +359,10 @@
           } @else {
             <div class="overflow-x-auto">
               <table
-                class="w-full rounded-lg border border-slate-200 bg-white text-left text-sm shadow-sm"
+                class="w-full rounded-lg border border-divider bg-panel text-left text-sm shadow-sm"
               >
-                <thead class="text-xs text-slate-500">
-                  <tr class="border-b border-slate-200">
+                <thead class="text-xs text-muted">
+                  <tr class="border-b border-divider">
                     <th class="px-4 py-2 font-normal">
                       {{ 'stats.attention.column.profile' | t }}
                     </th>
@@ -385,7 +379,7 @@
                 <tbody>
                   @for (row of standing.attention.rows; track row.key) {
                     <tr
-                      class="border-b border-slate-100 align-top last:border-0"
+                      class="border-b border-divider align-top last:border-0"
                       data-testid="attention-row"
                     >
                       <td class="px-4 py-2">
@@ -395,7 +389,7 @@
                           [routerLink]="row.link"
                           >{{ row.name }}</a
                         >
-                        <div class="text-xs text-slate-500">
+                        <div class="text-xs text-muted">
                           {{ row.kindKey | t }}
                           @if (row.salonName; as salonName) {
                             · {{ 'stats.attention.inSalon' | t: { name: salonName } }}
@@ -418,7 +412,7 @@
                           }
                         </div>
                         @if (row.missing; as missing) {
-                          <div class="mt-1 text-xs text-slate-500" data-testid="attention-missing">
+                          <div class="mt-1 text-xs text-muted" data-testid="attention-missing">
                             {{ missing }}
                           </div>
                         }

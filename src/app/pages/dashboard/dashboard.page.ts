@@ -26,6 +26,7 @@ import { DetailedStatsSection } from './detailed-stats.section';
   imports: [Button, DetailedStatsSection, NgTemplateOutlet, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',
+  host: { class: 'dashboard' },
 })
 export class DashboardPage {
   private readonly client = inject(StatsClient);

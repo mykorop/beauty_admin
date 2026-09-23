@@ -6,11 +6,11 @@ import {
 } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import Aura from '@primeuix/themes/aura';
 import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
 import { adminApiInterceptor } from './core/api/admin-api.interceptor';
+import { BookMePreset } from './theme/bookme-preset';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,10 +21,9 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {
-        preset: Aura,
+        preset: BookMePreset,
         options: {
-          // The panel is light-only; without this PrimeNG follows the OS and half the screen goes dark.
-          darkModeSelector: false,
+          darkModeSelector: '.bookme-dark',
           cssLayer: { name: 'primeng', order: 'theme, base, primeng, components, utilities' },
         },
       },

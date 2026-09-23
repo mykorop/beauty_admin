@@ -76,7 +76,7 @@ type GrowthStep = 'day' | 'week';
  *
  * The backend works in the background and one run at a time, so this polls until the run ends; a
  * dashboard opened while one is under way picks it up and follows it too. The last result stays on
- * screen, dimmed, while a new one is read, and stays for good if the new one fails. The period and
+ * screen at full contrast while a new one is read, and stays for good if the new one fails. The period and
  * the growth step only slice the result already here — neither asks the backend anything.
  */
 @Component({

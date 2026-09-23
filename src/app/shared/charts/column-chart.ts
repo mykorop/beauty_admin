@@ -20,21 +20,26 @@ export type ChartSeries = { key: string; label: string; color: string; values: r
 
 /**
  * The categorical slots of the panel's charts, in their fixed order — the data-viz reference palette,
- * validated for colour-blind separation and against the white card they are drawn on. A series takes
- * the next slot, never a skipped or a made-up one. Three of them are under 3:1 against white, which
- * is why every chart carries its table view.
+ * retained in the same order on graphite cards. A series takes the next slot, never a skipped or
+ * a made-up one. Every chart also carries a table view with the same values.
  */
 export const CHART_SERIES_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'] as const;
 
 /** Chart chrome: recessive hairlines and muted axis text, never the colour of a series. */
-const INK = { grid: '#e1e0d9', axis: '#c3c2b7', muted: '#898781', hover: 'rgba(11, 11, 11, 0.05)' };
+const INK = {
+  grid: 'var(--bm-border)',
+  axis: 'var(--bm-input-border)',
+  muted: 'var(--bm-muted)',
+  hover: 'rgba(245, 242, 235, 0.08)',
+};
 
 const MARGIN = { top: 8, right: 8, bottom: 24, left: 52 };
 /** Room an x-axis label needs, so a narrow chart gets fewer of them rather than a crowd. */
 const X_LABEL_SPACING = 80;
 const MAX_X_LABELS = 10;
-/** How far from the column under the pointer its tooltip stands, so it never hides that column. */
+/** Preferred gap from the column; on narrow charts the tooltip stays inside the plot's width. */
 const TOOLTIP_OFFSET = 12;
+const TOOLTIP_WIDTH = 240;
 
 /**
  * A column chart — stacked when it is given more than one series — drawn as plain SVG.
@@ -51,7 +56,7 @@ const TOOLTIP_OFFSET = 12;
   template: `
     @if (stacked()) {
       <ul
-        class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600"
+        class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted"
         [attr.data-testid]="testId() + '-legend'"
       >
         @for (item of series(); track item.key) {
@@ -64,11 +69,11 @@ const TOOLTIP_OFFSET = 12;
     }
 
     @if (empty()) {
-      <p class="py-10 text-center text-sm text-slate-500" [attr.data-testid]="testId() + '-empty'">
+      <p class="py-10 text-center text-sm text-muted" [attr.data-testid]="testId() + '-empty'">
         {{ 'chart.empty' | t }}
       </p>
     } @else if (showTable()) {
-      <div class="max-h-80 overflow-auto rounded border border-slate-200">
+      <div class="max-h-80 overflow-auto rounded border border-divider">
         <table
           class="w-full text-left text-xs tabular-nums"
           [attr.data-testid]="testId() + '-table'"
@@ -78,7 +83,7 @@ const TOOLTIP_OFFSET = 12;
               name()
             }}
           </caption>
-          <thead class="sticky top-0 bg-slate-50 text-slate-600">
+          <thead class="sticky top-0 bg-raised text-muted">
             <tr>
               <th class="px-2 py-1 font-medium">{{ 'chart.table.point' | t }}</th>
               @for (item of series(); track item.key) {
@@ -91,7 +96,7 @@ const TOOLTIP_OFFSET = 12;
           </thead>
           <tbody>
             @for (point of points(); track point.key; let index = $index) {
-              <tr class="border-t border-slate-100">
+              <tr class="border-t border-divider">
                 <td class="px-2 py-1">{{ point.title }}</td>
                 @for (item of series(); track item.key) {
                   <td class="px-2 py-1 text-right">{{ formatValue()(item.values[index]) }}</td>
@@ -109,7 +114,7 @@ const TOOLTIP_OFFSET = 12;
     } @else {
       <div class="relative">
         <svg
-          class="block select-none rounded outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          class="block max-w-full select-none rounded"
           role="img"
           tabindex="0"
           [attr.width]="width()"
@@ -182,25 +187,26 @@ const TOOLTIP_OFFSET = 12;
 
         @if (tooltip(); as tip) {
           <div
-            class="pointer-events-none absolute top-0 z-10 min-w-40 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs whitespace-nowrap shadow-md"
-            [class.-translate-x-full]="tip.flipped"
+            role="status"
+            class="chart-tooltip pointer-events-none absolute top-0 z-10 rounded-md border border-control bg-raised px-3 py-2 text-xs shadow-md"
             [style.left.px]="tip.left"
+            [style.width.px]="tooltipWidth"
             [attr.data-testid]="testId() + '-tooltip'"
           >
-            <p class="mb-1 text-slate-600">{{ tip.title }}</p>
+            <p class="mb-1 text-muted">{{ tip.title }}</p>
             @for (row of tip.rows; track row.key) {
               <p class="flex items-center gap-2">
                 <span class="inline-block h-0.5 w-3" [style.background]="row.color"></span>
-                <span class="font-semibold tabular-nums text-slate-900">{{ row.value }}</span>
+                <span class="font-semibold tabular-nums text-ink">{{ row.value }}</span>
                 @if (stacked()) {
-                  <span class="text-slate-600">{{ row.label }}</span>
+                  <span class="text-muted">{{ row.label }}</span>
                 }
               </p>
             }
             @if (tip.total !== null) {
-              <p class="mt-1 border-t border-slate-100 pt-1 text-slate-600">
+              <p class="mt-1 border-t border-divider pt-1 text-muted">
                 {{ 'chart.table.total' | t }}:
-                <span class="font-semibold tabular-nums text-slate-900">{{ tip.total }}</span>
+                <span class="font-semibold tabular-nums text-ink">{{ tip.total }}</span>
               </p>
             }
           </div>
@@ -211,7 +217,7 @@ const TOOLTIP_OFFSET = 12;
     @if (!empty()) {
       <button
         type="button"
-        class="mt-1 text-xs text-sky-700 hover:underline"
+        class="chart-table-toggle mt-1 text-xs"
         [attr.data-testid]="testId() + '-table-toggle'"
         (click)="showTable.set(!showTable())"
       >
@@ -234,6 +240,7 @@ export class ColumnChart {
 
   protected readonly margin = MARGIN;
   protected readonly ink = INK;
+  protected readonly tooltipWidth = TOOLTIP_WIDTH;
 
   protected readonly width = signal(640);
   protected readonly hovered = signal<number | null>(null);
@@ -326,8 +333,11 @@ export class ColumnChart {
         }))
         .reverse(),
       total: this.stacked() ? format(this.totals()[index]) : null,
-      flipped,
-      left: flipped ? center - offset : center + offset,
+      left: clamp(
+        flipped ? center - offset - TOOLTIP_WIDTH : center + offset,
+        0,
+        this.width() - TOOLTIP_WIDTH,
+      ),
     };
   });
 

@@ -5,8 +5,381 @@
 @import 'tailwindcss';
 @import 'tailwindcss-primeui';
 @import 'primeicons/primeicons.css';
+@import './fonts.css';
+
+@theme inline {
+  --color-canvas: var(--bm-bg);
+  --color-panel: var(--bm-panel);
+  --color-raised: var(--bm-raised);
+  --color-ink: var(--bm-text);
+  --color-muted: var(--bm-muted);
+  --color-accent: var(--bm-accent);
+  --color-divider: var(--bm-border);
+  --color-control: var(--bm-input-border);
+}
+
+:root {
+  color-scheme: light;
+  --bm-bg: #181a1d;
+  --bm-panel: #1e2024;
+  --bm-raised: #25282d;
+  --bm-text: #f5f2eb;
+  --bm-muted: #b9b9c0;
+  --bm-accent: #f59e0c;
+  --bm-accent-hover: #ffb52e;
+  --bm-accent-active: #dc8908;
+  --bm-border: #474b53;
+  --bm-input-border: #858992;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+html:lang(uk),
+html:lang(ru) {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+
+.bookme-dark {
+  color-scheme: dark;
+}
 
 html,
 body {
   height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+@layer components {
+  .bookme-brand {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 2.25rem;
+    line-height: 1;
+    color: var(--bm-text);
+    white-space: nowrap;
+  }
+  .bookme-brand > span {
+    color: var(--bm-accent);
+  }
+  .bookme-caption {
+    color: var(--bm-muted);
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  .login-page {
+    display: grid;
+    min-height: 100%;
+    place-items: center;
+    padding: 2rem 1rem;
+    background: var(--bm-bg);
+    color: var(--bm-text);
+  }
+  .login-card {
+    width: 100%;
+    max-width: 27rem;
+    border: 1px solid var(--bm-border);
+    border-radius: 1rem;
+    padding: clamp(1.25rem, 4vw, 2.25rem);
+    background: var(--bm-panel);
+    box-shadow: 0 20px 60px #0003;
+  }
+  .login-brand-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .login-card .p-inputtext {
+    min-height: 2.75rem;
+  }
+  .login-card .p-inputotp {
+    gap: 0.5rem;
+  }
+  .login-card .p-inputotp-input {
+    width: min(2.75rem, 11vw);
+  }
+  .login-card .p-password {
+    display: flex;
+  }
+  .login-card .p-button {
+    min-height: 2.75rem;
+  }
+
+  .admin-shell {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100dvh;
+  }
+  .shell-sidebar {
+    grid-row: 1 / -1;
+    background: var(--bm-panel);
+    border-right: 1px solid var(--bm-border);
+    overflow-y: auto;
+    color: var(--bm-text);
+  }
+  .shell-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+  .shell-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem 1.5rem;
+  }
+  .shell-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    padding: 0.625rem 0.75rem;
+    border-left: 3px solid transparent;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--bm-muted);
+  }
+  .shell-nav a:hover {
+    background: var(--bm-raised);
+    color: var(--bm-text);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .shell-nav a:active {
+    background: var(--bm-border);
+  }
+  .shell-nav a[aria-current='page'] {
+    border-left-color: var(--bm-accent);
+    background: var(--bm-raised);
+    color: var(--bm-accent);
+    font-weight: 600;
+  }
+  .navigation-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--bm-input-border);
+    border-radius: 0.5rem;
+    color: var(--bm-text);
+    background: var(--bm-raised);
+    cursor: pointer;
+  }
+  .navigation-toggle:hover {
+    border-color: var(--bm-accent);
+  }
+  .navigation-toggle:active {
+    background: var(--bm-border);
+  }
+  .shell-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    padding: 0.875rem 1.5rem;
+    border-bottom: 1px solid var(--bm-border);
+    background: var(--bm-panel);
+    color: var(--bm-text);
+  }
+  .environment-badge {
+    max-width: 100%;
+    border: 1px solid var(--bm-input-border);
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    color: var(--bm-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
+  .environment-production {
+    background: #7f1d1d;
+    border: 2px solid #fca5a5;
+    color: #fff;
+  }
+  .shell-account {
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    min-width: 0;
+  }
+  .shell-email {
+    color: var(--bm-muted);
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+  }
+  .shell-workspace {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+    padding: 1.5rem;
+    background: #f8fafc;
+    color: #0f172a;
+  }
+  html.bookme-dark .shell-workspace {
+    background: var(--bm-bg);
+    color: var(--bm-text);
+  }
+  .dashboard {
+    display: block;
+    max-width: 100rem;
+    margin-inline: auto;
+  }
+  .dashboard .grid > * {
+    min-width: 0;
+  }
+  .dashboard a:not(.metric-tile),
+  .chart-table-toggle {
+    color: var(--bm-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .dashboard a:hover,
+  .chart-table-toggle:hover {
+    color: var(--bm-accent-hover);
+  }
+  .dashboard a:active,
+  .chart-table-toggle:active {
+    color: var(--bm-accent-active);
+  }
+  .metric-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bm-raised);
+    border: 1px solid transparent;
+  }
+  a.metric-tile {
+    border-color: var(--bm-input-border);
+  }
+  a.metric-tile::after {
+    content: '↗';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.625rem;
+    color: var(--bm-accent);
+  }
+  a.metric-tile:hover {
+    border-color: var(--bm-accent-hover);
+    background: var(--bm-bg);
+  }
+  a.metric-tile:hover .metric-label {
+    text-decoration: underline;
+  }
+  a.metric-tile:active {
+    border-color: var(--bm-accent-active);
+  }
+  .metric-tile .metric-count {
+    padding-right: 0.75rem;
+  }
+  .dashboard .p-selectbutton {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+  .dashboard .p-togglebutton {
+    border-radius: 0.375rem;
+    min-height: 2.5rem;
+  }
+  .dashboard .p-togglebutton-content {
+    white-space: normal;
+    text-align: left;
+  }
+  .dashboard .p-togglebutton-checked .p-togglebutton-label {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .dashboard td {
+    overflow-wrap: anywhere;
+  }
+  .dashboard [data-testid='detailed-stats-attention'] table {
+    min-width: 48rem;
+  }
+  .dashboard [data-testid='quality-profile'] {
+    flex-wrap: wrap;
+  }
+  .dashboard .p-tag {
+    white-space: normal;
+  }
+  .chart-tooltip {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .chart-table-toggle {
+    min-height: 2.25rem;
+    cursor: pointer;
+  }
+  .bookme-dark :focus-visible {
+    outline: 3px solid var(--bm-accent);
+    outline-offset: 3px;
+  }
+  .bookme-dark .p-select-option-selected {
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .p-toast {
+    max-width: calc(100vw - 2rem);
+  }
+
+  @media (max-width: 63.999rem) {
+    .admin-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      height: auto;
+    }
+    .shell-sidebar {
+      overflow: visible;
+      border-right: 0;
+      border-bottom: 1px solid var(--bm-border);
+    }
+    .shell-brand-row {
+      padding: 1rem;
+    }
+    .shell-brand-row .bookme-brand {
+      font-size: 1.875rem;
+    }
+    .navigation-toggle {
+      display: inline-flex;
+    }
+    .shell-nav:not(.is-open) {
+      display: none;
+    }
+    .shell-header {
+      padding: 0.75rem 1rem;
+    }
+    .shell-account {
+      justify-content: flex-start;
+    }
+    .shell-workspace {
+      flex: 1;
+      overflow: visible;
+      padding: 1.25rem 1rem;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

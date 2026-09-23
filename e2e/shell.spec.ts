@@ -10,6 +10,42 @@ import {
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
 
+test('narrow navigation opens by keyboard, closes on Escape or selection, and returns focus', async ({
+  page,
+  mockBackend,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mockBackend(ADMIN, {
+    'GET /admin/me': ME,
+    'GET /admin/stats/basic': EMPTY_STATS,
+    'GET /admin/stats/detailed': NO_DETAILED_STATS,
+    'GET /admin/audit': apiOk({ items: [], nextCursor: null }),
+  });
+  await signIn(page, ADMIN);
+
+  const toggle = page.getByRole('button', { name: 'Навігація', exact: true });
+  const navigation = page.getByTestId('sidebar');
+  await expect(navigation).toBeHidden();
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(navigation.getByRole('link')).toHaveCount(7);
+  await page.keyboard.press('Tab');
+  await expect(navigation.getByRole('link').first()).toBeFocused();
+  await expect(navigation.getByRole('link').first()).toHaveAttribute('aria-current', 'page');
+  await page.keyboard.press('Escape');
+  await expect(navigation).toBeHidden();
+  await expect(toggle).toBeFocused();
+
+  await page.keyboard.press('Space');
+  await navigation.getByRole('link', { name: 'Журнал дій' }).click();
+  await expect(page).toHaveURL(/\/audit-log$/);
+  await expect(navigation).toBeHidden();
+  await expect(toggle).toBeFocused();
+  await expect(page.getByTestId('section-title')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test.describe('language', () => {
   test('switches the interface and survives a reload', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, {
