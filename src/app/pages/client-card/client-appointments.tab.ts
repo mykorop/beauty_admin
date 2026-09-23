@@ -1,13 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  type OnInit,
-  signal,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonDirective } from 'primeng/button';
 import { Select } from 'primeng/select';
@@ -16,8 +8,6 @@ import { catchError, EMPTY, exhaustMap, startWith, Subject, switchMap } from 'rx
 import {
   APPOINTMENT_STATUS_SEVERITY,
   APPOINTMENT_STATUSES,
-  AppointmentsClient,
-  type AppointmentDetails,
   type AppointmentStatus,
   type VenueAppointment,
 } from '../../core/api/appointments.client';
@@ -25,7 +15,7 @@ import { ClientsClient } from '../../core/api/clients.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AppointmentDetailsPanel } from '../../shared/appointments/appointment-details';
-import { appointmentRowPatch } from '../../shared/appointments/appointment-interaction';
+import { AppointmentInteraction } from '../../shared/appointments/appointment-interaction';
 import { appointmentStatusLabel, formatPrice } from '../../shared/appointments/appointment-wording';
 import { isStaleBooking } from '../../shared/appointments/appointment-filters';
 import { formatVenueDateTime } from '../../shared/venue-date';
@@ -43,11 +33,14 @@ import { ClientCardStore } from './client-card.store';
  * cursor and «показати давніші» is how it is read further.
  *
  * A Запис is never **made** here, and the actions over one are the Запис's own card, exactly as on
- * a Салон's tab: what comes back from an action is absorbed into the row it came from.
+ * a Салон's tab: which Запис is open, its read and where an action's answer lands belong to
+ * `AppointmentInteraction`. Another Клієнт or another status is a new list; an older page is the
+ * same list read further.
  */
 @Component({
   selector: 'app-client-appointments-tab',
   imports: [AppointmentDetailsPanel, ButtonDirective, FormsModule, Select, Tag, TranslatePipe],
+  providers: [AppointmentInteraction],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="appointment-filters mb-4 flex flex-wrap items-end gap-3">
@@ -61,7 +54,7 @@ import { ClientCardStore } from './client-card.store';
         [placeholder]="'appointments.filter.status' | t"
         [ariaLabel]="'appointments.filter.status' | t"
         [ngModel]="status()"
-        (ngModelChange)="setStatus($event)"
+        (ngModelChange)="status.set($event)"
       />
     </div>
 
@@ -80,20 +73,21 @@ import { ClientCardStore } from './client-card.store';
         </thead>
         <tbody>
           @for (row of rows; track row.appointment.appointmentId) {
+            @let open = interaction.isOpen(row.appointment.appointmentId);
             <tr
               class="cursor-pointer border-b border-divider last:border-0 hover:bg-raised"
               data-testid="appointment-row"
               [class.appointment-stale]="row.stale"
-              (click)="toggle(row.appointment)"
+              (click)="interaction.toggle(row.appointment.appointmentId)"
             >
               <td class="px-3 py-3">
                 <button
                   type="button"
                   class="appointment-toggle pi text-muted"
                   data-testid="appointment-row-toggle"
-                  [class.pi-chevron-right]="!isOpen(row.appointment)"
-                  [class.pi-chevron-down]="isOpen(row.appointment)"
-                  [attr.aria-expanded]="isOpen(row.appointment)"
+                  [class.pi-chevron-right]="!open"
+                  [class.pi-chevron-down]="open"
+                  [attr.aria-expanded]="open"
                   [attr.aria-label]="'appointments.details.open' | t"
                 ></button>
               </td>
@@ -126,13 +120,13 @@ import { ClientCardStore } from './client-card.store';
                 <p-tag data-testid="appointment-row-status" [severity]="row.statusSeverity" [value]="row.status" />
               </td>
             </tr>
-            @if (isOpen(row.appointment)) {
+            @if (open) {
               <tr class="border-b border-divider bg-raised" data-testid="appointment-details">
                 <td></td>
                 <td class="px-4 py-4" colspan="6">
-                  @if (details(); as details) {
-                    <app-appointment-details [details]="details" (changed)="absorb($event)" />
-                  } @else if (detailsFailed()) {
+                  @if (interaction.opened()?.details; as details) {
+                    <app-appointment-details [details]="details" />
+                  } @else if (interaction.opened()?.failed) {
                     <p class="text-muted" data-testid="appointment-details-failed">{{ 'card.failed' | t }}</p>
                   } @else {
                     <p class="text-muted" data-testid="appointment-details-loading">
@@ -173,30 +167,30 @@ import { ClientCardStore } from './client-card.store';
     }
   `,
 })
-export class ClientAppointmentsTab implements OnInit {
+export class ClientAppointmentsTab {
   private readonly clients = inject(ClientsClient);
-  private readonly appointments = inject(AppointmentsClient);
+  private readonly card = inject(ClientCardStore);
   private readonly i18n = inject(I18nService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  // The card renders its tabs only once the client is loaded, and rebuilds them for another one.
-  private readonly clientId = inject(ClientCardStore).client()?.clientId ?? '';
+  protected readonly interaction: AppointmentInteraction<VenueAppointment> =
+    inject(AppointmentInteraction);
 
   /** The one narrowing this feed offers; kept in the component, since the feed has no window. */
   protected readonly status = signal<AppointmentStatus | null>(null);
-  private readonly asked = new Subject<AppointmentStatus | null>();
 
-  private readonly items = signal<VenueAppointment[] | null>(null);
+  /**
+   * Whose history, narrowed how. Read from the card as it opens and reopens, not once: another
+   * Клієнт is another list even where the card keeps this tab standing between the two.
+   */
+  private readonly asked = computed(
+    () => ({ clientId: this.card.client()?.clientId ?? null, status: this.status() }),
+    { equal: (left, right) => left.clientId === right.clientId && left.status === right.status },
+  );
+
   protected readonly nextCursor = signal<string | null>(null);
   protected readonly loading = signal(false);
   protected readonly failed = signal(false);
   protected readonly more = new Subject<void>();
-
-  /** The Запис whose card is open, or `null`; every change goes through `opened`. */
-  private readonly openId = signal<string | null>(null);
-  private readonly opened = new Subject<string | null>();
-  protected readonly details = signal<AppointmentDetails | null>(null);
-  protected readonly detailsFailed = signal(false);
 
   protected readonly statusOptions = computed(() =>
     APPOINTMENT_STATUSES.map((value) => ({ value, label: this.i18n.t(`appointments.status.${value}`) })),
@@ -207,7 +201,7 @@ export class ClientAppointmentsTab implements OnInit {
     const money = new Intl.NumberFormat(locale);
     const now = new Date();
     return (
-      this.items()?.map((appointment) => ({
+      this.interaction.rows()?.map((appointment) => ({
         appointment,
         // Each row on the clock its own Запис was booked under: this feed spans venues.
         when: formatVenueDateTime(appointment.startTime, locale, appointment.timezone),
@@ -222,41 +216,23 @@ export class ClientAppointmentsTab implements OnInit {
     );
   });
 
-  // Not the constructor: the store is read after the card has filled it.
-  ngOnInit(): void {
-    // One card at a time: opening another drops the request for the last one, so a slow answer
-    // cannot land under the row that replaced it.
-    this.opened
+  constructor() {
+    toObservable(this.asked)
       .pipe(
-        switchMap((appointmentId) => {
-          this.details.set(null);
-          this.detailsFailed.set(false);
-          return appointmentId === null
-            ? EMPTY
-            : this.appointments
-                .details(appointmentId)
-                // Including a Запис that has since vanished: the row says so instead of a toast.
-                .pipe(catchError(() => (this.detailsFailed.set(true), EMPTY)));
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((details) => this.details.set(details));
-
-    this.asked
-      .pipe(
-        startWith(null),
-        // A new filter starts the feed over; the answer to the old one is dropped.
-        switchMap((status) => {
-          this.items.set(null);
+        // Another Клієнт or another status starts the feed over; the answer to the old one is dropped.
+        switchMap(({ clientId, status }) => {
+          this.interaction.show(null);
           this.nextCursor.set(null);
-          this.close();
+          if (clientId === null) {
+            return EMPTY;
+          }
           return this.more.pipe(
             startWith(undefined),
             exhaustMap(() => {
               this.loading.set(true);
               this.failed.set(false);
               return this.clients
-                .appointments(this.clientId, { status, cursor: this.nextCursor() ?? undefined })
+                .appointments(clientId, { status, cursor: this.nextCursor() ?? undefined })
                 // The interceptor has already worded the refusal as a toast; rows already shown stay.
                 .pipe(
                   catchError(() => {
@@ -268,47 +244,12 @@ export class ClientAppointmentsTab implements OnInit {
             }),
           );
         }),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntilDestroyed(),
       )
       .subscribe((page) => {
-        this.items.update((shown) => [...(shown ?? []), ...page.items]);
+        this.interaction.append(page.items);
         this.nextCursor.set(page.nextCursor);
         this.loading.set(false);
       });
-  }
-
-  protected setStatus(status: AppointmentStatus | null): void {
-    this.status.set(status);
-    this.asked.next(status);
-  }
-
-  protected isOpen(appointment: VenueAppointment): boolean {
-    return this.openId() === appointment.appointmentId;
-  }
-
-  protected toggle(appointment: VenueAppointment): void {
-    const next = this.isOpen(appointment) ? null : appointment.appointmentId;
-    this.openId.set(next);
-    this.opened.next(next);
-  }
-
-  /**
-   * A Запис an action just changed. The backend answers with the whole row, so the table redraws
-   * from that rather than re-reading the feed — a re-read under a status filter would drop the row
-   * from under the card still showing it.
-   */
-  protected absorb(details: AppointmentDetails): void {
-    this.details.set(details);
-    this.items.update(
-      (rows) =>
-        rows?.map((row) =>
-          row.appointmentId === details.appointmentId ? { ...row, ...appointmentRowPatch(details) } : row,
-        ) ?? rows,
-    );
-  }
-
-  private close(): void {
-    this.openId.set(null);
-    this.opened.next(null);
   }
 }

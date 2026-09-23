@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Tag } from 'primeng/tag';
 import { APPOINTMENT_STATUS_SEVERITY, type AppointmentDetails } from '../../core/api/appointments.client';
 import { I18nService } from '../../i18n/i18n.service';
@@ -96,15 +96,12 @@ import { appointmentStatusLabel, formatPrice } from './appointment-wording';
         </div>
       </div>
 
-      <app-appointment-actions [details]="view.details" (changed)="changed.emit($event)" />
+      <app-appointment-actions [details]="view.details" />
     }
   `,
 })
 export class AppointmentDetailsPanel {
   readonly details = input.required<AppointmentDetails>();
-
-  /** The Запис as an action left it — see `AppointmentActions.changed`. */
-  readonly changed = output<AppointmentDetails>();
 
   private readonly i18n = inject(I18nService);
 

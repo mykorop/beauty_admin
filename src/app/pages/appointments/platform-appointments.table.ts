@@ -2,19 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
+  effect,
   inject,
   input,
-  linkedSignal,
-  signal,
+  untracked,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Tag } from 'primeng/tag';
-import { catchError, EMPTY, Subject, switchMap, tap } from 'rxjs';
 import {
   APPOINTMENT_STATUS_SEVERITY,
-  AppointmentsClient,
-  type AppointmentDetails,
   type VenueAppointment,
 } from '../../core/api/appointments.client';
 import { I18nService } from '../../i18n/i18n.service';
@@ -22,7 +17,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
 import { AppointmentDetailsPanel } from '../../shared/appointments/appointment-details';
 import { isStaleBooking } from '../../shared/appointments/appointment-filters';
-import { appointmentRowPatch } from '../../shared/appointments/appointment-interaction';
+import { AppointmentInteraction } from '../../shared/appointments/appointment-interaction';
 import { appointmentStatusLabel, formatPrice } from '../../shared/appointments/appointment-wording';
 import { formatVenueDateTime } from '../../shared/venue-date';
 
@@ -33,14 +28,17 @@ import { formatVenueDateTime } from '../../shared/venue-date';
  * Every row carries its own venue and its own clock: the list spans venues, so there is no one
  * clock to print the page on, and an hour is printed as both sides of that Запис remember it.
  *
- * What an action changes is absorbed into the row it came from rather than re-read, exactly as on a
- * card's Записи tab: a Запис just cancelled under a «заброньовано» filter stays under the card still
- * showing it instead of vanishing. A new list — another window, another day, a new gathering —
- * starts from what it says.
+ * Which Запис is open, its read and where an action's answer lands belong to
+ * `AppointmentInteraction`, exactly as on a card's Записи tab: a Запис just cancelled under a
+ * «заброньовано» filter stays under the card still showing it instead of vanishing. Every list
+ * handed in is a new one — another window, another day, a new gathering, another status — and
+ * starts from what it says; the same list handed in again, as a poll of the same gathering hands
+ * it, is not handed in anew.
  */
 @Component({
   selector: 'app-platform-appointments-table',
   imports: [AppointmentDetailsPanel, Tag, TranslatePipe],
+  providers: [AppointmentInteraction],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="profile-table-scroll" tabindex="0" role="region" [attr.aria-label]="'nav.appointments' | t">
@@ -59,20 +57,21 @@ import { formatVenueDateTime } from '../../shared/venue-date';
         </thead>
         <tbody>
           @for (row of rows(); track row.appointment.appointmentId) {
+            @let open = interaction.isOpen(row.appointment.appointmentId);
             <tr
               class="cursor-pointer border-b border-divider last:border-0 hover:bg-raised"
               data-testid="appointment-row"
               [class.appointment-stale]="row.stale"
-              (click)="toggle(row.appointment)"
+              (click)="interaction.toggle(row.appointment.appointmentId)"
             >
               <td class="px-3 py-3">
                 <button
                   type="button"
                   class="appointment-toggle pi text-muted"
                   data-testid="appointment-row-toggle"
-                  [class.pi-chevron-right]="!isOpen(row.appointment)"
-                  [class.pi-chevron-down]="isOpen(row.appointment)"
-                  [attr.aria-expanded]="isOpen(row.appointment)"
+                  [class.pi-chevron-right]="!open"
+                  [class.pi-chevron-down]="open"
+                  [attr.aria-expanded]="open"
                   [attr.aria-label]="'appointments.details.open' | t"
                 ></button>
               </td>
@@ -121,16 +120,16 @@ import { formatVenueDateTime } from '../../shared/venue-date';
                 />
               </td>
             </tr>
-            @if (isOpen(row.appointment)) {
+            @if (open) {
               <tr
                 class="border-b border-divider bg-raised"
                 data-testid="appointment-details"
               >
                 <td></td>
                 <td class="px-4 py-4" colspan="7">
-                  @if (details(); as details) {
-                    <app-appointment-details [details]="details" (changed)="absorb($event)" />
-                  } @else if (detailsFailed()) {
+                  @if (interaction.opened()?.details; as details) {
+                    <app-appointment-details [details]="details" />
+                  } @else if (interaction.opened()?.failed) {
                     <p class="text-muted" data-testid="appointment-details-failed">
                       {{ 'card.failed' | t }}
                     </p>
@@ -166,26 +165,16 @@ export class PlatformAppointmentsTable {
   /** What an empty list says — «за цей період» or «цього дня». */
   readonly emptyKey = input<TranslationKey>('appointments.empty');
 
-  private readonly client = inject(AppointmentsClient);
+  protected readonly interaction: AppointmentInteraction<VenueAppointment> =
+    inject(AppointmentInteraction);
+
   private readonly i18n = inject(I18nService);
-
-  /** The rows as shown: the list handed in, with whatever the actions since have changed in it. */
-  private readonly shown = linkedSignal(() => this.appointments());
-
-  /** The Запис whose card is open, or `null`; a new list closes it. Every change goes through `opened`. */
-  private readonly openId = linkedSignal<VenueAppointment[], string | null>({
-    source: this.appointments,
-    computation: () => null,
-  });
-  private readonly opened = new Subject<string | null>();
-  protected readonly details = signal<AppointmentDetails | null>(null);
-  protected readonly detailsFailed = signal(false);
 
   protected readonly rows = computed(() => {
     const locale = this.i18n.locale();
     const money = new Intl.NumberFormat(locale);
     const now = new Date();
-    return this.shown().map((appointment) => ({
+    return (this.interaction.rows() ?? []).map((appointment) => ({
       appointment,
       // Each row on the clock its own Запис was booked under: this list spans venues.
       when: formatVenueDateTime(appointment.startTime, locale, appointment.timezone),
@@ -199,46 +188,11 @@ export class PlatformAppointmentsTable {
   });
 
   constructor() {
-    // One card at a time: opening another drops the request for the last one, so a slow answer
-    // cannot land under the row that replaced it.
-    this.opened
-      .pipe(
-        tap(() => {
-          this.details.set(null);
-          this.detailsFailed.set(false);
-        }),
-        switchMap((appointmentId) =>
-          appointmentId === null
-            ? EMPTY
-            : this.client
-                .details(appointmentId)
-                // Including a Запис that has since vanished: the row says so instead of a toast.
-                .pipe(catchError(() => (this.detailsFailed.set(true), EMPTY))),
-        ),
-        takeUntilDestroyed(inject(DestroyRef)),
-      )
-      .subscribe((details) => this.details.set(details));
-  }
-
-  protected isOpen(appointment: VenueAppointment): boolean {
-    return this.openId() === appointment.appointmentId;
-  }
-
-  protected toggle(appointment: VenueAppointment): void {
-    const next = this.isOpen(appointment) ? null : appointment.appointmentId;
-    this.openId.set(next);
-    this.opened.next(next);
-  }
-
-  /** A Запис an action just changed: the backend answers with the whole of it. */
-  protected absorb(details: AppointmentDetails): void {
-    this.details.set(details);
-    this.shown.update((rows) =>
-      rows.map((row) =>
-        row.appointmentId === details.appointmentId
-          ? { ...row, ...appointmentRowPatch(details) }
-          : row,
-      ),
-    );
+    // Every list handed in is a new one: the Запис open in the last closes, and nothing asked
+    // there reaches this one. A poll of the same gathering hands the same list, so it is not seen.
+    effect(() => {
+      const appointments = this.appointments();
+      untracked(() => this.interaction.show(appointments));
+    });
   }
 }

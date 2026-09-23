@@ -5,7 +5,6 @@ import {
   DestroyRef,
   inject,
   input,
-  output,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -32,10 +31,10 @@ import { AppointmentRescheduleDialog } from './appointment-reschedule-dialog';
  * question a disabled row raises.
  *
  * Nothing here decides *whose* Запис it is: the three actions are addressed by the Запис's own id,
- * so one component serves the Салон's tab, the Майстер салону's and the Незалежний майстер's alike
- * — the same reason the table itself takes a `port` instead of a venue. Where the answer lands is
- * the list's business: this component sends the action through the list's
- * `AppointmentInteraction`, which takes the answer in even if this card has closed by then.
+ * so one component serves every Записи list alike — a card's tab, a Клієнт's history, the
+ * platform's list. Where the answer lands is the list's business: this component sends the action
+ * through the list's `AppointmentInteraction`, which takes the answer in even if this card has
+ * closed by then.
  */
 type StatusOffer = {
   status: AppointmentActionStatus;
@@ -144,14 +143,8 @@ const OFFERS: StatusOffer[] = [
 export class AppointmentActions {
   readonly details = input.required<AppointmentDetails>();
 
-  /**
-   * The Запис as the backend answered it back, for the Клієнт's history and the platform list: they
-   * provide no `AppointmentInteraction` yet and redraw their row and card from this themselves.
-   */
-  readonly changed = output<AppointmentDetails>();
-
   private readonly client = inject(AppointmentsClient);
-  private readonly interaction = inject(AppointmentInteraction, { optional: true });
+  private readonly interaction = inject(AppointmentInteraction);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly offers = OFFERS;
@@ -204,16 +197,15 @@ export class AppointmentActions {
     this.busy.set(true);
     // The list takes the answer in whether or not this card is still open; the card only ends its
     // own wait, and stops listening once it is gone.
-    const answer = this.interaction
-      ? this.interaction.act(call).pipe(takeUntilDestroyed(this.destroyRef))
-      : call;
-    answer.subscribe({
-      next: (updated) => {
-        this.busy.set(false);
-        close();
-        this.changed.emit(updated);
-      },
-      error: () => this.busy.set(false),
-    });
+    this.interaction
+      .act(call)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy.set(false);
+          close();
+        },
+        error: () => this.busy.set(false),
+      });
   }
 }

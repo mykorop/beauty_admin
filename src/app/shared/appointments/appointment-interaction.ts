@@ -28,13 +28,16 @@ export type OpenedAppointment = {
  *   even if the row has been closed since, and the details take it while that Запис is the one
  *   open — never another's, and a closed one is not reopened for it. A list shown since — another
  *   target, other filters, a new answer — is left as it was read.
+ * - A page appended to the list shown is the same list read further, not a new one: the open Запис
+ *   stays open, and an answer to an action taken before the page came still lands.
  *
  * The row is redrawn from the answer, never re-read: under a «заброньовано» filter a re-read would
  * drop a Запис just cancelled from under the card still showing it.
  *
- * Whose Записи these are, how they are fetched and how their rows are printed is the list's own.
- * Provided by the list, so the actions under its open Запис reach it too; a Запис's own reads and
- * actions are addressed by its id alone, whichever list it was opened from.
+ * Whose Записи these are, how they are fetched and how their rows are printed is the list's own — a
+ * venue's window, a Клієнт's history by cursor, a platform day or window; the list only says when
+ * it shows a new one. Provided by the list, so the actions under its open Запис reach it too; a
+ * Запис's own reads and actions are addressed by its id alone, whichever list it was opened from.
  */
 @Injectable()
 export class AppointmentInteraction<R extends Appointment = Appointment> {
@@ -64,6 +67,14 @@ export class AppointmentInteraction<R extends Appointment = Appointment> {
     this.listShown++;
     this.close();
     this.shown.set(rows);
+  }
+
+  /**
+   * The list shown, read one page further — or its first page, on a list shown as `null` while it
+   * was read. Not a new list (see above).
+   */
+  append(rows: R[]): void {
+    this.shown.update((shown) => [...(shown ?? []), ...rows]);
   }
 
   /** Opens the Запис, or closes it if it is the one open. */
@@ -138,12 +149,10 @@ export class AppointmentInteraction<R extends Appointment = Appointment> {
 
 /**
  * What an action over a Запис changes in its row: the card narrowed back down to the row's
- * fields. A field left out here is a cell that quietly stops updating.
- *
- * Exported only for the Клієнт's history and the platform list, which still redraw their own rows
- * until they take `AppointmentInteraction` too.
+ * fields. A field left out here is a cell that quietly stops updating. What a row of a list that
+ * spans venues carries besides — its venue's name and clock — is the row's own and is kept.
  */
-export function appointmentRowPatch(details: AppointmentDetails): Partial<Appointment> {
+function appointmentRowPatch(details: AppointmentDetails): Partial<Appointment> {
   return {
     startTime: details.startTime,
     endTime: details.endTime,
