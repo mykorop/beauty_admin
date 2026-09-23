@@ -1,4 +1,5 @@
-import { apiError, apiOk } from './fixtures/api-mock';
+import type { Locator, Page } from '@playwright/test';
+import { apiError, apiOk, type MockRoutes } from './fixtures/api-mock';
 import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
@@ -265,5 +266,162 @@ test.describe('вкладка «Фото й сертифікати» Незал�
     await expect(page.getByTestId('media-certificate-noscan')).toBeVisible();
     await expect(page.getByTestId('media-certificate-scan')).toHaveCount(0);
     await expect(page.getByTestId('media-certificate-dates')).toContainText('дійсний до');
+  });
+});
+
+/**
+ * Видалення вмісту, every kind on every profile that has it. The answer to a removal is the whole
+ * tab, and the tab redraws from it: the target is gone and the confirmation closes, with nothing
+ * read again — a later read of the tab failing is no reason to doubt a removal that succeeded.
+ * A genuine refusal leaves the confirmation open with the reason as typed.
+ */
+test.describe('Видалення вмісту', () => {
+  const NOTE = 'Порушує правила платформи';
+  const SECOND = certificate({ certificateId: 'cert-2', title: 'Курс манікюру', fileUrl: '' });
+
+  const salonBefore = salonMedia({ certificates: [certificate(), SECOND] });
+  const masterBefore = { avatarUrl: AVATAR, images: [PHOTO, OTHER_PHOTO], certificates: [certificate(), SECOND] };
+
+  const photo = (page: Page, url: string) => page.locator(`[data-testid="media-photo-image"][src="${url}"]`);
+  const certificateTitled = (page: Page, title: string) =>
+    page.getByTestId('media-certificate').filter({ hasText: title });
+
+  /** The tab reads once; any read after that fails, so nothing shown can have come from one. */
+  const readOnce = (media: unknown): MockRoutes[string] => {
+    let reads = 0;
+    return () => (reads++ === 0 ? apiOk(media) : apiError(500, 'INTERNAL_SERVER_ERROR'));
+  };
+
+  const salonRoutes = (): MockRoutes => ({
+    'GET /admin/me': ME,
+    'GET /admin/salons/s1': apiOk(salonCard()),
+    'GET /admin/salons/s1/media': readOnce(salonBefore),
+  });
+  const masterRoutes = (): MockRoutes => ({
+    'GET /admin/me': ME,
+    'GET /admin/masters/m1': apiOk(masterCard()),
+    'GET /admin/masters/m1/media': readOnce(masterBefore),
+  });
+
+  const REMOVALS: {
+    media: string;
+    path: string;
+    routes: () => MockRoutes;
+    remove: string;
+    answer: unknown;
+    sent: unknown;
+    ask: (page: Page) => Locator;
+    target: (page: Page) => Locator;
+    kept: (page: Page) => Locator;
+  }[] = [
+    {
+      media: 'a Салон photo',
+      path: '/salons/s1/media',
+      routes: salonRoutes,
+      remove: 'DELETE /admin/salons/s1/images',
+      answer: { ...salonBefore, images: [OTHER_PHOTO] },
+      sent: { imageUrl: PHOTO, reason: NOTE },
+      ask: (page) => page.getByTestId('media-photo').filter({ has: photo(page, PHOTO) }).getByTestId('media-photo-delete'),
+      target: (page) => photo(page, PHOTO),
+      kept: (page) => photo(page, OTHER_PHOTO),
+    },
+    {
+      media: 'a Салон certificate with its scan',
+      path: '/salons/s1/media',
+      routes: salonRoutes,
+      remove: 'DELETE /admin/salons/s1/certificates/cert-1',
+      answer: { ...salonBefore, certificates: [SECOND] },
+      sent: { reason: NOTE },
+      ask: (page) => certificateTitled(page, 'Диплом перукаря').getByTestId('media-certificate-delete'),
+      target: (page) => certificateTitled(page, 'Диплом перукаря'),
+      kept: (page) => certificateTitled(page, 'Курс манікюру'),
+    },
+    {
+      media: 'a Майстер photo',
+      path: '/independent-masters/m1/media',
+      routes: masterRoutes,
+      remove: 'DELETE /admin/masters/m1/images',
+      answer: { ...masterBefore, images: [OTHER_PHOTO] },
+      sent: { imageUrl: PHOTO, reason: NOTE },
+      ask: (page) => page.getByTestId('media-photo').filter({ has: photo(page, PHOTO) }).getByTestId('media-photo-delete'),
+      target: (page) => photo(page, PHOTO),
+      kept: (page) => photo(page, OTHER_PHOTO),
+    },
+    {
+      media: 'a Майстер avatar',
+      path: '/independent-masters/m1/media',
+      routes: masterRoutes,
+      remove: 'DELETE /admin/masters/m1/avatar',
+      answer: { ...masterBefore, avatarUrl: null },
+      sent: { reason: NOTE },
+      ask: (page) => page.getByTestId('media-avatar-delete'),
+      target: (page) => page.getByTestId('media-avatar'),
+      kept: (page) => photo(page, PHOTO),
+    },
+    {
+      media: 'a Майстер certificate that has no scan',
+      path: '/independent-masters/m1/media',
+      routes: masterRoutes,
+      remove: 'DELETE /admin/masters/m1/certificates/cert-2',
+      answer: { ...masterBefore, certificates: [certificate()] },
+      sent: { reason: NOTE },
+      ask: (page) => certificateTitled(page, 'Курс манікюру').getByTestId('media-certificate-delete'),
+      target: (page) => certificateTitled(page, 'Курс манікюру'),
+      kept: (page) => certificateTitled(page, 'Диплом перукаря'),
+    },
+  ];
+
+  for (const removal of REMOVALS) {
+    test(`removes ${removal.media} and closes the confirmation`, async ({ page, mockBackend }) => {
+      const mock = await mockBackend(ADMIN, { ...removal.routes(), [removal.remove]: apiOk(removal.answer) });
+      await signIn(page, ADMIN, removal.path);
+      await expect(removal.target(page)).toHaveCount(1);
+
+      await removal.ask(page).click();
+      await page.getByTestId('reason-input').fill(NOTE);
+      await page.getByTestId('reason-confirm').click();
+
+      await expect(page.getByTestId('reason-dialog')).toHaveCount(0);
+      await expect(removal.target(page)).toHaveCount(0);
+      await expect(removal.kept(page)).toHaveCount(1);
+      expect(mock.bodies[removal.remove]).toEqual([removal.sent]);
+    });
+
+    test(`keeps ${removal.media} and the reason as typed when the backend refuses`, async ({
+      page,
+      mockBackend,
+    }) => {
+      const mock = await mockBackend(ADMIN, { ...removal.routes(), [removal.remove]: apiError(404, 'NOT_FOUND') });
+      await signIn(page, ADMIN, removal.path);
+
+      await removal.ask(page).click();
+      await page.getByTestId('reason-input').fill(NOTE);
+      await page.getByTestId('reason-confirm').click();
+
+      await expect(page.getByTestId('reason-dialog')).toBeVisible();
+      await expect(page.getByTestId('reason-input')).toHaveValue(NOTE);
+      await expect(page.getByTestId('reason-confirm')).toBeEnabled();
+      await expect(removal.target(page)).toHaveCount(1);
+      expect(mock.bodies[removal.remove]).toEqual([removal.sent]);
+    });
+  }
+
+  test('offers nothing to remove on a Видалений майстер', async ({ page, mockBackend }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/masters/m1': apiOk(masterCard({ status: 'deleted', deletedAt: '2026-06-01T00:00:00.000Z' })),
+      'GET /admin/masters/m1/media': apiOk(masterBefore),
+      'GET /admin/masters/m1/appointments/upcoming-count': apiOk({ count: 0 }),
+    });
+
+    await signIn(page, ADMIN, '/independent-masters/m1/media');
+
+    await expect(page.getByTestId('media-avatar-image')).toHaveAttribute('src', AVATAR);
+    await expect(page.getByTestId('media-photo')).toHaveCount(2);
+    await expect(page.getByTestId('media-certificate')).toHaveCount(2);
+    await expect(page.getByTestId('media-readonly-profile')).toBeVisible();
+    await expect(page.getByTestId('media-avatar-delete')).toHaveCount(0);
+    await expect(page.getByTestId('media-photo-delete')).toHaveCount(0);
+    await expect(page.getByTestId('media-certificate-delete')).toHaveCount(0);
   });
 });
