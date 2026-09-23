@@ -67,10 +67,14 @@ test.describe('session', () => {
     page,
     mockBackend,
   }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME });
-    // A section that reads nothing of its own: this is about the address the shell returns to.
-    await signIn(page, ADMIN, '/appointments');
-    await expect(page.getByTestId('section-title')).toHaveText('Записи');
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/audit': apiOk({ items: [], nextCursor: null }),
+    });
+    // A section that leaves a parameter it does not know alone: this is about the address the
+    // shell returns to, not about the section.
+    await signIn(page, ADMIN, '/audit-log');
+    await expect(page.getByTestId('section-title')).toHaveText('Журнал дій');
 
     // What an expired refresh token leaves behind: no usable tokens in the browser.
     await page.evaluate(() => {
@@ -78,11 +82,11 @@ test.describe('session', () => {
         .filter((key) => key.startsWith('CognitoIdentityServiceProvider.'))
         .forEach((key) => localStorage.removeItem(key));
     });
-    await page.goto('/appointments?city=Chisinau');
+    await page.goto('/audit-log?city=Chisinau');
 
-    await expect(page).toHaveURL(/\/login\?returnUrl=%2Fappointments%3Fcity%3DChisinau/);
+    await expect(page).toHaveURL(/\/login\?returnUrl=%2Faudit-log%3Fcity%3DChisinau/);
 
     await signIn(page, ADMIN, page.url());
-    await expect(page).toHaveURL(/\/appointments\?city=Chisinau$/);
+    await expect(page).toHaveURL(/\/audit-log\?city=Chisinau$/);
   });
 });

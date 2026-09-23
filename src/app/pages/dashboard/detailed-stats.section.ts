@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  signal,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
@@ -14,7 +6,6 @@ import { Message } from 'primeng/message';
 import { ProgressBar } from 'primeng/progressbar';
 import { SelectButton } from 'primeng/selectbutton';
 import { Tag } from 'primeng/tag';
-import { exhaustMap, type Subscription, takeWhile, timer } from 'rxjs';
 import {
   ATTENTION_FLAGS,
   type AppointmentsDay,
@@ -32,6 +23,7 @@ import { formatBuiltAt } from '../../shared/built-at';
 import { calendarDayAsUtcDate } from '../../shared/calendar-day';
 import { PLATFORM_TIME_ZONE } from '../../shared/platform-clock';
 import { formatRating } from '../../shared/rating';
+import { TableRunFollower } from '../../shared/table-run';
 import { formatVenueDate } from '../../shared/venue-date';
 import {
   CHART_SERIES_COLORS,
@@ -50,14 +42,10 @@ import {
   weeksFrom,
   growthTotals,
   periodStart,
-  runProgress,
   STATS_PERIODS,
   type StatsPeriod,
   valueTotals,
 } from './detailed-stats-view';
-
-/** How often the dashboard asks how a run is getting on. */
-export const DETAILED_STATS_POLL_MS = 2000;
 
 const GROWTH_KINDS = [
   'salons',
@@ -110,36 +98,25 @@ type GrowthStep = 'day' | 'week';
 export class DetailedStatsSection {
   private readonly client = inject(StatsClient);
   private readonly i18n = inject(I18nService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  private readonly state = signal<DetailedStatsState | null>(null);
-  protected readonly loadFailed = signal(false);
-  private readonly starting = signal(false);
-  /** Polling is under way. */
-  private readonly following = signal(false);
-  /** Polling stopped on a refusal — the run may still be reading; a press follows it again. */
-  protected readonly followFailed = signal(false);
+  /** The last run and the last result, read on landing and followed while a run reads. */
+  protected readonly runs = new TableRunFollower<DetailedStatsState>({
+    read: () => this.client.detailed(),
+    start: () => this.client.startDetailed(),
+  });
 
   protected readonly period = signal<StatsPeriod>('90');
   protected readonly growthStep = signal<GrowthStep>('day');
   /** The «Потребують уваги» filters chosen; none chosen shows everyone. */
   protected readonly attentionChosen = signal<AttentionFlag[]>([]);
 
-  protected readonly run = computed(() => this.state()?.run ?? null);
-  protected readonly result = computed(() => this.state()?.result ?? null);
-  protected readonly running = computed(() => this.run()?.status === 'running');
-  protected readonly busy = computed(() => this.starting() || (this.running() && this.following()));
+  protected readonly result = computed(() => this.runs.state()?.result ?? null);
   protected readonly neverRun = computed(
-    () => this.state() !== null && !this.run() && !this.result(),
+    () => this.runs.state() !== null && !this.runs.run() && !this.result(),
   );
 
-  protected readonly progress = computed(() => {
-    const run = this.run();
-    return run && this.running() ? runProgress(run) : null;
-  });
-
   protected readonly progressText = computed(() => {
-    const run = this.run();
+    const run = this.runs.run();
     if (!run) {
       return '';
     }
@@ -153,7 +130,7 @@ export class DetailedStatsSection {
   });
 
   protected readonly failureKey = computed(() => {
-    const run = this.run();
+    const run = this.runs.run();
     return run?.status === 'failed'
       ? (`stats.detailed.failed.${run.errorCode ?? 'FAILED'}` as TranslationKey)
       : null;
@@ -260,61 +237,8 @@ export class DetailedStatsSection {
     return result ? this.standingOf(result) : null;
   });
 
-  private followSubscription: Subscription | undefined;
-
   constructor() {
-    this.client
-      .detailed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (state) => {
-          this.state.set(state);
-          if (state.run?.status === 'running') {
-            this.follow();
-          }
-        },
-        // The interceptor has already worded the refusal as a toast.
-        error: () => this.loadFailed.set(true),
-      });
-  }
-
-  /** «Порахувати». While a run is under way the backend answers with that run, and this follows it. */
-  protected start(): void {
-    this.starting.set(true);
-    this.client
-      .startDetailed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (run) => {
-          this.starting.set(false);
-          this.loadFailed.set(false);
-          this.state.update((state) => ({ run, result: state?.result ?? null }));
-          this.follow();
-        },
-        error: () => this.starting.set(false),
-      });
-  }
-
-  private follow(): void {
-    this.followSubscription?.unsubscribe();
-    this.following.set(true);
-    this.followFailed.set(false);
-    this.followSubscription = timer(DETAILED_STATS_POLL_MS, DETAILED_STATS_POLL_MS)
-      .pipe(
-        // A slow answer is waited for rather than cancelled by the next tick.
-        exhaustMap(() => this.client.detailed()),
-        takeWhile((state) => state.run?.status === 'running', true),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (state) => this.state.set(state),
-        // One toast, not one every two seconds: polling stops, and a press picks the run up again.
-        error: () => {
-          this.following.set(false);
-          this.followFailed.set(true);
-        },
-        complete: () => this.following.set(false),
-      });
+    this.runs.load();
   }
 
   /** The series of a stacked chart: one per key, in its fixed order, each on the next colour slot. */

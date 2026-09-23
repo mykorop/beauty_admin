@@ -4,7 +4,6 @@ import {
   type AppointmentValueDay,
   type AttentionFlag,
   type AttentionItem,
-  type DetailedStatsRun,
   type GrowthDay,
   type LowRatedProfile,
   type StatsWindow,
@@ -100,18 +99,6 @@ export function valueTotals(days: readonly AppointmentValueDay[]): { past: numbe
     ahead += Math.round(day.ahead * 100);
   }
   return { past: past / 100, ahead: ahead / 100 };
-}
-
-/**
- * How far a run has got, as a percentage of the table — or `null` when there is no estimate to take
- * it of, and the dashboard shows the count alone. DynamoDB refreshes its estimate every few hours,
- * so the count can outrun it: a run still reading is at most 99%, never «done».
- */
-export function runProgress(run: DetailedStatsRun): number | null {
-  if (!run.estimatedItems) {
-    return null;
-  }
-  return Math.min(99, Math.floor((run.scannedItems / run.estimatedItems) * 100));
 }
 
 /**

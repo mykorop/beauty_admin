@@ -1,0 +1,127 @@
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.appointments' | t }}</h1>
+</div>
+
+<p class="mb-4 max-w-3xl text-sm text-slate-600" data-testid="appointments-scope-hint">
+  {{ 'platformAppointments.hint' | t }}
+</p>
+
+@if (filters(); as filters) {
+  <div class="mb-3 flex flex-wrap items-end gap-3">
+    <label class="flex flex-col gap-1 text-xs text-slate-600">
+      {{ 'platformAppointments.scope.salon' | t }}
+      <p-select
+        data-testid="appointments-scope-salon"
+        class="w-64"
+        optionLabel="label"
+        optionValue="value"
+        [options]="salonOptions()"
+        [filter]="true"
+        [showClear]="true"
+        [placeholder]="'platformAppointments.scope.salonPlaceholder' | t"
+        [ariaLabel]="'platformAppointments.scope.salon' | t"
+        [ngModel]="filters.salonId"
+        (ngModelChange)="pick({ salonId: $event })"
+      />
+    </label>
+    <label class="flex flex-col gap-1 text-xs text-slate-600">
+      {{ 'platformAppointments.scope.master' | t }}
+      <p-select
+        data-testid="appointments-scope-master"
+        class="w-64"
+        optionLabel="label"
+        optionValue="value"
+        [options]="masterOptions()"
+        [filter]="true"
+        [showClear]="true"
+        [placeholder]="
+          (filters.salonId
+            ? 'platformAppointments.scope.masterOfSalon'
+            : 'platformAppointments.scope.masterIndependent'
+          ) | t
+        "
+        [ariaLabel]="'platformAppointments.scope.master' | t"
+        [ngModel]="filters.masterId"
+        (ngModelChange)="pick({ masterId: $event })"
+      />
+    </label>
+    <label class="flex flex-col gap-1 text-xs text-slate-600">
+      {{ 'platformAppointments.scope.client' | t }}
+      <p-select
+        data-testid="appointments-scope-client"
+        class="w-80"
+        optionLabel="label"
+        optionValue="value"
+        [options]="clientOptions()"
+        [filter]="true"
+        [virtualScroll]="clientOptions().length > 100"
+        [virtualScrollItemSize]="38"
+        [showClear]="true"
+        [placeholder]="'platformAppointments.scope.clientPlaceholder' | t"
+        [ariaLabel]="'platformAppointments.scope.client' | t"
+        [ngModel]="filters.clientId"
+        (ngModelChange)="pick({ clientId: $event })"
+      />
+    </label>
+  </div>
+
+  <div class="mb-4 flex flex-wrap items-end gap-3">
+    @if (filters.date; as date) {
+      <label class="flex flex-col gap-1 text-xs text-slate-600">
+        {{ 'platformAppointments.filter.day' | t }}
+        <input
+          pInputText
+          type="date"
+          data-testid="appointments-filter-date"
+          [value]="date"
+          (change)="setFilter({ date: $any($event.target).value })"
+        />
+      </label>
+    } @else {
+      <label class="flex flex-col gap-1 text-xs text-slate-600">
+        {{ 'appointments.filter.from' | t }}
+        <input
+          pInputText
+          type="date"
+          data-testid="appointments-filter-from"
+          [max]="filters.to"
+          [value]="filters.from"
+          (change)="setFilter({ from: $any($event.target).value })"
+        />
+      </label>
+      <label class="flex flex-col gap-1 text-xs text-slate-600">
+        {{ 'appointments.filter.to' | t }}
+        <input
+          pInputText
+          type="date"
+          data-testid="appointments-filter-to"
+          [min]="filters.from"
+          [value]="filters.to"
+          (change)="setFilter({ to: $any($event.target).value })"
+        />
+      </label>
+    }
+    <p-select
+      data-testid="appointments-filter-status"
+      class="w-52"
+      optionLabel="label"
+      optionValue="value"
+      [options]="statusOptions()"
+      [showClear]="true"
+      [placeholder]="'appointments.filter.status' | t"
+      [ariaLabel]="'appointments.filter.status' | t"
+      [ngModel]="filters.status"
+      (ngModelChange)="setFilter({ status: $event })"
+    />
+  </div>
+
+  @if (scoped()) {
+    @if (items(); as items) {
+      <app-platform-appointments-table [appointments]="items" />
+    } @else if (failed()) {
+      <p class="text-slate-600" data-testid="appointments-failed">{{ 'card.failed' | t }}</p>
+    }
+  } @else if (filters.date; as date) {
+    <app-appointments-day [date]="date" [status]="filters.status" />
+  }
+}

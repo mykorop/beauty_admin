@@ -7,7 +7,10 @@ export type NavSection = {
   icon: string;
 };
 
-/** The sidebar, top to bottom. The routes are generated from the same list, so the two cannot drift. */
+/**
+ * The sidebar, top to bottom. Every section has its own route in `app.routes.ts` — «Записи» was the
+ * last to stop being a placeholder — and the first one is where an empty address lands.
+ */
 export const NAV_SECTIONS: readonly NavSection[] = [
   { path: 'dashboard', labelKey: 'nav.dashboard', icon: 'pi pi-chart-bar' },
   { path: 'salons', labelKey: 'nav.salons', icon: 'pi pi-building' },

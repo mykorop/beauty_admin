@@ -12,17 +12,17 @@
       icon="pi pi-chart-bar"
       size="small"
       [label]="'stats.detailed.run' | t"
-      [loading]="busy()"
-      (onClick)="start()"
+      [loading]="runs.busy()"
+      (onClick)="runs.start()"
     />
   </div>
 
-  @if (running()) {
+  @if (runs.running()) {
     <div class="mb-4 max-w-xl" data-testid="detailed-stats-progress">
       <p-progressbar
         styleClass="h-2"
-        [mode]="progress() === null ? 'indeterminate' : 'determinate'"
-        [value]="progress() ?? 0"
+        [mode]="runs.progress() === null ? 'indeterminate' : 'determinate'"
+        [value]="runs.progress() ?? 0"
         [showValue]="false"
       />
       <p class="mt-1 text-sm text-slate-600" data-testid="detailed-stats-progress-text">
@@ -40,13 +40,13 @@
     </p-message>
   }
 
-  @if (followFailed()) {
+  @if (runs.followFailed()) {
     <p-message class="mb-4 block" severity="warn" data-testid="detailed-stats-follow-failed">
       {{ 'stats.detailed.followFailed' | t }}
     </p-message>
   }
 
-  @if (loadFailed() && !result()) {
+  @if (runs.loadFailed() && !result()) {
     <p class="text-slate-600" data-testid="detailed-stats-load-failed">
       {{ 'stats.detailed.loadFailed' | t }}
     </p>
@@ -61,7 +61,7 @@
   @if (view(); as view) {
     <div
       class="transition-opacity"
-      [class.opacity-60]="running()"
+      [class.opacity-60]="runs.running()"
       data-testid="detailed-stats-result"
     >
       <!-- One row of controls above everything it scopes: every chart below is cut to it. The tops,

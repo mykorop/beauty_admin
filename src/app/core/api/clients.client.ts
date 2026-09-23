@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { adminApiUrl } from './admin-api-url';
-import type { Appointment, AppointmentStatus } from './appointments.client';
+import type { AppointmentStatus, VenueAppointment } from './appointments.client';
 import type { ReviewsPage } from './reviews.client';
 
 /** A Клієнт wears the same three states as a Салон and a Майстер. */
@@ -59,14 +59,8 @@ export type Client = {
   updatedAt: string | null;
 };
 
-/**
- * One Запис of a Клієнт's own feed. The venue's name and clock travel **on the row**, not on the
- * page the way a card's Записи tab carries them: this feed spans every place the person has
- * visited, so there is no one clock to print it on.
- */
-export type ClientAppointment = Appointment & { venueName: string; timezone: string };
-
-export type ClientAppointmentsPage = { items: ClientAppointment[]; nextCursor: string | null };
+/** A page of a Клієнт's own Записи — the feed spans every place the person has visited. */
+export type ClientAppointmentsPage = { items: VenueAppointment[]; nextCursor: string | null };
 
 const clientUrl = (clientId: string, rest = ''): string =>
   adminApiUrl(`/admin/clients/${encodeURIComponent(clientId)}${rest}`);

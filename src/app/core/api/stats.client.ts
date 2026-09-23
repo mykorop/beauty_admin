@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { adminApiUrl } from './admin-api-url';
+import type { TableRun } from './table-run.model';
 
 /** How many profiles of one kind there are, split the way their table splits them. */
 export type ProfileCounts = {
@@ -145,22 +146,8 @@ export type DetailedStats = {
   attention: StatsAttention;
 };
 
-/** One run of the Детальна статистика, as the dashboard follows it. */
-export type DetailedStatsRun = {
-  runId: string;
-  status: 'running' | 'succeeded' | 'failed';
-  startedAt: string;
-  finishedAt: string | null;
-  /** Table rows read so far. */
-  scannedItems: number;
-  /** DynamoDB's estimate of the table's size — an estimate, so the count may run past it. */
-  estimatedItems: number | null;
-  /** `TIMED_OUT`: did not finish in the worker's time. `FAILED`: anything else. */
-  errorCode: 'TIMED_OUT' | 'FAILED' | null;
-};
-
 /** The latest run and the latest result — independent: a run under way keeps the last result shown. */
-export type DetailedStatsState = { run: DetailedStatsRun | null; result: DetailedStats | null };
+export type DetailedStatsState = { run: TableRun | null; result: DetailedStats | null };
 
 @Injectable({ providedIn: 'root' })
 export class StatsClient {
@@ -185,7 +172,7 @@ export class StatsClient {
    * Starts the Детальна статистика — a read of the whole table, done by a backend worker — and
    * answers with the run to follow. While one is under way, the backend hands back that one.
    */
-  startDetailed(): Observable<DetailedStatsRun> {
-    return this.http.post<DetailedStatsRun>(adminApiUrl('/admin/stats/detailed'), null);
+  startDetailed(): Observable<TableRun> {
+    return this.http.post<TableRun>(adminApiUrl('/admin/stats/detailed'), null);
   }
 }

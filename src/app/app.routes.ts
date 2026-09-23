@@ -54,6 +54,10 @@ export const routes: Routes = [
         loadChildren: () => import('./pages/client-card/client-card.tabs').then((m) => m.CLIENT_CARD_ROUTES),
       },
       {
+        path: 'appointments',
+        loadComponent: () => import('./pages/appointments/appointments.page').then((m) => m.AppointmentsPage),
+      },
+      {
         path: 'reviews',
         loadComponent: () => import('./pages/reviews/reviews.page').then((m) => m.ReviewsPage),
       },
@@ -61,14 +65,6 @@ export const routes: Routes = [
         path: 'audit-log',
         loadComponent: () => import('./pages/audit-log/audit-log.page').then((m) => m.AuditLogPage),
       },
-      ...NAV_SECTIONS.filter(
-        (section) =>
-          !['dashboard', 'salons', 'independent-masters', 'clients', 'reviews', 'audit-log'].includes(section.path),
-      ).map((section) => ({
-        path: section.path,
-        loadComponent: () => import('./pages/section-stub/section-stub.page').then((m) => m.SectionStubPage),
-        data: { titleKey: section.labelKey },
-      })),
     ],
   },
   { path: '**', redirectTo: '' },

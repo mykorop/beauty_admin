@@ -767,4 +767,30 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'audit.targetType.client': 'Клиент',
   'audit.action.client.block': 'Блокировка Клиента',
   'audit.action.client.unblock': 'Снятие Блокировки Клиента',
+  'platformAppointments.hint':
+    'Выберите Салон, Мастера или Клиента, чтобы увидеть их Записи за период. Без них — все Записи платформы за один день.',
+  'platformAppointments.scope.salon': 'Салон',
+  'platformAppointments.scope.salonPlaceholder': 'Любой Салон',
+  'platformAppointments.scope.master': 'Мастер',
+  'platformAppointments.scope.masterIndependent': 'Независимый мастер',
+  'platformAppointments.scope.masterOfSalon': 'Мастер этого Салона',
+  'platformAppointments.scope.client': 'Клиент',
+  'platformAppointments.scope.clientPlaceholder': 'Любой Клиент',
+  'platformAppointments.filter.day': 'День',
+  'platformAppointments.day.hint':
+    'Записи всей платформы за день собирает отдельный расчёт: он читает всю таблицу, как Детальная статистика, и может занять несколько минут. День — по времени Кишинёва; Записи, созданные или изменённые после сбора, появятся после следующего.',
+  'platformAppointments.day.run': 'Собрать Записи за день',
+  'platformAppointments.day.rerun': 'Собрать заново',
+  'platformAppointments.day.never': 'Записи за этот день ещё не собирали.',
+  'platformAppointments.day.builtAt': 'Собрано {{time}}',
+  'platformAppointments.day.progress': 'Прочитано {{scanned}} из ≈ {{estimated}} строк таблицы…',
+  'platformAppointments.day.progressCount': 'Прочитано {{scanned}} строк таблицы…',
+  'platformAppointments.day.failed.TIMED_OUT':
+    'Последний сбор не уложился в 15 минут. Попробуйте ещё раз.',
+  'platformAppointments.day.failed.FAILED': 'Последний сбор не удался. Попробуйте ещё раз.',
+  'platformAppointments.day.previousResult': 'Ниже — Записи предыдущего сбора.',
+  'platformAppointments.day.followFailed':
+    'Не удалось узнать, как идёт сбор. Нажмите кнопку ещё раз, чтобы снова следить за ним.',
+  'platformAppointments.day.loadFailed': 'Не удалось загрузить Записи за этот день.',
+  'platformAppointments.day.empty': 'В этот день Записей нет.',
 };

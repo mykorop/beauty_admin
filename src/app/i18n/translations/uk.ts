@@ -762,6 +762,32 @@ export const UK_TRANSLATIONS = {
   'audit.targetType.client': 'Клієнт',
   'audit.action.client.block': 'Блокування Клієнта',
   'audit.action.client.unblock': 'Зняття Блокування Клієнта',
+  'platformAppointments.hint':
+    'Оберіть Салон, Майстра чи Клієнта, щоб побачити їхні Записи за період. Без них — усі Записи платформи за один день.',
+  'platformAppointments.scope.salon': 'Салон',
+  'platformAppointments.scope.salonPlaceholder': 'Будь-який Салон',
+  'platformAppointments.scope.master': 'Майстер',
+  'platformAppointments.scope.masterIndependent': 'Незалежний майстер',
+  'platformAppointments.scope.masterOfSalon': 'Майстер цього Салону',
+  'platformAppointments.scope.client': 'Клієнт',
+  'platformAppointments.scope.clientPlaceholder': 'Будь-який Клієнт',
+  'platformAppointments.filter.day': 'День',
+  'platformAppointments.day.hint':
+    'Записи всієї платформи за день збирає окреме обчислення: воно читає всю таблицю, як Детальна статистика, і може тривати кілька хвилин. День — за часом Кишинева; Записи, зроблені чи змінені після збирання, з’являться після наступного.',
+  'platformAppointments.day.run': 'Зібрати Записи за день',
+  'platformAppointments.day.rerun': 'Зібрати знову',
+  'platformAppointments.day.never': 'Записи за цей день ще не збирали.',
+  'platformAppointments.day.builtAt': 'Зібрано {{time}}',
+  'platformAppointments.day.progress': 'Прочитано {{scanned}} з ≈ {{estimated}} рядків таблиці…',
+  'platformAppointments.day.progressCount': 'Прочитано {{scanned}} рядків таблиці…',
+  'platformAppointments.day.failed.TIMED_OUT':
+    'Останнє збирання не встигло за 15 хвилин. Спробуйте ще раз.',
+  'platformAppointments.day.failed.FAILED': 'Останнє збирання не вдалося. Спробуйте ще раз.',
+  'platformAppointments.day.previousResult': 'Нижче — Записи попереднього збирання.',
+  'platformAppointments.day.followFailed':
+    'Не вдалося дізнатися, як іде збирання. Натисніть кнопку ще раз, щоб стежити за ним знову.',
+  'platformAppointments.day.loadFailed': 'Не вдалося завантажити Записи за цей день.',
+  'platformAppointments.day.empty': 'Цього дня Записів немає.',
 } as const;
 
 export type TranslationKey = keyof typeof UK_TRANSLATIONS;

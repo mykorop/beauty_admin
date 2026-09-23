@@ -1,9 +1,4 @@
-import type {
-  AppointmentsDay,
-  AttentionItem,
-  DetailedStatsRun,
-  GrowthDay,
-} from '../../core/api/stats.client';
+import type { AppointmentsDay, AttentionItem, GrowthDay } from '../../core/api/stats.client';
 import {
   appointmentTotals,
   attentionCounts,
@@ -14,7 +9,6 @@ import {
   weeksFrom,
   growthTotals,
   periodStart,
-  runProgress,
   valueTotals,
 } from './detailed-stats-view';
 
@@ -46,17 +40,6 @@ const attentionItem = (overrides: Partial<AttentionItem> = {}): AttentionItem =>
   lastAppointmentAt: null,
   flags: [],
   gaps: [],
-  ...overrides,
-});
-
-const run = (overrides: Partial<DetailedStatsRun> = {}): DetailedStatsRun => ({
-  runId: 'run-1',
-  status: 'running',
-  startedAt: '2026-09-23T09:00:00.000Z',
-  finishedAt: null,
-  scannedItems: 0,
-  estimatedItems: null,
-  errorCode: null,
   ...overrides,
 });
 
@@ -179,22 +162,6 @@ describe('detailed stats view', () => {
           { day: 'c', past: 0, ahead: 49.5 },
         ]),
       ).toEqual({ past: 0.3, ahead: 200 });
-    });
-  });
-
-  describe('runProgress', () => {
-    it('is the share of the estimated table read so far', () => {
-      expect(runProgress(run({ scannedItems: 1250, estimatedItems: 5000 }))).toBe(25);
-    });
-
-    it('never claims to be done while the run is still reading', () => {
-      // The estimate lags the table by hours, so the count can run past it.
-      expect(runProgress(run({ scannedItems: 6000, estimatedItems: 5000 }))).toBe(99);
-    });
-
-    it('has no share without an estimate', () => {
-      expect(runProgress(run({ scannedItems: 1250, estimatedItems: null }))).toBeNull();
-      expect(runProgress(run({ scannedItems: 0, estimatedItems: 0 }))).toBeNull();
     });
   });
 

@@ -19,8 +19,9 @@ import {
   AppointmentsClient,
   type AppointmentDetails,
   type AppointmentStatus,
+  type VenueAppointment,
 } from '../../core/api/appointments.client';
-import { ClientsClient, type ClientAppointment } from '../../core/api/clients.client';
+import { ClientsClient } from '../../core/api/clients.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AppointmentDetailsPanel } from '../../shared/appointments/appointment-details';
@@ -185,7 +186,7 @@ export class ClientAppointmentsTab implements OnInit {
   protected readonly status = signal<AppointmentStatus | null>(null);
   private readonly asked = new Subject<AppointmentStatus | null>();
 
-  private readonly items = signal<ClientAppointment[] | null>(null);
+  private readonly items = signal<VenueAppointment[] | null>(null);
   protected readonly nextCursor = signal<string | null>(null);
   protected readonly loading = signal(false);
   protected readonly failed = signal(false);
@@ -281,11 +282,11 @@ export class ClientAppointmentsTab implements OnInit {
     this.asked.next(status);
   }
 
-  protected isOpen(appointment: ClientAppointment): boolean {
+  protected isOpen(appointment: VenueAppointment): boolean {
     return this.openId() === appointment.appointmentId;
   }
 
-  protected toggle(appointment: ClientAppointment): void {
+  protected toggle(appointment: VenueAppointment): void {
     const next = this.isOpen(appointment) ? null : appointment.appointmentId;
     this.openId.set(next);
     this.opened.next(next);

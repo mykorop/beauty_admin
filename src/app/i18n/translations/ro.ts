@@ -769,4 +769,31 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'audit.targetType.client': 'Client',
   'audit.action.client.block': 'Blocarea Clientului',
   'audit.action.client.unblock': 'Deblocarea Clientului',
+  'platformAppointments.hint':
+    'Alegeți un Salon, un Maestru sau un Client pentru a vedea programările lor pe o perioadă. Fără ele — toate programările platformei dintr-o zi.',
+  'platformAppointments.scope.salon': 'Salon',
+  'platformAppointments.scope.salonPlaceholder': 'Orice Salon',
+  'platformAppointments.scope.master': 'Maestru',
+  'platformAppointments.scope.masterIndependent': 'Maestru independent',
+  'platformAppointments.scope.masterOfSalon': 'Maestru al acestui Salon',
+  'platformAppointments.scope.client': 'Client',
+  'platformAppointments.scope.clientPlaceholder': 'Orice Client',
+  'platformAppointments.filter.day': 'Ziua',
+  'platformAppointments.day.hint':
+    'Programările întregii platforme dintr-o zi sunt adunate de un calcul separat: citește întregul tabel, ca Statistica detaliată, și poate dura câteva minute. Ziua — după ora Chișinăului; programările create sau modificate după adunare apar după următoarea.',
+  'platformAppointments.day.run': 'Adună programările zilei',
+  'platformAppointments.day.rerun': 'Adună din nou',
+  'platformAppointments.day.never': 'Programările acestei zile nu au fost adunate încă.',
+  'platformAppointments.day.builtAt': 'Adunate la {{time}}',
+  'platformAppointments.day.progress':
+    'Citite {{scanned}} din ≈ {{estimated}} rânduri ale tabelului…',
+  'platformAppointments.day.progressCount': 'Citite {{scanned}} rânduri ale tabelului…',
+  'platformAppointments.day.failed.TIMED_OUT':
+    'Ultima adunare nu s-a încadrat în 15 minute. Încercați din nou.',
+  'platformAppointments.day.failed.FAILED': 'Ultima adunare a eșuat. Încercați din nou.',
+  'platformAppointments.day.previousResult': 'Mai jos sunt programările adunării anterioare.',
+  'platformAppointments.day.followFailed':
+    'Nu s-a putut afla cum decurge adunarea. Apăsați butonul din nou pentru a o urmări.',
+  'platformAppointments.day.loadFailed': 'Programările acestei zile nu au putut fi încărcate.',
+  'platformAppointments.day.empty': 'În această zi nu sunt programări.',
 };

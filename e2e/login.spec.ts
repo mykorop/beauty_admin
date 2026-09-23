@@ -61,13 +61,17 @@ test.describe('sign-in', () => {
   });
 
   test('returns to the address that asked for the sign-in', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, { 'GET /admin/me': ME });
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/audit': apiOk({ items: [], nextCursor: null }),
+    });
 
-    // A section that reads nothing of its own: this is about the address the shell returns to.
-    await signIn(page, ADMIN, '/appointments');
+    // Not the landing screen, and one that leaves its address alone: this is about the address the
+    // shell returns to, not about the section.
+    await signIn(page, ADMIN, '/audit-log');
 
-    await expect(page).toHaveURL(/\/appointments$/);
-    await expect(page.getByTestId('section-title')).toHaveText('Записи');
+    await expect(page).toHaveURL(/\/audit-log$/);
+    await expect(page.getByTestId('section-title')).toHaveText('Журнал дій');
   });
 
   test('an account with another role is refused and signed out', async ({ page, mockBackend }) => {

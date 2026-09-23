@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { adminApiUrl } from './admin-api-url';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
+import type { TableRun } from './table-run.model';
 
 /** The four states of a Запис, as the business apps write them. */
 export const APPOINTMENT_STATUSES = ['BOOKED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] as const;
@@ -32,6 +33,17 @@ export type Appointment = {
   currency: string;
   /** Ручний запис — created by the business, the only kind allowed outside the Робочий графік. */
   isManual: boolean;
+};
+
+/**
+ * One Запис of a list that spans venues — a Клієнт's feed, the наскрізний список. The venue's name
+ * and clock travel **on the row**, not on the page the way a card's Записи tab carries them: such a
+ * list has no one venue whose clock it could be printed on.
+ */
+export type VenueAppointment = Appointment & {
+  /** The Салон's name, or the Незалежний майстер's own — as the Запис recorded it. */
+  venueName: string;
+  timezone: string;
 };
 
 /** The window as it was answered, and the clock it was cut on — the venue's. */
@@ -122,6 +134,36 @@ export type UpcomingAppointments = { count: number };
  */
 export type BulkCancelResult = { cancelled: number; failed: number; remaining: number };
 
+/**
+ * The наскрізний список narrowed to a Салон, a Майстер or a Клієнт — at least one of them, always:
+ * with nobody named the question is the whole platform, which is a day's gathering, not this read.
+ * The window's days are the platform's.
+ */
+export type PlatformAppointmentQuery = {
+  from: string;
+  to: string;
+  salonId?: string;
+  masterId?: string;
+  clientId?: string;
+  status?: AppointmentStatus;
+};
+
+/**
+ * Every Запис of one day of the platform, as the last gathering of that day found them — soonest
+ * first. `builtAt` is when the table was read: a Запис made or moved since is not here.
+ */
+export type AppointmentsDay = {
+  runId: string;
+  date: string;
+  builtAt: string;
+  timeZone: string;
+  scannedItems: number;
+  items: VenueAppointment[];
+};
+
+/** The latest gathering of a day and its latest result — independent, as the dashboard's are. */
+export type AppointmentsDayState = { run: TableRun | null; result: AppointmentsDay | null };
+
 /** What the backend is asked for: the window is never optional, and `masterId` narrows a Салон's list. */
 export type AppointmentQuery = {
   from: string;
@@ -160,6 +202,32 @@ export class AppointmentsClient {
       adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/appointments`),
       { params: params(query) },
     );
+  }
+
+  /**
+   * The наскрізний список narrowed to a Салон, a Майстер or a Клієнт: a read of that one's own
+   * partition, answered at once.
+   */
+  platform(query: PlatformAppointmentQuery): Observable<{ items: VenueAppointment[] }> {
+    return this.http.get<{ items: VenueAppointment[] }>(adminApiUrl('/admin/appointments'), {
+      params: { ...query },
+    });
+  }
+
+  /** The latest gathering of one day of the platform and what it found — what the page polls. */
+  day(date: string): Observable<AppointmentsDayState> {
+    return this.http.get<AppointmentsDayState>(adminApiUrl('/admin/appointments/day'), {
+      params: { date },
+    });
+  }
+
+  /**
+   * Gathers every Запис of one day of the platform — a read of the whole table, done by a backend
+   * worker — and answers with the run to follow. While that day is being gathered, the backend
+   * hands back the run already under way.
+   */
+  startDay(date: string): Observable<TableRun> {
+    return this.http.post<TableRun>(adminApiUrl('/admin/appointments/day'), { date });
   }
 
   /**
