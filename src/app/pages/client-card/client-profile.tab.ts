@@ -47,7 +47,7 @@ import { ClientCardStore } from './client-card.store';
 })
 export class ClientProfileTab {
   private readonly store = inject(ClientCardStore);
-  protected readonly client = this.store.client.asReadonly();
+  protected readonly client = this.store.client;
 
   protected readonly createdAt = computed(() => this.store.platformDate(this.client()?.createdAt));
   protected readonly blockedAt = computed(() => this.store.platformDate(this.client()?.blockedAt));

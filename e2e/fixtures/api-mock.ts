@@ -5,14 +5,19 @@ export type MockResponse = {
   /** Defaults to 200. */
   status?: number;
   body: unknown;
+  /** Told once the answer has been handed to the browser, or the app no longer waited for it. */
+  delivered?: () => void;
 };
 
 /**
  * Route table keyed by `"<METHOD> <pathname>"`, e.g. `"GET /admin/me"`. A function entry answers
  * from the request's URL and JSON body — for an endpoint whose response depends on either, or
- * changes from one call to the next.
+ * changes from one call to the next — and may answer later than at once (`holdResponse`).
  */
-export type MockRoutes = Record<string, MockResponse | ((url: URL, body: unknown) => MockResponse)>;
+export type MockRoutes = Record<
+  string,
+  MockResponse | ((url: URL, body: unknown) => MockResponse | Promise<MockResponse>)
+>;
 
 export type ApiMock = {
   /** Requests that matched no entry. The app fixture asserts this is empty when a test ends. */
@@ -33,6 +38,44 @@ export function apiError(status: number, code: string, message = code, details?:
   return { status, body: { success: false, error: { code, message, ...(details === undefined ? {} : { details }) } } };
 }
 
+/** An answer the spec lets go of itself: see `holdResponse`. */
+export type HeldResponse = {
+  /** The route entry, or what a function entry returns for the call it holds. */
+  readonly respond: () => Promise<MockResponse>;
+  /** Settles once the app's request has reached the mock. */
+  readonly requested: Promise<void>;
+  /**
+   * Lets the answer go. Settles once the browser has it — or once the mock knows the app no longer
+   * waits for it, which a spec about late answers cannot tell apart and need not.
+   */
+  release(): Promise<void>;
+};
+
+/**
+ * Holds an answer until the spec releases it, so it lands after whatever the spec does meanwhile
+ * — another card opened, another request answered first. Deterministic: nothing waits on a clock.
+ */
+export function holdResponse(response: MockResponse): HeldResponse {
+  let arrive!: () => void;
+  let letGo!: () => void;
+  let deliver!: () => void;
+  const requested = new Promise<void>((resolve) => (arrive = resolve));
+  const released = new Promise<void>((resolve) => (letGo = resolve));
+  const delivered = new Promise<void>((resolve) => (deliver = resolve));
+  return {
+    requested,
+    respond: async () => {
+      arrive();
+      await released;
+      return { ...response, delivered: deliver };
+    },
+    release: () => {
+      letGo();
+      return delivered;
+    },
+  };
+}
+
 /**
  * Intercepts every call to `admin-api` and answers it from `routes`. An unknown path is recorded
  * and answered with 599 rather than passed through: a spec that greens on data nobody mocked is
@@ -46,10 +89,8 @@ export async function installApiMock(context: BrowserContext, routes: MockRoutes
     const url = new URL(request.url());
     const key = `${request.method()} ${url.pathname}`;
     const matched = routes[key];
-    const body: unknown = request.postDataJSON();
-    const entry = typeof matched === 'function' ? matched(url, body) : matched;
 
-    if (entry === undefined) {
+    if (matched === undefined) {
       mock.unmatched.push(key);
       await route.fulfill({
         status: 599,
@@ -59,15 +100,21 @@ export async function installApiMock(context: BrowserContext, routes: MockRoutes
       return;
     }
 
+    const body: unknown = request.postDataJSON();
     mock.authorizations.push(request.headers()['authorization']);
     (mock.bodies[key] ??= []).push(body);
-    await route.fulfill({
-      status: entry.status ?? 200,
-      contentType: 'application/json',
-      // The app runs on another origin; without this header the browser hides the response.
-      headers: { 'access-control-allow-origin': '*' },
-      body: JSON.stringify(entry.body),
-    });
+    const entry = typeof matched === 'function' ? await matched(url, body) : matched;
+    try {
+      await route.fulfill({
+        status: entry.status ?? 200,
+        contentType: 'application/json',
+        // The app runs on another origin; without this header the browser hides the response.
+        headers: { 'access-control-allow-origin': '*' },
+        body: JSON.stringify(entry.body),
+      });
+    } finally {
+      entry.delivered?.();
+    }
   });
 
   return mock;

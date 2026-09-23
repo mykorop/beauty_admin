@@ -23,7 +23,7 @@ import { MasterProfileForm } from './master-profile.form';
 export class MasterProfileTab {
   private readonly i18n = inject(I18nService);
   private readonly store = inject(MasterCardStore);
-  protected readonly master = this.store.master.asReadonly();
+  protected readonly master = this.store.master;
   protected readonly editing = signal(false);
 
   protected readonly addressLines = computed(() => {

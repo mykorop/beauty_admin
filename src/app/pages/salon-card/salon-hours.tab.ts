@@ -60,7 +60,7 @@ export class SalonHoursTab {
   private readonly i18n = inject(I18nService);
   private readonly client = inject(SalonsClient);
 
-  protected readonly salon = inject(SalonCardStore).salon.asReadonly();
+  protected readonly salon = inject(SalonCardStore).salon;
   protected readonly days = signal<SalonDayHours[] | null>(null);
   protected readonly failed = signal(false);
   protected readonly editing = signal(false);

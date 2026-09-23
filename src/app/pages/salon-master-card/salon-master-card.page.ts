@@ -5,20 +5,15 @@ import {
   effect,
   inject,
   input,
-  signal,
+  untracked,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Message } from 'primeng/message';
 import { Tag } from 'primeng/tag';
-import { forkJoin, type Subscription } from 'rxjs';
-import { ApiError } from '../../core/api/api-error';
-import {
-  SALON_MASTER_STATUS_SEVERITY,
-  SalonMastersClient,
-} from '../../core/api/salon-masters.client';
-import { SalonsClient } from '../../core/api/salons.client';
+import { SALON_MASTER_STATUS_SEVERITY } from '../../core/api/salon-masters.client';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { CardLifetime } from '../../shared/profile-card/card-lifetime';
 import { ProfileCard } from '../../shared/profile-card/profile-card';
 import { SalonCardStore } from '../salon-card/salon-card.store';
 import { SALON_MASTER_CARD_TABS } from './salon-master-card.tabs';
@@ -32,7 +27,7 @@ import { SalonMasterStore } from './salon-master.store';
 @Component({
   selector: 'app-salon-master-card-page',
   imports: [Message, ProfileCard, RouterLink, Tag, TranslatePipe],
-  providers: [SalonCardStore, SalonMasterStore],
+  providers: [CardLifetime, SalonCardStore, SalonMasterStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (master(); as master) {
@@ -82,8 +77,6 @@ import { SalonMasterStore } from './salon-master.store';
   `,
 })
 export class SalonMasterCardPage {
-  private readonly salons = inject(SalonsClient);
-  private readonly masters = inject(SalonMastersClient);
   private readonly salonStore = inject(SalonCardStore);
   private readonly store = inject(SalonMasterStore);
 
@@ -92,9 +85,9 @@ export class SalonMasterCardPage {
   readonly masterId = input.required<string>();
 
   protected readonly tabs = SALON_MASTER_CARD_TABS;
-  protected readonly salon = this.salonStore.salon.asReadonly();
-  protected readonly master = this.store.master.asReadonly();
-  protected readonly failure = signal<'notFound' | 'failed' | null>(null);
+  protected readonly salon = this.salonStore.salon;
+  protected readonly master = this.store.master;
+  protected readonly failure = this.salonStore.failure;
 
   protected readonly rosterLink = computed(
     () => `/salons/${encodeURIComponent(this.salonId())}/roster`,
@@ -107,29 +100,12 @@ export class SalonMasterCardPage {
   );
 
   constructor() {
-    let subscription: Subscription | undefined;
-    // The router reuses this component between two masters, so the ids are followed, not read once.
-    effect((onCleanup) => {
+    // The router reuses this component between two masters and between two Салони, and between two
+    // visits to one pair: every pair of ids it is given opens the card anew.
+    effect(() => {
       const salonId = this.salonId();
       const masterId = this.masterId();
-      this.store.master.set(null);
-      this.salonStore.salon.set(null);
-      this.failure.set(null);
-      subscription = forkJoin({
-        salon: this.salons.get(salonId),
-        master: this.masters.get(salonId, masterId),
-      }).subscribe({
-        next: ({ salon, master }) => {
-          this.salonStore.salon.set(salon);
-          this.store.master.set(master);
-        },
-        // Any other refusal has already been worded as a toast by the interceptor.
-        error: (error: unknown) =>
-          this.failure.set(
-            error instanceof ApiError && error.code === 'NOT_FOUND' ? 'notFound' : 'failed',
-          ),
-      });
-      onCleanup(() => subscription?.unsubscribe());
+      untracked(() => this.store.open(salonId, masterId));
     });
   }
 }

@@ -7,9 +7,8 @@ import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
-import { finalize, type Observable, tap } from 'rxjs';
 import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
-import { type Master, MastersClient } from '../../core/api/masters.client';
+import type { Master } from '../../core/api/masters.client';
 import { MASTER_SPECIALIZATIONS } from '../../core/api/salon-masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
@@ -44,7 +43,6 @@ const text = (validators: ValidatorFn[]) => new FormControl('', { nonNullable: t
   templateUrl: './master-profile.form.html',
 })
 export class MasterProfileForm {
-  private readonly client = inject(MastersClient);
   private readonly store = inject(MasterCardStore);
   private readonly i18n = inject(I18nService);
   private readonly messages = inject(MessageService);
@@ -52,7 +50,7 @@ export class MasterProfileForm {
   /** Saved or cancelled — either way the tab goes back to reading. */
   readonly closed = output<void>();
 
-  protected readonly master = this.store.master.asReadonly();
+  protected readonly master = this.store.master;
   protected readonly busy = signal(false);
   protected readonly conflict = signal(false);
 
@@ -102,49 +100,36 @@ export class MasterProfileForm {
     return field.invalid && field.dirty;
   }
 
+  /** The saved Майстер is the card's — header and every tab included — before the form closes. */
   protected save(): void {
-    const master = this.master();
-    if (!master || !this.canSave() || this.reason.invalid) {
+    if (!this.canSave() || this.reason.invalid) {
       return;
     }
-    this.run(
-      this.client.updateProfile(master.masterId, {
-        updatedAt: master.updatedAt,
-        patch: this.patch(),
-        reason: this.reason.value.trim() || undefined,
-      }),
-    ).subscribe({
-      next: () => {
-        this.messages.add({ severity: 'success', summary: this.i18n.t('salon.edit.saved'), life: 4000 });
-        this.closed.emit();
+    this.busy.set(true);
+    this.store.updateProfile(
+      { patch: this.patch(), reason: this.reason.value.trim() || undefined },
+      {
+        next: () => {
+          this.messages.add({ severity: 'success', summary: this.i18n.t('salon.edit.saved'), life: 4000 });
+          this.closed.emit();
+        },
+        // Every refusal but this one has already been worded as a toast; the form stays as typed.
+        error: (error) => this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
+        done: () => this.busy.set(false),
       },
-      // Every refusal but this one has already been worded as a toast; the form stays as typed.
-      error: (error: unknown) => this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
-    });
+    );
   }
 
   /** Drops what was typed and reopens the form on what the Майстер saved meanwhile. */
   protected reload(): void {
-    const master = this.master();
-    if (!master) {
-      return;
-    }
-    this.run(this.client.get(master.masterId)).subscribe({
+    this.busy.set(true);
+    this.store.reload({
       next: (fresh) => {
         this.resetTo(fresh);
         this.conflict.set(false);
       },
-      error: () => undefined,
+      done: () => this.busy.set(false),
     });
-  }
-
-  /** The card shows whatever the backend answered with — header and every tab included. */
-  private run(request: Observable<Master>): Observable<Master> {
-    this.busy.set(true);
-    return request.pipe(
-      tap((master) => this.store.master.set(master)),
-      finalize(() => this.busy.set(false)),
-    );
   }
 
   private resetTo(master: Master | null): void {

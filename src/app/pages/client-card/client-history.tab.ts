@@ -25,7 +25,7 @@ import { ClientCardStore } from './client-card.store';
 })
 export class ClientHistoryTab {
   // The card renders its tabs only once the client is loaded, and rebuilds them for another one.
-  protected readonly client = inject(ClientCardStore).client.asReadonly();
+  protected readonly client = inject(ClientCardStore).client;
   /** A Клієнт belongs to no venue, so his rows are dated on the platform's own clock. */
   protected readonly platformTimeZone = PLATFORM_TIME_ZONE;
 }

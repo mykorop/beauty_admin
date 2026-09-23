@@ -20,5 +20,5 @@ import { SalonCardStore } from './salon-card.store';
 })
 export class SalonHistoryTab {
   // The card renders its tabs only once the salon is loaded, and rebuilds them for another one.
-  protected readonly salon = inject(SalonCardStore).salon.asReadonly();
+  protected readonly salon = inject(SalonCardStore).salon;
 }

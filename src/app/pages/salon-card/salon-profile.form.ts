@@ -6,9 +6,8 @@ import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Textarea } from 'primeng/textarea';
-import { finalize, type Observable, tap } from 'rxjs';
 import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
-import { type Salon, SalonsClient } from '../../core/api/salons.client';
+import type { Salon } from '../../core/api/salons.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { SalonCardStore } from './salon-card.store';
@@ -39,7 +38,6 @@ const text = (validators: ValidatorFn[]) => new FormControl('', { nonNullable: t
   templateUrl: './salon-profile.form.html',
 })
 export class SalonProfileForm {
-  private readonly client = inject(SalonsClient);
   private readonly store = inject(SalonCardStore);
   private readonly i18n = inject(I18nService);
   private readonly messages = inject(MessageService);
@@ -47,7 +45,7 @@ export class SalonProfileForm {
   /** Saved or cancelled — either way the tab goes back to reading. */
   readonly closed = output<void>();
 
-  protected readonly salon = this.store.salon.asReadonly();
+  protected readonly salon = this.store.salon;
   protected readonly busy = signal(false);
   protected readonly conflict = signal(false);
 
@@ -86,49 +84,36 @@ export class SalonProfileForm {
     return field.invalid && field.dirty;
   }
 
+  /** The saved Салон is the card's — header and every tab included — before the form closes. */
   protected save(): void {
-    const salon = this.salon();
-    if (!salon || !this.canSave() || this.reason.invalid) {
+    if (!this.canSave() || this.reason.invalid) {
       return;
     }
-    this.run(
-      this.client.updateProfile(salon.salonId, {
-        updatedAt: salon.updatedAt,
-        patch: this.patch(),
-        reason: this.reason.value.trim() || undefined,
-      }),
-    ).subscribe({
-      next: () => {
-        this.messages.add({ severity: 'success', summary: this.i18n.t('salon.edit.saved'), life: 4000 });
-        this.closed.emit();
+    this.busy.set(true);
+    this.store.updateProfile(
+      { patch: this.patch(), reason: this.reason.value.trim() || undefined },
+      {
+        next: () => {
+          this.messages.add({ severity: 'success', summary: this.i18n.t('salon.edit.saved'), life: 4000 });
+          this.closed.emit();
+        },
+        // Every refusal but this one has already been worded as a toast; the form stays as typed.
+        error: (error) => this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
+        done: () => this.busy.set(false),
       },
-      // Every refusal but this one has already been worded as a toast; the form stays as typed.
-      error: (error: unknown) => this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
-    });
+    );
   }
 
   /** Drops what was typed and reopens the form on what the Власник салону saved meanwhile. */
   protected reload(): void {
-    const salon = this.salon();
-    if (!salon) {
-      return;
-    }
-    this.run(this.client.get(salon.salonId)).subscribe({
+    this.busy.set(true);
+    this.store.reload({
       next: (fresh) => {
         this.resetTo(fresh);
         this.conflict.set(false);
       },
-      error: () => undefined,
+      done: () => this.busy.set(false),
     });
-  }
-
-  /** The card shows whatever the backend answered with — header and every tab included. */
-  private run(request: Observable<Salon>): Observable<Salon> {
-    this.busy.set(true);
-    return request.pipe(
-      tap((salon) => this.store.salon.set(salon)),
-      finalize(() => this.busy.set(false)),
-    );
   }
 
   private resetTo(salon: Salon | null): void {

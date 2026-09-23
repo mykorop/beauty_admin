@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
-import { finalize } from 'rxjs';
-import { SalonMastersClient } from '../../core/api/salon-masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
@@ -114,11 +112,10 @@ export class SalonMasterProfileTab {
   private readonly i18n = inject(I18nService);
   private readonly salonStore = inject(SalonCardStore);
   private readonly store = inject(SalonMasterStore);
-  private readonly client = inject(SalonMastersClient);
   private readonly messages = inject(MessageService);
 
-  protected readonly salon = this.salonStore.salon.asReadonly();
-  protected readonly master = this.store.master.asReadonly();
+  protected readonly salon = this.salonStore.salon;
+  protected readonly master = this.store.master;
   protected readonly editing = signal(false);
   protected readonly removing = signal(false);
   protected readonly busy = signal(false);
@@ -144,29 +141,22 @@ export class SalonMasterProfileTab {
     this.salonStore.venueDate(this.master()?.updatedAt),
   );
 
+  /** The dialog closes on success only: a refusal leaves it open with the reason as typed. */
   protected remove(reason: string): void {
-    const salon = this.salon();
-    const master = this.master();
-    if (!salon || !master || this.busy()) {
+    if (this.busy()) {
       return;
     }
     this.busy.set(true);
-    this.client
-      .remove(salon.salonId, master.masterId, reason)
-      .pipe(finalize(() => this.busy.set(false)))
-      .subscribe({
-        next: ({ status }) => {
-          // The link stays on the Ростер as an ended one, so the card stays open on it.
-          this.store.master.set({ ...master, status });
-          this.removing.set(false);
-          this.messages.add({
-            severity: 'success',
-            summary: this.i18n.t('salonMaster.remove.done'),
-            life: 4000,
-          });
-        },
-        // Already worded as a toast; the dialog stays open with the reason as typed.
-        error: () => undefined,
-      });
+    this.store.remove(reason, {
+      next: () => {
+        this.removing.set(false);
+        this.messages.add({
+          severity: 'success',
+          summary: this.i18n.t('salonMaster.remove.done'),
+          life: 4000,
+        });
+      },
+      done: () => this.busy.set(false),
+    });
   }
 }

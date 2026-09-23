@@ -19,7 +19,7 @@ import { SalonProfileForm } from './salon-profile.form';
 export class SalonProfileTab {
   private readonly i18n = inject(I18nService);
   private readonly store = inject(SalonCardStore);
-  protected readonly salon = this.store.salon.asReadonly();
+  protected readonly salon = this.store.salon;
   protected readonly editing = signal(false);
 
   protected readonly addressLines = computed(() => {

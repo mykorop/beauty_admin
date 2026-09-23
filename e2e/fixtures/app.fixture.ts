@@ -70,3 +70,18 @@ export async function signIn(page: Page, account: CognitoAccount, path = '/'): P
   await submitPassword(page, account.email);
   await submitTotp(page, VALID_TOTP);
 }
+
+/**
+ * Opens `path` with the browser's own Back button, which the router follows without reloading the
+ * page: a card that is open stays built and is reused for the next profile, as it is whenever two
+ * history entries of one card lie side by side. No link in the panel leads straight from one card
+ * to another of its kind, so the entry to step back to is laid down here first.
+ */
+export async function goBackTo(page: Page, path: string): Promise<void> {
+  await page.evaluate((target) => {
+    const here = location.pathname + location.search;
+    history.pushState(null, '', target);
+    history.pushState(null, '', here);
+  }, path);
+  await page.goBack();
+}

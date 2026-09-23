@@ -23,5 +23,5 @@ import { MasterCardStore } from './master-card.store';
 })
 export class MasterHistoryTab {
   // The card renders its tabs only once the master is loaded, and rebuilds them for another one.
-  protected readonly master = inject(MasterCardStore).master.asReadonly();
+  protected readonly master = inject(MasterCardStore).master;
 }
