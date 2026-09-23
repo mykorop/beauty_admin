@@ -1,6 +1,6 @@
-<div class="mb-4 flex flex-wrap items-end gap-3">
+<div class="content-filters mb-4 flex flex-wrap items-end gap-3">
   @if (shows('from')) {
-    <label class="flex flex-col gap-1 text-xs text-slate-600">
+    <label class="flex flex-col gap-1 text-xs text-muted">
       {{ 'reviews.filter.from' | t }}
       <input
         pInputText
@@ -13,7 +13,7 @@
     </label>
   }
   @if (shows('to')) {
-    <label class="flex flex-col gap-1 text-xs text-slate-600">
+    <label class="flex flex-col gap-1 text-xs text-muted">
       {{ 'reviews.filter.to' | t }}
       <input
         pInputText
@@ -78,9 +78,14 @@
 </div>
 
 @if (rows(); as rows) {
-  <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
-    <table class="w-full text-left text-sm" data-testid="reviews-table">
-      <thead class="bg-slate-50 text-xs text-slate-600">
+  <div
+    class="profile-table-scroll"
+    role="region"
+    tabindex="0"
+    [attr.aria-label]="'nav.reviews' | t"
+  >
+    <table class="profile-data-table reviews-table" data-testid="reviews-table">
+      <thead class="bg-raised text-xs text-muted">
         <tr>
           <th class="px-3 py-2 font-medium">{{ 'reviews.column.when' | t }}</th>
           <th class="px-3 py-2 font-medium">{{ 'reviews.column.client' | t }}</th>
@@ -93,10 +98,17 @@
       </thead>
       <tbody>
         @for (row of rows; track row.review.reviewId) {
-          <tr class="border-t border-slate-100 align-top" data-testid="review-row" [class.bg-slate-50]="row.hidden">
+          <tr
+            class="border-t border-divider align-top"
+            data-testid="review-row"
+            [class.review-hidden]="row.hidden"
+          >
             <td class="px-3 py-3 whitespace-nowrap" data-testid="review-when">{{ row.when }}</td>
-            <td class="px-3 py-3" data-testid="review-client">
-              {{ row.review.clientName || '—' }}
+            <td class="px-3 py-3">
+              <span data-testid="review-client">{{ row.review.clientName || '—' }}</span>
+              <p class="mt-2 text-xs text-muted" data-testid="review-appointment">
+                {{ 'appointments.auditField' | t }}: {{ row.review.appointmentId }}
+              </p>
             </td>
             <td class="px-3 py-3 whitespace-nowrap" data-testid="review-master-rating">
               {{ row.masterRating }}
@@ -114,7 +126,7 @@
                 [value]="(row.hidden ? 'reviews.state.hidden' : 'reviews.state.visible') | t"
               />
               @if (row.hidden) {
-                <p class="mt-1 text-xs text-slate-500" data-testid="review-hidden-reason">
+                <p class="mt-1 text-xs text-muted" data-testid="review-hidden-reason">
                   {{ 'reviews.hiddenReason' | t: { reason: row.review.hiddenReason || '—' } }}
                 </p>
               }
@@ -135,7 +147,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="7" class="py-8 text-center text-slate-600" data-testid="reviews-empty">
+            <td colspan="7" class="py-8 text-center text-muted" data-testid="reviews-empty">
               {{ (nextCursor() ? 'reviews.emptyPage' : 'reviews.empty') | t }}
             </td>
           </tr>
@@ -143,7 +155,7 @@
       </tbody>
     </table>
   </div>
-  <p class="mt-2 text-xs text-slate-500" data-testid="reviews-readonly">
+  <p class="mt-2 text-xs text-muted" data-testid="reviews-readonly">
     {{ 'reviews.readonly' | t }}
   </p>
   @if (nextCursor()) {
@@ -161,7 +173,13 @@
     </div>
   }
 } @else if (failed()) {
-  <p class="text-slate-600" data-testid="reviews-failed">{{ 'list.failed' | t }}</p>
+  <p class="content-state text-danger" role="alert" data-testid="reviews-failed">
+    {{ 'list.failed' | t }}
+  </p>
+} @else {
+  <p class="content-state text-muted" role="status" data-testid="reviews-loading">
+    {{ 'common.loading' | t }}
+  </p>
 }
 
 @if (asked(); as asked) {
@@ -175,6 +193,9 @@
     (visibleChange)="closeUnless($event)"
     (confirmed)="apply(asked, $event)"
   >
-    {{ (asked.hiddenAt ? 'reviews.unhide.message' : 'reviews.hide.message') | t: { client: asked.clientName || '—' } }}
+    {{
+      (asked.hiddenAt ? 'reviews.unhide.message' : 'reviews.hide.message')
+        | t: { client: asked.clientName || '—' }
+    }}
   </app-reason-dialog>
 }

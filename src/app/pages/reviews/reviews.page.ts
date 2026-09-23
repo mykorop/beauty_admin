@@ -29,6 +29,7 @@ import { ReviewsTable } from '../../shared/reviews/reviews.table';
   selector: 'app-reviews-page',
   imports: [FormsModule, ReviewsTable, Select, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'moderation-page' },
   templateUrl: './reviews.page.html',
 })
 export class ReviewsPage {

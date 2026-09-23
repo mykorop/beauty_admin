@@ -22,19 +22,19 @@ export class App {
   constructor() {
     const document = inject(DOCUMENT);
     const router = inject(Router);
-    // Temporary scopes until ticket 05: later tabs keep their light content and overlays,
-    // while every profile frame uses BookMe. No OS/theme preference changes these routes.
+    // Explicit route scopes remain until ticket 05 consolidates the completed theme.
+    // Body-mounted overlays share the route theme regardless of OS preference.
     const syncTheme = (url: string) => {
       const path = url.split(/[?;#]/)[0];
       const profiles = /^\/(salons|independent-masters|clients)(\/|$)/.test(path);
       const migrated =
-        /^\/(salons|independent-masters|clients)(\/[^/]+(\/masters\/[^/]+)?(\/(profile|services|roster|invites|hours|schedule|appointments))?)?\/?$/.test(
+        /^\/(salons|independent-masters|clients)(\/[^/]+(\/masters\/[^/]+)?(\/(profile|services|roster|invites|hours|schedule|appointments|reviews|media|history))?)?\/?$/.test(
           path,
         );
       document.documentElement.classList.toggle('bookme-profile', profiles);
       document.documentElement.classList.toggle(
         'bookme-dark',
-        /^\/(login|dashboard|appointments)$/.test(path) || migrated,
+        /^\/(login|dashboard|appointments|reviews|audit-log)$/.test(path) || migrated,
       );
     };
     syncTheme(router.url);

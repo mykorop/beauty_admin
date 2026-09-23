@@ -128,10 +128,10 @@ for (const sample of samples) {
         animations: 'disabled',
       });
     }
-    // A legacy route keeps its light page and body-mounted controls, while the shell stays dark.
+    // The audit log and its body-mounted controls keep the same theme after navigation.
     await page.getByTestId('sidebar').getByRole('link').last().click();
     await expect(page).toHaveURL(/\/audit-log$/);
-    await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(248, 250, 252)');
+    await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(24, 26, 29)');
     await page.getByTestId('language-switcher').click();
     await expect(page.getByRole('listbox')).toHaveCSS('color', 'rgb(245, 242, 235)');
     await page.keyboard.press('Escape');

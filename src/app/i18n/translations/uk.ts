@@ -715,6 +715,8 @@ export const UK_TRANSLATIONS = {
   'media.gallery.empty': 'Фотографій немає.',
   'media.certificates': 'Сертифікати',
   'media.certificates.empty': 'Сертифікатів немає.',
+  'common.loading': 'Завантаження…',
+  'media.unavailable': 'Зображення недоступне',
   'media.certificate.noScan': 'Без скана',
   'media.certificate.issued': 'Видано {{issued}}',
   'media.certificate.period': 'Видано {{issued}} · дійсний до {{expires}}',

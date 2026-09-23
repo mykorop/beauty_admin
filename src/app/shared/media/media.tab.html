@@ -1,25 +1,32 @@
 @if (media(); as media) {
   @if (writable()) {
-    <p class="mb-4 max-w-3xl text-sm text-amber-700" data-testid="media-irreversible">
+    <p class="content-state mb-4 max-w-3xl text-warning" data-testid="media-irreversible">
       {{ 'media.irreversible' | t }}
     </p>
   } @else {
-    <p class="mb-4 max-w-3xl text-sm text-slate-600" data-testid="media-readonly-profile">
+    <p class="content-state mb-4 max-w-3xl text-muted" data-testid="media-readonly-profile">
       {{ 'media.deletedProfile' | t }}
     </p>
   }
 
   @if (media.avatarUrl; as avatarUrl) {
     <section class="mb-6" data-testid="media-avatar">
-      <h2 class="mb-2 text-sm font-medium text-slate-700">{{ 'media.avatar' | t }}</h2>
-      <div class="flex items-start gap-3">
+      <h2 class="mb-2 text-sm font-medium text-ink">{{ 'media.avatar' | t }}</h2>
+      <div class="media-avatar-card flex flex-wrap items-start gap-3">
         <a [href]="avatarUrl" target="_blank" rel="noopener">
           <img
-            class="h-24 w-24 rounded-full border border-slate-200 object-cover"
+            class="h-24 w-24 rounded-full border border-divider object-cover"
             data-testid="media-avatar-image"
             [src]="avatarUrl"
+            [hidden]="unavailableImages().has(avatarUrl)"
+            (error)="imageUnavailable(avatarUrl)"
             [alt]="'media.avatar' | t"
           />
+          @if (unavailableImages().has(avatarUrl)) {
+            <span class="media-unavailable" data-testid="media-unavailable">{{
+              'media.unavailable' | t
+            }}</span>
+          }
         </a>
         @if (writable()) {
           <button
@@ -39,18 +46,25 @@
   }
 
   <section class="mb-6">
-    <h2 class="mb-2 text-sm font-medium text-slate-700">{{ 'media.gallery' | t }}</h2>
+    <h2 class="mb-2 text-sm font-medium text-ink">{{ 'media.gallery' | t }}</h2>
     @if (media.images.length > 0) {
-      <ul class="flex flex-wrap gap-4" data-testid="media-gallery">
+      <ul class="media-gallery" data-testid="media-gallery">
         @for (imageUrl of media.images; track imageUrl) {
-          <li class="w-44" data-testid="media-photo">
+          <li class="media-photo-card" data-testid="media-photo">
             <a [href]="imageUrl" target="_blank" rel="noopener">
               <img
-                class="h-32 w-44 rounded-lg border border-slate-200 object-cover"
+                class="h-40 w-full rounded border border-divider object-contain"
                 data-testid="media-photo-image"
                 [src]="imageUrl"
+                [hidden]="unavailableImages().has(imageUrl)"
+                (error)="imageUnavailable(imageUrl)"
                 [alt]="'media.gallery' | t"
               />
+              @if (unavailableImages().has(imageUrl)) {
+                <span class="media-unavailable" data-testid="media-unavailable">{{
+                  'media.unavailable' | t
+                }}</span>
+              }
             </a>
             @if (writable()) {
               <button
@@ -70,48 +84,62 @@
         }
       </ul>
     } @else {
-      <p class="text-slate-600" data-testid="media-gallery-empty">{{ 'media.gallery.empty' | t }}</p>
+      <p class="content-state text-muted" data-testid="media-gallery-empty">
+        {{ 'media.gallery.empty' | t }}
+      </p>
     }
   </section>
 
   <section>
-    <h2 class="mb-2 text-sm font-medium text-slate-700">{{ 'media.certificates' | t }}</h2>
+    <h2 class="mb-2 text-sm font-medium text-ink">{{ 'media.certificates' | t }}</h2>
     @if (certificates(); as certificates) {
       @if (certificates.length > 0) {
         <ul class="flex max-w-5xl flex-col gap-3" data-testid="media-certificates">
           @for (row of certificates; track row.certificate.certificateId) {
-            <li
-              class="flex items-start gap-4 rounded-lg border border-slate-200 bg-white p-3"
-              data-testid="media-certificate"
-            >
+            <li class="media-certificate-card" data-testid="media-certificate">
               @if (row.certificate.fileUrl) {
                 <a [href]="row.certificate.fileUrl" target="_blank" rel="noopener">
                   <img
-                    class="h-24 w-24 rounded border border-slate-200 object-cover"
+                    class="h-24 w-24 rounded border border-divider object-contain"
                     data-testid="media-certificate-scan"
                     [src]="row.certificate.fileUrl"
+                    [hidden]="unavailableImages().has(row.certificate.fileUrl)"
+                    (error)="imageUnavailable(row.certificate.fileUrl)"
                     [alt]="row.certificate.title"
                   />
+                  @if (unavailableImages().has(row.certificate.fileUrl)) {
+                    <span class="media-unavailable" data-testid="media-unavailable">{{
+                      'media.unavailable' | t
+                    }}</span>
+                  }
                 </a>
               } @else {
                 <span
-                  class="flex h-24 w-24 items-center justify-center rounded border border-dashed border-slate-300 px-2 text-center text-xs text-slate-500"
+                  class="flex h-24 w-24 items-center justify-center rounded border border-dashed border-divider px-2 text-center text-xs text-muted"
                   data-testid="media-certificate-noscan"
                   >{{ 'media.certificate.noScan' | t }}</span
                 >
               }
               <div class="min-w-0 flex-1 text-sm">
-                <p class="font-medium" data-testid="media-certificate-title">{{ row.certificate.title || '—' }}</p>
-                <p class="text-slate-600" data-testid="media-certificate-issuer">{{ row.certificate.issuer || '—' }}</p>
-                <p class="text-xs text-slate-500" data-testid="media-certificate-dates">{{ row.dates }}</p>
+                <p class="font-medium" data-testid="media-certificate-title">
+                  {{ row.certificate.title || '—' }}
+                </p>
+                <p class="text-muted" data-testid="media-certificate-issuer">
+                  {{ row.certificate.issuer || '—' }}
+                </p>
+                <p class="text-xs text-muted" data-testid="media-certificate-dates">
+                  {{ row.dates }}
+                </p>
                 @if (row.certificate.credentialId) {
-                  <p class="text-xs text-slate-500">
-                    {{ 'media.certificate.credentialId' | t: { value: row.certificate.credentialId } }}
+                  <p class="text-xs text-muted">
+                    {{
+                      'media.certificate.credentialId' | t: { value: row.certificate.credentialId }
+                    }}
                   </p>
                 }
                 @if (row.certificate.verificationUrl; as verificationUrl) {
                   <a
-                    class="text-xs font-medium hover:underline"
+                    class="text-xs font-medium text-accent underline underline-offset-4"
                     data-testid="media-certificate-verification"
                     [href]="verificationUrl"
                     target="_blank"
@@ -120,7 +148,7 @@
                   >
                 }
                 @if (row.certificate.notes; as notes) {
-                  <p class="mt-1 text-xs whitespace-pre-line text-slate-600">{{ notes }}</p>
+                  <p class="mt-1 text-xs whitespace-pre-line text-muted">{{ notes }}</p>
                 }
               </div>
               @if (writable()) {
@@ -140,16 +168,22 @@
           }
         </ul>
       } @else {
-        <p class="text-slate-600" data-testid="media-certificates-empty">
+        <p class="content-state text-muted" data-testid="media-certificates-empty">
           {{ 'media.certificates.empty' | t }}
         </p>
       }
     }
   </section>
 
-  <p class="mt-4 text-xs text-slate-500" data-testid="media-readonly">{{ 'media.readonly' | t }}</p>
+  <p class="mt-4 text-xs text-muted" data-testid="media-readonly">{{ 'media.readonly' | t }}</p>
 } @else if (failed()) {
-  <p class="text-slate-600" data-testid="media-failed">{{ 'card.failed' | t }}</p>
+  <p class="content-state text-danger" role="alert" data-testid="media-failed">
+    {{ 'card.failed' | t }}
+  </p>
+} @else {
+  <p class="content-state text-muted" role="status" data-testid="media-loading">
+    {{ 'common.loading' | t }}
+  </p>
 }
 
 @if (asked(); as asked) {

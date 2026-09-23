@@ -12,8 +12,8 @@
   />
 </div>
 
-<div class="mb-4 flex flex-wrap items-end gap-3">
-  <label class="flex flex-col gap-1 text-xs text-slate-600">
+<div class="content-filters mb-4 flex flex-wrap items-end gap-3">
+  <label class="flex flex-col gap-1 text-xs text-muted">
     {{ 'auditLog.filter.from' | t }}
     <input
       pInputText
@@ -24,7 +24,7 @@
       (change)="setFilter({ from: $any($event.target).value })"
     />
   </label>
-  <label class="flex flex-col gap-1 text-xs text-slate-600">
+  <label class="flex flex-col gap-1 text-xs text-muted">
     {{ 'auditLog.filter.to' | t }}
     <input
       pInputText
@@ -74,11 +74,16 @@
 </div>
 
 @if (entries(); as entries) {
-  <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
-    <table class="w-full text-left text-sm" data-testid="audit-table">
-      <thead class="bg-slate-50 text-xs text-slate-600">
+  <div
+    class="profile-table-scroll"
+    role="region"
+    tabindex="0"
+    [attr.aria-label]="'nav.auditLog' | t"
+  >
+    <table class="profile-data-table audit-table" data-testid="audit-table">
+      <thead class="bg-raised text-xs text-muted">
         <tr>
-          <th class="w-10 px-3 py-2"></th>
+          <th class="px-3 py-2"></th>
           <th class="px-3 py-2 font-medium">{{ 'auditLog.column.time' | t }}</th>
           <th class="px-3 py-2 font-medium">{{ 'auditLog.column.admin' | t }}</th>
           <th class="px-3 py-2 font-medium">{{ 'auditLog.column.action' | t }}</th>
@@ -88,14 +93,14 @@
       <tbody>
         @for (entry of entries; track entry.auditId) {
           <tr
-            class="cursor-pointer border-t border-slate-100 hover:bg-slate-50"
+            class="cursor-pointer border-t border-divider hover:bg-raised"
             data-testid="audit-row"
             (click)="toggle(entry, $event)"
           >
             <td class="px-3 py-2">
               <button
                 type="button"
-                class="pi text-slate-500"
+                class="audit-toggle pi text-muted"
                 data-testid="audit-row-toggle"
                 [class.pi-chevron-right]="!isExpanded(entry)"
                 [class.pi-chevron-down]="isExpanded(entry)"
@@ -109,16 +114,19 @@
             <td class="px-3 py-2">
               {{ targetTypeLabel(entry.targetType) }}
               @if (targetLink(entry); as link) {
-                <a class="font-medium hover:underline" data-testid="audit-target" [routerLink]="link">{{
-                  entry.targetId
-                }}</a>
+                <a
+                  class="font-medium hover:underline"
+                  data-testid="audit-target"
+                  [routerLink]="link"
+                  >{{ entry.targetId }}</a
+                >
               } @else {
                 {{ entry.targetId }}
               }
             </td>
           </tr>
           @if (isExpanded(entry)) {
-            <tr class="border-t border-slate-100 bg-slate-50/50" data-testid="audit-details">
+            <tr class="border-t border-divider bg-raised" data-testid="audit-details">
               <td></td>
               <td colspan="4" class="px-3 py-3">
                 <app-audit-entry-details [entry]="entry" />
@@ -127,7 +135,7 @@
           }
         } @empty {
           <tr>
-            <td colspan="5" class="py-8 text-center text-slate-600" data-testid="audit-empty">
+            <td colspan="5" class="py-8 text-center text-muted" data-testid="audit-empty">
               {{ (nextCursor() ? 'auditLog.emptyPage' : 'list.empty') | t }}
             </td>
           </tr>
@@ -150,5 +158,11 @@
     </div>
   }
 } @else if (failed()) {
-  <p class="text-slate-600" data-testid="audit-failed">{{ 'list.failed' | t }}</p>
+  <p class="content-state text-danger" role="alert" data-testid="audit-failed">
+    {{ 'list.failed' | t }}
+  </p>
+} @else {
+  <p class="content-state text-muted" role="status" data-testid="audit-loading">
+    {{ 'common.loading' | t }}
+  </p>
 }

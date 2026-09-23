@@ -295,10 +295,7 @@ for (const sample of samples) {
       await page.keyboard.press('Escape');
       await expect(page.getByTestId('block-open')).toBeFocused();
       await page.locator('a[data-testid="card-tab"][href$="/history"]').click();
-      await expect(page.locator('.profile-content')).toHaveCSS(
-        'background-color',
-        'rgb(248, 250, 252)',
-      );
+      await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(24, 26, 29)');
       await fitsViewport(page);
       await page.goto('/independent-masters/m1/profile');
       await expect(page.getByTestId('field-specialization')).toBeVisible();
@@ -372,7 +369,7 @@ test('chained reason dialogs return focus to the original profile action', async
   await expect(page.getByTestId('block-open')).toBeFocused();
 });
 
-test('conditionally rendered reason dialogs return focus inside a preserved light tab', async ({
+test('review reason dialogs return focus inside the themed tab', async ({
   page,
   mockBackend,
 }) => {
@@ -403,7 +400,7 @@ test('conditionally rendered reason dialogs return focus inside a preserved ligh
   const trigger = page.getByTestId('review-hide');
   await page.keyboard.press('Tab');
   await trigger.focus();
-  await expect(trigger).toHaveCSS('outline-color', 'rgb(146, 64, 14)');
+  await expect(trigger).toHaveCSS('outline-color', 'rgb(245, 158, 12)');
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('reason-input')).toBeFocused();
   await expect(page.getByTestId('reason-input')).toHaveCSS('outline-color', 'rgb(245, 158, 12)');

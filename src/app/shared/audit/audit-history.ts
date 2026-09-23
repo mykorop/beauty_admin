@@ -21,20 +21,21 @@ import { AuditEntryDetails } from './audit-entry-details';
   selector: 'app-audit-history',
   imports: [AuditEntryDetails, ButtonDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'moderation-page' },
   template: `
     @if (entries(); as entries) {
       <div class="flex max-w-4xl flex-col gap-3">
         @for (entry of entries; track entry.auditId) {
-          <article class="rounded-lg border border-slate-200 bg-white p-4 text-sm" data-testid="history-entry">
+          <article class="audit-history-card rounded-lg border border-divider bg-panel p-4 text-sm" data-testid="history-entry">
             <header class="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h2 class="font-semibold">{{ actionLabel(entry.action) }}</h2>
-              <span class="text-slate-500">{{ venueDate(entry.createdAt) }}</span>
-              <span class="text-slate-500">{{ entry.adminEmail || entry.adminId }}</span>
+              <span class="text-muted">{{ venueDate(entry.createdAt) }}</span>
+              <span class="text-muted">{{ entry.adminEmail || entry.adminId }}</span>
             </header>
             <app-audit-entry-details [entry]="entry" />
           </article>
         } @empty {
-          <p class="text-slate-500" data-testid="history-empty">{{ emptyKey() | t }}</p>
+          <p class="content-state text-muted" data-testid="history-empty">{{ emptyKey() | t }}</p>
         }
         @if (nextCursor()) {
           <div>
@@ -52,7 +53,9 @@ import { AuditEntryDetails } from './audit-entry-details';
         }
       </div>
     } @else if (failed()) {
-      <p class="text-slate-600" data-testid="history-failed">{{ 'card.failed' | t }}</p>
+      <p class="content-state text-danger" role="alert" data-testid="history-failed">{{ 'card.failed' | t }}</p>
+    } @else {
+      <p class="content-state text-muted" role="status" data-testid="history-loading">{{ 'common.loading' | t }}</p>
     }
   `,
 })

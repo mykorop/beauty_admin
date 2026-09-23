@@ -16,35 +16,38 @@ import { formatCalendarDate, formatPeriod, TIME_OFF_TYPE_KEYS } from '../working
   selector: 'app-audit-entry-details',
   imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'audit-entry-details' },
   template: `
     @if (entry().changes.length > 0) {
-      <table class="w-full table-fixed text-left">
-        <thead class="text-xs text-slate-500">
-          <tr>
-            <th class="w-1/4 py-1 font-normal">{{ 'history.field' | t }}</th>
-            <th class="py-1 font-normal">{{ 'history.before' | t }}</th>
-            <th class="py-1 font-normal">{{ 'history.after' | t }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (change of entry().changes; track change.field) {
-            <tr class="border-t border-slate-100 align-top" data-testid="history-change">
-              <td class="py-1 pr-3">{{ fieldLabel(change.field) }}</td>
-              <td class="py-1 pr-3 break-words whitespace-pre-line text-slate-500">
-                {{ display(change.before, change.field) }}
-              </td>
-              <td class="py-1 break-words whitespace-pre-line">{{ display(change.after, change.field) }}</td>
+      <div class="audit-changes-scroll" role="region" tabindex="0" [attr.aria-label]="'auditLog.details' | t">
+        <table class="audit-changes w-full table-fixed text-left">
+          <thead class="text-xs text-muted">
+            <tr>
+              <th class="w-1/4 py-1 font-normal">{{ 'history.field' | t }}</th>
+              <th class="py-1 font-normal">{{ 'history.before' | t }}</th>
+              <th class="py-1 font-normal">{{ 'history.after' | t }}</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (change of entry().changes; track change.field) {
+              <tr class="border-t border-divider align-top" data-testid="history-change">
+                <td class="py-1 pr-3">{{ fieldLabel(change.field) }}</td>
+                <td class="py-1 pr-3 break-words whitespace-pre-line text-muted">
+                  {{ display(change.before, change.field) }}
+                </td>
+                <td class="py-1 break-words whitespace-pre-line">{{ display(change.after, change.field) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
     @if (entry().reason; as reason) {
-      <p class="mt-2 text-slate-600" data-testid="history-reason">{{ 'history.reason' | t: { reason } }}</p>
+      <p class="mt-2 text-muted" data-testid="history-reason">{{ 'history.reason' | t: { reason } }}</p>
     }
     @if (affected().length > 0) {
       <div class="mt-2" data-testid="history-affected">
-        <p class="text-slate-600">{{ 'history.affected' | t: { count: affected().length } }}</p>
+        <p class="text-muted">{{ 'history.affected' | t: { count: affected().length } }}</p>
         <ul class="mt-1 list-inside list-disc">
           @for (entity of affected(); track entity.type + ':' + entity.id) {
             <li data-testid="history-affected-entity">{{ typeLabel(entity.type) }} {{ entity.id }}</li>

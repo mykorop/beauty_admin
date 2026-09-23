@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, type OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  type OnInit,
+  signal,
+} from '@angular/core';
 import { ButtonDirective } from 'primeng/button';
 import { catchError, EMPTY, type Observable } from 'rxjs';
 import type { Certificate, ProfileMedia } from '../../core/api/media.client';
@@ -34,6 +42,7 @@ type MediaAsk = {
   selector: 'app-media',
   imports: [ButtonDirective, ReasonDialog, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'moderation-page' },
   templateUrl: './media.tab.html',
 })
 export class MediaTab implements OnInit {
@@ -47,6 +56,8 @@ export class MediaTab implements OnInit {
 
   protected readonly media = signal<ProfileMedia | null>(null);
   protected readonly failed = signal(false);
+  protected readonly unavailableImages = signal<ReadonlySet<string>>(new Set());
+
   protected readonly busy = signal(false);
   protected readonly asked = signal<MediaAsk | null>(null);
 
@@ -56,10 +67,13 @@ export class MediaTab implements OnInit {
     return (
       this.media()?.certificates.map((certificate) => ({
         certificate,
-        dates: this.i18n.t(certificate.expiresAt ? 'media.certificate.period' : 'media.certificate.issued', {
-          issued: formatVenueDate(certificate.issuedAt, locale, timezone),
-          expires: formatVenueDate(certificate.expiresAt, locale, timezone),
-        }),
+        dates: this.i18n.t(
+          certificate.expiresAt ? 'media.certificate.period' : 'media.certificate.issued',
+          {
+            issued: formatVenueDate(certificate.issuedAt, locale, timezone),
+            expires: formatVenueDate(certificate.expiresAt, locale, timezone),
+          },
+        ),
       })) ?? null
     );
   });
@@ -67,6 +81,10 @@ export class MediaTab implements OnInit {
   // `port` is an input, so the first read waits for the bindings — not the constructor.
   ngOnInit(): void {
     this.read();
+  }
+
+  protected imageUnavailable(url: string): void {
+    this.unavailableImages.update((urls) => new Set([...urls, url]));
   }
 
   protected askPhoto(imageUrl: string): void {

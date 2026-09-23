@@ -41,6 +41,7 @@ const TARGET_CARD_ROUTE: Partial<Record<string, (entry: AuditEntry) => string[] 
   selector: 'app-audit-log-page',
   imports: [AuditEntryDetails, Button, ButtonDirective, FormsModule, InputText, RouterLink, Select, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'moderation-page' },
   templateUrl: './audit-log.page.html',
 })
 export class AuditLogPage {

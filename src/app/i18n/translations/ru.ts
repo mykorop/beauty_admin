@@ -720,6 +720,8 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'media.gallery.empty': 'Фотографий нет.',
   'media.certificates': 'Сертификаты',
   'media.certificates.empty': 'Сертификатов нет.',
+  'common.loading': 'Загрузка…',
+  'media.unavailable': 'Изображение недоступно',
   'media.certificate.noScan': 'Без скана',
   'media.certificate.issued': 'Выдан {{issued}}',
   'media.certificate.period': 'Выдан {{issued}} · действителен до {{expires}}',

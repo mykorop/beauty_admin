@@ -2,12 +2,12 @@
   <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.reviews' | t }}</h1>
 </div>
 
-<p class="mb-4 max-w-3xl text-sm text-slate-600" data-testid="reviews-scope-hint">
+<p class="mb-4 max-w-3xl text-sm text-muted" data-testid="reviews-scope-hint">
   {{ 'reviews.scope.hint' | t }}
 </p>
 
-<div class="mb-5 flex flex-wrap items-end gap-3">
-  <label class="flex flex-col gap-1 text-xs text-slate-600">
+<div class="content-filters mb-5 flex flex-wrap items-end gap-3">
+  <label class="flex flex-col gap-1 text-xs text-muted">
     {{ 'reviews.scope.salon' | t }}
     <p-select
       data-testid="reviews-scope-salon"
@@ -23,7 +23,7 @@
       (ngModelChange)="pick({ salonId: $event, masterId: null })"
     />
   </label>
-  <label class="flex flex-col gap-1 text-xs text-slate-600">
+  <label class="flex flex-col gap-1 text-xs text-muted">
     {{ 'reviews.scope.master' | t }}
     <p-select
       data-testid="reviews-scope-master"
@@ -44,5 +44,5 @@
 @if (chosen(); as chosen) {
   <app-reviews [feed]="chosen" [timezone]="platformTimeZone" />
 } @else {
-  <p class="text-slate-600" data-testid="reviews-scope-empty">{{ 'reviews.scope.empty' | t }}</p>
+  <p class="content-state text-muted" data-testid="reviews-scope-empty">{{ 'reviews.scope.empty' | t }}</p>
 }

@@ -32,6 +32,7 @@ import { NO_REVIEW_FILTERS, parseReviewFilters, toQueryParams, type ReviewFilter
   selector: 'app-reviews',
   imports: [Button, ButtonDirective, FormsModule, InputText, ReasonDialog, Select, Tag, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'moderation-page' },
   templateUrl: './reviews.table.html',
 })
 export class ReviewsTable {

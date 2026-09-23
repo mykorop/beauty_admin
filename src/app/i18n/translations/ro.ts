@@ -722,6 +722,8 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'media.gallery.empty': 'Nu există fotografii.',
   'media.certificates': 'Certificate',
   'media.certificates.empty': 'Nu există certificate.',
+  'common.loading': 'Se încarcă…',
+  'media.unavailable': 'Imagine indisponibilă',
   'media.certificate.noScan': 'Fără scan',
   'media.certificate.issued': 'Emis la {{issued}}',
   'media.certificate.period': 'Emis la {{issued}} · valabil până la {{expires}}',
