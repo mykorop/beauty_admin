@@ -68,6 +68,7 @@ const orEmpty = <T>(): OperatorFunction<T[], T[]> => catchError(() => of([]));
  */
 @Component({
   selector: 'app-appointments-page',
+  host: { class: 'appointments-page' },
   imports: [
     AppointmentsDaySection,
     FormsModule,

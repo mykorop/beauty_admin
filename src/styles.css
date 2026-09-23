@@ -7,6 +7,8 @@
 @import 'primeicons/primeicons.css';
 @import './fonts.css';
 @import './profiles.css';
+@import './schedules.css';
+@import './appointments.css';
 
 @theme inline {
   --color-canvas: var(--bm-bg);

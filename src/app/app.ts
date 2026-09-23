@@ -28,13 +28,13 @@ export class App {
       const path = url.split(/[?;#]/)[0];
       const profiles = /^\/(salons|independent-masters|clients)(\/|$)/.test(path);
       const migrated =
-        /^\/(salons|independent-masters|clients)(\/[^/]+(\/masters\/[^/]+)?(\/(profile|services|roster|invites))?)?\/?$/.test(
+        /^\/(salons|independent-masters|clients)(\/[^/]+(\/masters\/[^/]+)?(\/(profile|services|roster|invites|hours|schedule|appointments))?)?\/?$/.test(
           path,
         );
       document.documentElement.classList.toggle('bookme-profile', profiles);
       document.documentElement.classList.toggle(
         'bookme-dark',
-        /^\/(login|dashboard)$/.test(path) || migrated,
+        /^\/(login|dashboard|appointments)$/.test(path) || migrated,
       );
     };
     syncTheme(router.url);

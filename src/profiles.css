@@ -48,7 +48,7 @@
     min-width: 0;
     overflow-wrap: anywhere;
   }
-  /* Staged migration: tickets 03/04 own the remaining tab bodies. Keep their original
+  /* Staged migration: ticket 04 owns the remaining tab bodies. Keep their original
      colours and body-mounted overlays readable inside the new frame until then. */
   html:not(.bookme-dark) .profile-content {
     color-scheme: light;

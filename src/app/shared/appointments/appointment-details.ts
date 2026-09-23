@@ -20,54 +20,55 @@ import { appointmentStatusLabel, formatPrice } from './appointment-wording';
  */
 @Component({
   selector: 'app-appointment-details',
+  host: { class: 'appointment-details-panel' },
   imports: [AppointmentActions, Tag, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (view(); as view) {
       <div class="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
         <div>
-          <p class="text-xs text-slate-500">{{ 'appointments.details.client' | t }}</p>
+          <p class="text-xs text-muted">{{ 'appointments.details.client' | t }}</p>
           <p class="font-medium" data-testid="appointment-details-client">{{ view.clientName }}</p>
-          <p class="text-slate-600" data-testid="appointment-details-phone">{{ view.clientPhone }}</p>
+          <p class="text-muted" data-testid="appointment-details-phone">{{ view.clientPhone }}</p>
           @if (!view.details.clientId) {
-            <p class="text-xs text-slate-500" data-testid="appointment-details-walk-in">
+            <p class="text-xs text-muted" data-testid="appointment-details-walk-in">
               {{ 'appointments.details.walkIn' | t }}
             </p>
           }
         </div>
         <div>
-          <p class="text-xs text-slate-500">{{ 'appointments.details.when' | t }}</p>
+          <p class="text-xs text-muted">{{ 'appointments.details.when' | t }}</p>
           <p class="font-medium" data-testid="appointment-details-when">{{ view.start }} – {{ view.end }}</p>
-          <p class="text-slate-600">
+          <p class="text-muted">
             {{ 'services.value.minutes' | t: { count: view.details.totalDurationMinutes } }} ·
             {{ view.timezone }}
           </p>
         </div>
         <div>
-          <p class="text-xs text-slate-500">{{ 'appointments.details.master' | t }}</p>
+          <p class="text-xs text-muted">{{ 'appointments.details.master' | t }}</p>
           <p class="font-medium" data-testid="appointment-details-master">{{ view.details.masterName || '—' }}</p>
         </div>
         <div>
-          <p class="text-xs text-slate-500">{{ 'appointments.details.salon' | t }}</p>
+          <p class="text-xs text-muted">{{ 'appointments.details.salon' | t }}</p>
           <p class="font-medium" data-testid="appointment-details-salon">
             {{ view.details.salonName || ('appointments.details.independent' | t) }}
           </p>
         </div>
         <div class="sm:col-span-2">
-          <p class="mb-1 text-xs text-slate-500">{{ 'appointments.details.services' | t }}</p>
+          <p class="mb-1 text-xs text-muted">{{ 'appointments.details.services' | t }}</p>
           <table class="w-full max-w-xl text-left">
             <tbody>
               @for (service of view.services; track service.serviceId) {
-                <tr class="border-b border-slate-100 last:border-0" data-testid="appointment-details-service">
+                <tr class="border-b border-divider last:border-0" data-testid="appointment-details-service">
                   <td class="py-1">{{ service.name }}</td>
-                  <td class="py-1 text-slate-600">
+                  <td class="py-1 text-muted">
                     {{ 'services.value.minutes' | t: { count: service.durationMinutes } }}
                   </td>
                   <td class="py-1 text-right">{{ service.price }} {{ view.details.currency }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td class="py-1 text-slate-600" data-testid="appointment-details-no-services">—</td>
+                  <td class="py-1 text-muted" data-testid="appointment-details-no-services">—</td>
                 </tr>
               }
               <tr>
@@ -81,14 +82,14 @@ import { appointmentStatusLabel, formatPrice } from './appointment-wording';
           </table>
         </div>
         <div>
-          <p class="text-xs text-slate-500">{{ 'appointments.details.status' | t }}</p>
+          <p class="text-xs text-muted">{{ 'appointments.details.status' | t }}</p>
           <p-tag data-testid="appointment-details-status" [severity]="view.statusSeverity" [value]="view.status" />
           @if (view.details.isManual) {
             <p-tag class="ml-2" severity="warn" data-testid="appointment-details-manual" [value]="'appointments.manual' | t" />
           }
         </div>
         <div class="sm:col-span-2">
-          <p class="text-xs text-slate-500">{{ 'appointments.details.notes' | t }}</p>
+          <p class="text-xs text-muted">{{ 'appointments.details.notes' | t }}</p>
           <p class="whitespace-pre-line" data-testid="appointment-details-notes">
             {{ view.details.notes || ('appointments.details.noNotes' | t) }}
           </p>

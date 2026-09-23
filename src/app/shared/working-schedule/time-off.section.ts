@@ -50,18 +50,18 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
   template: `
     @if (adding()) {
       <form
-        class="mb-4 max-w-xl text-sm"
+        class="schedule-form mb-4 max-w-xl text-sm"
         data-testid="time-off-form"
         [formGroup]="form"
         (ngSubmit)="submit()"
       >
-        <div class="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white px-6 py-4">
+        <div class="flex flex-col gap-4 rounded-lg border border-divider bg-panel px-6 py-4">
           <div class="flex flex-wrap gap-4">
             @for (type of types; track type.value) {
               <label class="flex items-center gap-2">
                 <input
                   type="radio"
-                  class="size-4"
+                  class="schedule-choice"
                   formControlName="type"
                   [value]="type.value"
                   [attr.data-testid]="'time-off-type-' + type.value"
@@ -71,7 +71,7 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
             }
           </div>
           <div class="flex flex-wrap gap-6">
-            <label class="flex flex-col gap-1 text-slate-500">
+            <label class="flex flex-col gap-1 text-muted">
               {{ 'timeOff.from' | t }}
               <input
                 pInputText
@@ -80,15 +80,15 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
                 formControlName="fromDate"
               />
             </label>
-            <label class="flex flex-col gap-1 text-slate-500">
+            <label class="flex flex-col gap-1 text-muted">
               {{ 'timeOff.to' | t }}
               <input pInputText type="date" data-testid="time-off-to" formControlName="toDate" />
             </label>
           </div>
           @if (form.controls.type.value === 'CUSTOM_HOURS') {
             <div>
-              <p class="text-slate-500">{{ 'timeOff.window' | t }}</p>
-              <div class="mt-1 flex items-center gap-4">
+              <p class="text-muted">{{ 'timeOff.window' | t }}</p>
+              <div class="mt-1 flex flex-wrap items-center gap-4">
                 <input
                   pInputText
                   type="time"
@@ -105,10 +105,10 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
                   [attr.aria-label]="'hours.edit.to' | t"
                 />
               </div>
-              <p class="mt-2 text-xs text-slate-500">{{ 'timeOff.window.hint' | t }}</p>
+              <p class="mt-2 text-xs text-muted">{{ 'timeOff.window.hint' | t }}</p>
             </div>
           }
-          <label class="flex flex-col gap-1 text-slate-500">
+          <label class="flex flex-col gap-1 text-muted">
             {{ 'timeOff.reason' | t }}
             <input
               pInputText
@@ -119,7 +119,7 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
           </label>
         </div>
 
-        <label class="mt-4 block text-slate-500" for="time-off-audit-reason">{{
+        <label class="mt-4 block text-muted" for="time-off-audit-reason">{{
           'salon.edit.reason' | t
         }}</label>
         <input
@@ -132,7 +132,7 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
         />
 
         @if (issue(); as issue) {
-          <p class="mt-3 text-xs text-amber-700" data-testid="time-off-issue">{{ issue | t }}</p>
+          <p class="mt-3 text-xs text-warning" data-testid="time-off-issue">{{ issue | t }}</p>
         }
         @if (conflict(); as conflict) {
           <p-message class="mt-4 block" severity="warn" icon="pi pi-exclamation-triangle">
@@ -167,7 +167,7 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
           </p-message>
         }
 
-        <div class="flex gap-2 pt-4">
+        <div class="flex flex-wrap gap-2 pt-4">
           <button
             pButton
             type="submit"
@@ -203,9 +203,9 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
     }
 
     @if (rows().length > 0) {
-      <table class="w-full max-w-4xl rounded-lg border border-slate-200 bg-white text-left text-sm">
-        <thead class="text-xs text-slate-500">
-          <tr class="border-b border-slate-200">
+      <div class="profile-table-scroll max-w-4xl" tabindex="0" role="region" [attr.aria-label]="'timeOff.title' | t"><table class="profile-data-table time-off-table">
+        <thead class="text-xs text-muted">
+          <tr class="border-b border-divider">
             <th class="px-6 py-3 font-normal">{{ 'timeOff.period' | t }}</th>
             <th class="px-6 py-3 font-normal">{{ 'timeOff.type' | t }}</th>
             <th class="px-6 py-3 font-normal">{{ 'timeOff.reason.column' | t }}</th>
@@ -215,13 +215,13 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
         <tbody>
           @for (row of rows(); track row.groupId) {
             <tr
-              class="border-b border-slate-100 align-top last:border-0"
+              class="border-b border-divider align-top last:border-0"
               data-testid="time-off-row"
             >
               <td class="px-6 py-3" data-testid="time-off-period">
                 {{ row.period }}
                 @if (row.skipped) {
-                  <div class="text-xs text-slate-500" data-testid="time-off-skipped">
+                  <div class="text-xs text-muted" data-testid="time-off-skipped">
                     {{ 'timeOff.skipped' | t: { dates: row.skipped } }}
                   </div>
                 }
@@ -229,19 +229,19 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
               <td class="px-6 py-3" data-testid="time-off-type">
                 {{ row.typeKey | t }}
                 @if (row.slots) {
-                  <div class="text-xs text-slate-500">{{ row.slots }}</div>
+                  <div class="text-xs text-muted">{{ row.slots }}</div>
                 }
               </td>
               <td
                 class="px-6 py-3 break-words"
                 data-testid="time-off-row-reason"
-                [class.text-slate-500]="!row.reason"
+                [class.text-muted]="!row.reason"
               >
                 {{ row.reason ?? '—' }}
               </td>
-              <td class="px-6 py-3 text-right whitespace-nowrap">
+              <td class="px-6 py-3 time-off-actions">
                 @if (removing() === row.groupId) {
-                  <span class="mr-2 text-xs text-slate-600">{{
+                  <span class="mr-2 text-xs text-muted">{{
                     'timeOff.remove.confirmText' | t
                   }}</span>
                   <input
@@ -291,9 +291,9 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
             </tr>
           }
         </tbody>
-      </table>
+      </table></div>
     } @else {
-      <p class="text-sm text-slate-500" data-testid="time-off-empty">{{ 'timeOff.empty' | t }}</p>
+      <p class="text-sm text-muted" data-testid="time-off-empty">{{ 'timeOff.empty' | t }}</p>
     }
   `,
 })

@@ -2,13 +2,13 @@
   <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.appointments' | t }}</h1>
 </div>
 
-<p class="mb-4 max-w-3xl text-sm text-slate-600" data-testid="appointments-scope-hint">
+<p class="mb-4 max-w-3xl text-sm text-muted" data-testid="appointments-scope-hint">
   {{ 'platformAppointments.hint' | t }}
 </p>
 
 @if (filters(); as filters) {
-  <div class="mb-3 flex flex-wrap items-end gap-3">
-    <label class="flex flex-col gap-1 text-xs text-slate-600">
+  <div class="appointment-filters mb-3 flex flex-wrap items-end gap-3">
+    <label class="flex flex-col gap-1 text-xs text-muted">
       {{ 'platformAppointments.scope.salon' | t }}
       <p-select
         data-testid="appointments-scope-salon"
@@ -24,7 +24,7 @@
         (ngModelChange)="pick({ salonId: $event })"
       />
     </label>
-    <label class="flex flex-col gap-1 text-xs text-slate-600">
+    <label class="flex flex-col gap-1 text-xs text-muted">
       {{ 'platformAppointments.scope.master' | t }}
       <p-select
         data-testid="appointments-scope-master"
@@ -45,7 +45,7 @@
         (ngModelChange)="pick({ masterId: $event })"
       />
     </label>
-    <label class="flex flex-col gap-1 text-xs text-slate-600">
+    <label class="flex flex-col gap-1 text-xs text-muted">
       {{ 'platformAppointments.scope.client' | t }}
       <p-select
         data-testid="appointments-scope-client"
@@ -65,9 +65,9 @@
     </label>
   </div>
 
-  <div class="mb-4 flex flex-wrap items-end gap-3">
+  <div class="appointment-filters mb-4 flex flex-wrap items-end gap-3">
     @if (filters.date; as date) {
-      <label class="flex flex-col gap-1 text-xs text-slate-600">
+      <label class="flex flex-col gap-1 text-xs text-muted">
         {{ 'platformAppointments.filter.day' | t }}
         <input
           pInputText
@@ -78,7 +78,7 @@
         />
       </label>
     } @else {
-      <label class="flex flex-col gap-1 text-xs text-slate-600">
+      <label class="flex flex-col gap-1 text-xs text-muted">
         {{ 'appointments.filter.from' | t }}
         <input
           pInputText
@@ -89,7 +89,7 @@
           (change)="setFilter({ from: $any($event.target).value })"
         />
       </label>
-      <label class="flex flex-col gap-1 text-xs text-slate-600">
+      <label class="flex flex-col gap-1 text-xs text-muted">
         {{ 'appointments.filter.to' | t }}
         <input
           pInputText
@@ -119,7 +119,7 @@
     @if (items(); as items) {
       <app-platform-appointments-table [appointments]="items" />
     } @else if (failed()) {
-      <p class="text-slate-600" data-testid="appointments-failed">{{ 'card.failed' | t }}</p>
+      <p class="text-muted" data-testid="appointments-failed">{{ 'card.failed' | t }}</p>
     }
   } @else if (filters.date; as date) {
     <app-appointments-day [date]="date" [status]="filters.status" />

@@ -31,16 +31,16 @@ import { WeekHoursEditor, type WeekHoursSaveRequest } from '../../shared/working
           ></button>
         </div>
       }
-      <table class="w-full max-w-xl rounded-lg border border-slate-200 bg-white text-sm">
+      <div class="profile-table-scroll max-w-xl" tabindex="0" role="region" [attr.aria-label]="'salon.tab.hours' | t"><table class="schedule-hours-table">
         <tbody>
           @for (day of week; track day.dayOfWeek) {
-            <tr class="border-b border-slate-100 last:border-0" data-testid="hours-day">
+            <tr class="border-b border-divider last:border-0" data-testid="hours-day">
               <th class="w-48 px-6 py-3 text-left font-medium first-letter:uppercase">{{ day.name }}</th>
               <td class="px-6 py-3">
                 @if (!day.hours) {
-                  <span class="text-slate-400">{{ 'hours.notSet' | t }}</span>
+                  <span class="text-muted">{{ 'hours.notSet' | t }}</span>
                 } @else if (!day.hours.isOpen || day.hours.slots.length === 0) {
-                  <span class="text-slate-500">{{ 'hours.closed' | t }}</span>
+                  <span class="text-muted">{{ 'hours.closed' | t }}</span>
                 } @else {
                   @for (slot of day.hours.slots; track $index) {
                     <div>{{ slot.start }} – {{ slot.end }}</div>
@@ -50,9 +50,9 @@ import { WeekHoursEditor, type WeekHoursSaveRequest } from '../../shared/working
             </tr>
           }
         </tbody>
-      </table>
+      </table></div>
     } @else if (failed()) {
-      <p class="text-slate-600" data-testid="hours-failed">{{ 'card.failed' | t }}</p>
+      <p class="text-muted" data-testid="hours-failed">{{ 'card.failed' | t }}</p>
     }
   `,
 })

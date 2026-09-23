@@ -1,0 +1,145 @@
+@layer components {
+  .schedule-form {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .schedule-form input:not([type='checkbox'], [type='radio']) {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .schedule-form label {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .hours-edit-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hours-day-name {
+    width: 7rem;
+  }
+  .hours-day-toggle {
+    width: 7rem;
+  }
+  .hours-edit-row input[type='time'] {
+    width: 8.5rem;
+  }
+  .schedule-choice {
+    width: 1.125rem;
+    height: 1.125rem;
+    flex-shrink: 0;
+    accent-color: var(--bm-accent);
+  }
+  .schedule-week-table,
+  .schedule-hours-table {
+    width: 100%;
+    min-width: 32rem;
+    background: var(--bm-panel);
+    text-align: left;
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .schedule-hours-table {
+    min-width: 22rem;
+  }
+  .schedule-week-table thead {
+    background: var(--bm-raised);
+  }
+  .rotation-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--bm-input-border);
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    cursor: pointer;
+  }
+  .rotation-choice.is-worked {
+    border-color: var(--bm-accent);
+    background: var(--bm-raised);
+    color: var(--bm-accent);
+  }
+  .time-off-table {
+    min-width: 48rem;
+  }
+  .time-off-actions {
+    width: 18rem;
+  }
+  .time-off-actions > * {
+    margin-bottom: 0.5rem;
+    max-width: 100%;
+  }
+  .calendar-note {
+    flex: 1 1 12rem;
+    text-align: right;
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    min-width: 56rem;
+    gap: 1px;
+    background: var(--bm-border);
+    font-variant-numeric: tabular-nums;
+  }
+  .calendar-cell {
+    min-height: 7.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bm-panel);
+    color: var(--bm-text);
+    overflow-wrap: anywhere;
+  }
+  .calendar-cell[data-status='CLOSED'],
+  .calendar-cell[data-status='PATTERN_OFF'] {
+    background: var(--bm-bg);
+    color: var(--bm-muted);
+  }
+  .calendar-cell[data-status='CUSTOM_HOURS'] {
+    background: #203140;
+    box-shadow: inset 0 3px #93c5fd;
+  }
+  .calendar-cell[data-status='DAY_OFF'],
+  .calendar-cell[data-status='BLOCKED'],
+  .calendar-cell[data-status='BOUNDS_CLOSED'] {
+    background: #352e20;
+    box-shadow: inset 0 3px var(--bm-warning);
+  }
+  .calendar-cell.outside-month .calendar-date:not(.is-today) {
+    text-decoration: underline dotted;
+    text-underline-offset: 0.25em;
+    color: var(--bm-muted);
+  }
+  .calendar-date {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  .calendar-date.is-today {
+    border-radius: 50%;
+    background: var(--bm-accent);
+    color: var(--bm-bg);
+    font-weight: 700;
+  }
+  .calendar-count {
+    border: 1px solid #93c5fd;
+    border-radius: 1rem;
+    padding: 0 0.5rem;
+    background: #203140;
+    color: #bfdbfe;
+    font-size: 0.75rem;
+  }
+  @media (max-width: 39.999rem) {
+    .hours-day-name {
+      width: calc(50% - 0.375rem);
+    }
+    .hours-day-toggle {
+      width: calc(50% - 0.375rem);
+    }
+    .calendar-note {
+      flex-basis: 100%;
+      text-align: left;
+    }
+  }
+}

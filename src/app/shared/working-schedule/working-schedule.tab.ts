@@ -84,9 +84,9 @@ export type WorkingSchedulePort = {
             ></button>
           </div>
         }
-        <table class="w-full max-w-2xl rounded-lg border border-slate-200 bg-white text-left text-sm">
-          <thead class="text-xs text-slate-500">
-            <tr class="border-b border-slate-200">
+        <div class="profile-table-scroll max-w-2xl" tabindex="0" role="region" [attr.aria-label]="'schedule.week.title' | t"><table class="schedule-week-table">
+          <thead class="text-xs text-muted">
+            <tr class="border-b border-divider">
               <th class="px-6 py-3 font-normal"></th>
               <th class="px-6 py-3 font-normal">{{ 'schedule.week.master' | t }}</th>
               @if (bounded()) {
@@ -96,25 +96,25 @@ export type WorkingSchedulePort = {
           </thead>
           <tbody>
             @for (day of week(); track day.dayOfWeek) {
-              <tr class="border-b border-slate-100 last:border-0" data-testid="schedule-day">
+              <tr class="border-b border-divider last:border-0" data-testid="schedule-day">
                 <th class="w-40 px-6 py-3 font-medium first-letter:uppercase">{{ day.name }}</th>
-                <td class="px-6 py-3" data-testid="schedule-day-master" [class.text-slate-500]="!day.master">
+                <td class="px-6 py-3" data-testid="schedule-day-master" [class.text-muted]="!day.master">
                   {{ day.master ?? ('schedule.week.dayOff' | t) }}
                   @if (day.outside) {
-                    <span class="ml-2 text-xs text-amber-700" data-testid="schedule-day-outside">
+                    <span class="ml-2 text-xs text-warning" data-testid="schedule-day-outside">
                       {{ 'hours.edit.outsideBounds' | t }}
                     </span>
                   }
                 </td>
                 @if (bounded()) {
-                  <td class="px-6 py-3 text-slate-500" data-testid="schedule-day-salon">
+                  <td class="px-6 py-3 text-muted" data-testid="schedule-day-salon">
                     {{ day.salon ?? ((boundsSet() ? 'hours.closed' : 'hours.notSet') | t) }}
                   </td>
                 }
               </tr>
             }
           </tbody>
-        </table>
+        </table></div>
       }
 
       <h2 class="mb-3 mt-8 font-medium">{{ 'rotation.title' | t }}</h2>
@@ -135,7 +135,7 @@ export type WorkingSchedulePort = {
       />
 
       <h2 class="mb-1 mt-8 font-medium">{{ 'timeOff.title' | t }}</h2>
-      <p class="mb-3 text-xs text-slate-500">{{ 'timeOff.note' | t }}</p>
+      <p class="mb-3 text-xs text-muted">{{ 'timeOff.note' | t }}</p>
       <app-time-off-section
         [groups]="schedule.timeOff"
         [todayDate]="schedule.todayDate"
@@ -145,7 +145,7 @@ export type WorkingSchedulePort = {
         (changed)="months.next($event ? monthOf($event) : month())"
       />
     } @else if (failed()) {
-      <p class="text-slate-600" data-testid="schedule-failed">{{ 'card.failed' | t }}</p>
+      <p class="text-muted" data-testid="schedule-failed">{{ 'card.failed' | t }}</p>
     }
   `,
 })

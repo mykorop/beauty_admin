@@ -1,0 +1,296 @@
+[
+  {
+    "role": "text",
+    "foreground": "#f5f2eb",
+    "background": "#181a1d",
+    "ratio": 15.6,
+    "minimum": 4.5
+  },
+  {
+    "role": "secondary text",
+    "foreground": "#b9b9c0",
+    "background": "#181a1d",
+    "ratio": 8.94,
+    "minimum": 4.5
+  },
+  {
+    "role": "warning text",
+    "foreground": "#fcd34d",
+    "background": "#181a1d",
+    "ratio": 12.09,
+    "minimum": 4.5
+  },
+  {
+    "role": "focus",
+    "foreground": "#f59e0c",
+    "background": "#181a1d",
+    "ratio": 8.12,
+    "minimum": 3
+  },
+  {
+    "role": "control boundary",
+    "foreground": "#858992",
+    "background": "#181a1d",
+    "ratio": 4.97,
+    "minimum": 3
+  },
+  {
+    "role": "text",
+    "foreground": "#f5f2eb",
+    "background": "#1e2024",
+    "ratio": 14.59,
+    "minimum": 4.5
+  },
+  {
+    "role": "secondary text",
+    "foreground": "#b9b9c0",
+    "background": "#1e2024",
+    "ratio": 8.36,
+    "minimum": 4.5
+  },
+  {
+    "role": "warning text",
+    "foreground": "#fcd34d",
+    "background": "#1e2024",
+    "ratio": 11.31,
+    "minimum": 4.5
+  },
+  {
+    "role": "focus",
+    "foreground": "#f59e0c",
+    "background": "#1e2024",
+    "ratio": 7.6,
+    "minimum": 3
+  },
+  {
+    "role": "control boundary",
+    "foreground": "#858992",
+    "background": "#1e2024",
+    "ratio": 4.65,
+    "minimum": 3
+  },
+  {
+    "role": "text",
+    "foreground": "#f5f2eb",
+    "background": "#25282d",
+    "ratio": 13.23,
+    "minimum": 4.5
+  },
+  {
+    "role": "secondary text",
+    "foreground": "#b9b9c0",
+    "background": "#25282d",
+    "ratio": 7.58,
+    "minimum": 4.5
+  },
+  {
+    "role": "warning text",
+    "foreground": "#fcd34d",
+    "background": "#25282d",
+    "ratio": 10.26,
+    "minimum": 4.5
+  },
+  {
+    "role": "focus",
+    "foreground": "#f59e0c",
+    "background": "#25282d",
+    "ratio": 6.89,
+    "minimum": 3
+  },
+  {
+    "role": "control boundary",
+    "foreground": "#858992",
+    "background": "#25282d",
+    "ratio": 4.22,
+    "minimum": 3
+  },
+  {
+    "role": "text",
+    "foreground": "#f5f2eb",
+    "background": "#203140",
+    "ratio": 11.93,
+    "minimum": 4.5
+  },
+  {
+    "role": "secondary text",
+    "foreground": "#b9b9c0",
+    "background": "#203140",
+    "ratio": 6.84,
+    "minimum": 4.5
+  },
+  {
+    "role": "warning text",
+    "foreground": "#fcd34d",
+    "background": "#203140",
+    "ratio": 9.25,
+    "minimum": 4.5
+  },
+  {
+    "role": "focus",
+    "foreground": "#f59e0c",
+    "background": "#203140",
+    "ratio": 6.21,
+    "minimum": 3
+  },
+  {
+    "role": "control boundary",
+    "foreground": "#858992",
+    "background": "#203140",
+    "ratio": 3.8,
+    "minimum": 3
+  },
+  {
+    "role": "text",
+    "foreground": "#f5f2eb",
+    "background": "#352e20",
+    "ratio": 12.02,
+    "minimum": 4.5
+  },
+  {
+    "role": "secondary text",
+    "foreground": "#b9b9c0",
+    "background": "#352e20",
+    "ratio": 6.89,
+    "minimum": 4.5
+  },
+  {
+    "role": "warning text",
+    "foreground": "#fcd34d",
+    "background": "#352e20",
+    "ratio": 9.32,
+    "minimum": 4.5
+  },
+  {
+    "role": "focus",
+    "foreground": "#f59e0c",
+    "background": "#352e20",
+    "ratio": 6.26,
+    "minimum": 3
+  },
+  {
+    "role": "control boundary",
+    "foreground": "#858992",
+    "background": "#352e20",
+    "ratio": 3.83,
+    "minimum": 3
+  },
+  {
+    "role": "today / selected slot",
+    "foreground": "#181a1d",
+    "background": "#f59e0c",
+    "ratio": 8.12,
+    "minimum": 4.5
+  },
+  {
+    "role": "calendar appointment count",
+    "foreground": "#bfdbfe",
+    "background": "#203140",
+    "ratio": 9.38,
+    "minimum": 4.5
+  },
+  {
+    "role": "calendar count boundary / custom hours marker",
+    "foreground": "#93c5fd",
+    "background": "#203140",
+    "ratio": 7.4,
+    "minimum": 3
+  },
+  {
+    "role": "absence marker",
+    "foreground": "#fcd34d",
+    "background": "#352e20",
+    "ratio": 9.32,
+    "minimum": 3
+  },
+  {
+    "role": "appointment booked",
+    "foreground": "#7dd3fc",
+    "background": "#1b3544",
+    "ratio": 7.68,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment booked",
+    "foreground": "#7dd3fc",
+    "background": "#213c4b",
+    "ratio": 6.95,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment booked",
+    "foreground": "#7dd3fc",
+    "background": "#2f4140",
+    "ratio": 6.46,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment completed",
+    "foreground": "#86efac",
+    "background": "#1f3a2d",
+    "ratio": 8.79,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment completed",
+    "foreground": "#86efac",
+    "background": "#254135",
+    "ratio": 7.93,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment completed",
+    "foreground": "#86efac",
+    "background": "#32462a",
+    "ratio": 7.31,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment no show",
+    "foreground": "#fca5a5",
+    "background": "#3f2629",
+    "ratio": 7.28,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment no show",
+    "foreground": "#fca5a5",
+    "background": "#452c31",
+    "ratio": 6.67,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment no show",
+    "foreground": "#fca5a5",
+    "background": "#533226",
+    "ratio": 5.97,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment manual",
+    "foreground": "#fdba74",
+    "background": "#412d22",
+    "ratio": 7.67,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment manual",
+    "foreground": "#fdba74",
+    "background": "#473429",
+    "ratio": 6.95,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment manual",
+    "foreground": "#fdba74",
+    "background": "#54391e",
+    "ratio": 6.29,
+    "minimum": 4.5
+  },
+  {
+    "role": "appointment cancelled",
+    "foreground": "#d4d4d8",
+    "background": "#25282d",
+    "ratio": 10.01,
+    "minimum": 4.5
+  }
+]

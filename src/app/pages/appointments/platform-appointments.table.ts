@@ -43,10 +43,10 @@ import { formatVenueDateTime } from '../../shared/venue-date';
   imports: [AppointmentDetailsPanel, Tag, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="overflow-x-auto">
-      <table class="w-full max-w-7xl rounded-lg border border-slate-200 bg-white text-left text-sm">
-        <thead class="text-xs text-slate-500">
-          <tr class="border-b border-slate-200">
+    <div class="profile-table-scroll" tabindex="0" role="region" [attr.aria-label]="'nav.appointments' | t">
+      <table class="profile-data-table appointments-table">
+        <thead class="text-xs text-muted">
+          <tr class="border-b border-divider">
             <th class="w-10 px-3 py-3"></th>
             <th class="px-4 py-3 font-normal">{{ 'appointments.column.when' | t }}</th>
             <th class="px-4 py-3 font-normal">{{ 'client.appointments.column.venue' | t }}</th>
@@ -60,15 +60,15 @@ import { formatVenueDateTime } from '../../shared/venue-date';
         <tbody>
           @for (row of rows(); track row.appointment.appointmentId) {
             <tr
-              class="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50"
+              class="cursor-pointer border-b border-divider last:border-0 hover:bg-raised"
               data-testid="appointment-row"
-              [class.bg-amber-50]="row.stale"
+              [class.appointment-stale]="row.stale"
               (click)="toggle(row.appointment)"
             >
               <td class="px-3 py-3">
                 <button
                   type="button"
-                  class="pi text-slate-500"
+                  class="appointment-toggle pi text-muted"
                   data-testid="appointment-row-toggle"
                   [class.pi-chevron-right]="!isOpen(row.appointment)"
                   [class.pi-chevron-down]="isOpen(row.appointment)"
@@ -78,11 +78,11 @@ import { formatVenueDateTime } from '../../shared/venue-date';
               </td>
               <td class="px-4 py-3 whitespace-nowrap">
                 <span data-testid="appointment-row-when">{{ row.when }}</span>
-                <p class="text-xs text-slate-500" data-testid="appointment-row-timezone">
+                <p class="text-xs text-muted" data-testid="appointment-row-timezone">
                   {{ row.appointment.timezone }}
                 </p>
                 @if (row.stale) {
-                  <p class="text-xs text-amber-700" data-testid="appointment-row-stale">
+                  <p class="text-xs text-warning whitespace-normal" data-testid="appointment-row-stale">
                     {{ 'appointments.stale' | t }}
                   </p>
                 }
@@ -90,7 +90,7 @@ import { formatVenueDateTime } from '../../shared/venue-date';
               <td class="px-4 py-3" data-testid="appointment-row-venue">
                 {{ row.appointment.venueName || '—' }}
                 @if (!row.appointment.salonId) {
-                  <p class="text-xs text-slate-500">{{ 'appointments.details.independent' | t }}</p>
+                  <p class="text-xs text-muted">{{ 'appointments.details.independent' | t }}</p>
                 }
               </td>
               <td class="px-4 py-3" data-testid="appointment-row-client">
@@ -123,7 +123,7 @@ import { formatVenueDateTime } from '../../shared/venue-date';
             </tr>
             @if (isOpen(row.appointment)) {
               <tr
-                class="border-b border-slate-100 bg-slate-50/50"
+                class="border-b border-divider bg-raised"
                 data-testid="appointment-details"
               >
                 <td></td>
@@ -131,11 +131,11 @@ import { formatVenueDateTime } from '../../shared/venue-date';
                   @if (details(); as details) {
                     <app-appointment-details [details]="details" (changed)="absorb($event)" />
                   } @else if (detailsFailed()) {
-                    <p class="text-slate-600" data-testid="appointment-details-failed">
+                    <p class="text-muted" data-testid="appointment-details-failed">
                       {{ 'card.failed' | t }}
                     </p>
                   } @else {
-                    <p class="text-slate-500" data-testid="appointment-details-loading">
+                    <p class="text-muted" data-testid="appointment-details-loading">
                       {{ 'appointments.details.loading' | t }}
                     </p>
                   }
@@ -146,7 +146,7 @@ import { formatVenueDateTime } from '../../shared/venue-date';
             <tr>
               <td
                 colspan="8"
-                class="py-8 text-center text-slate-600"
+                class="py-8 text-center text-muted"
                 data-testid="appointments-empty"
               >
                 {{ emptyKey() | t }}
@@ -156,7 +156,7 @@ import { formatVenueDateTime } from '../../shared/venue-date';
         </tbody>
       </table>
     </div>
-    <p class="mt-2 max-w-6xl text-xs text-slate-500" data-testid="appointments-readonly">
+    <p class="mt-2 max-w-6xl text-xs text-muted" data-testid="appointments-readonly">
       {{ 'appointments.readonly' | t }}
     </p>
   `,

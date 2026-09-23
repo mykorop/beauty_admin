@@ -37,10 +37,10 @@ import { PlatformAppointmentsTable } from './platform-appointments.table';
   template: `
     <section data-testid="appointments-day">
       <div class="mb-3 flex flex-wrap items-center gap-3">
-        <p class="max-w-3xl text-sm text-slate-600">{{ 'platformAppointments.day.hint' | t }}</p>
+        <p class="max-w-3xl text-sm text-muted">{{ 'platformAppointments.day.hint' | t }}</p>
         <span class="flex-1"></span>
         @if (builtAt(); as builtAt) {
-          <span class="text-sm text-slate-600" data-testid="appointments-day-built-at">{{
+          <span class="text-sm text-muted" data-testid="appointments-day-built-at">{{
             'platformAppointments.day.builtAt' | t: { time: builtAt }
           }}</span>
         }
@@ -64,7 +64,7 @@ import { PlatformAppointmentsTable } from './platform-appointments.table';
             [value]="runs.progress() ?? 0"
             [showValue]="false"
           />
-          <p class="mt-1 text-sm text-slate-600">{{ progressText() }}</p>
+          <p class="mt-1 text-sm text-muted">{{ progressText() }}</p>
         </div>
       }
 
@@ -84,13 +84,13 @@ import { PlatformAppointmentsTable } from './platform-appointments.table';
       }
 
       @if (runs.loadFailed() && !result()) {
-        <p class="text-slate-600" data-testid="appointments-day-load-failed">
+        <p class="text-muted" data-testid="appointments-day-load-failed">
           {{ 'platformAppointments.day.loadFailed' | t }}
         </p>
       }
 
       @if (neverGathered()) {
-        <p class="text-slate-600" data-testid="appointments-day-never">
+        <p class="text-muted" data-testid="appointments-day-never">
           {{ 'platformAppointments.day.never' | t }}
         </p>
       }

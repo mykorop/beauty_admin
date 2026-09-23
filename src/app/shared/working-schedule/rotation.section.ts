@@ -34,14 +34,14 @@ export type RotationSaveRequest = { pattern: SchedulePattern | null; reason?: st
   template: `
     @if (editing()) {
       <form
-        class="max-w-xl text-sm"
+        class="schedule-form max-w-xl text-sm"
         data-testid="rotation-form"
         [formGroup]="form"
         (ngSubmit)="submit()"
       >
-        <div class="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white px-6 py-4">
+        <div class="flex flex-col gap-4 rounded-lg border border-divider bg-panel px-6 py-4">
           <div class="flex flex-wrap gap-6">
-            <label class="flex flex-col gap-1 text-slate-500">
+            <label class="flex flex-col gap-1 text-muted">
               {{ 'rotation.anchorDate' | t }}
               <input
                 pInputText
@@ -50,7 +50,7 @@ export type RotationSaveRequest = { pattern: SchedulePattern | null; reason?: st
                 formControlName="anchorDate"
               />
             </label>
-            <label class="flex flex-col gap-1 text-slate-500">
+            <label class="flex flex-col gap-1 text-muted">
               {{ 'rotation.cycleLength' | t }}
               <input
                 pInputText
@@ -64,16 +64,16 @@ export type RotationSaveRequest = { pattern: SchedulePattern | null; reason?: st
             </label>
           </div>
           <div>
-            <p class="text-slate-500">{{ 'rotation.workingDays' | t }}</p>
+            <p class="text-muted">{{ 'rotation.workingDays' | t }}</p>
             <div class="mt-2 flex flex-wrap gap-2">
               @for (day of cycleDays(); track day.offset) {
                 <label
-                  class="flex cursor-pointer items-center gap-1 rounded border border-slate-200 px-2 py-1"
-                  [class.bg-sky-50]="day.worked"
+                  class="rotation-choice"
+                  [class.is-worked]="day.worked"
                 >
                   <input
                     type="checkbox"
-                    class="size-4"
+                    class="schedule-choice"
                     data-testid="rotation-day"
                     [checked]="day.worked"
                     (change)="toggle(day.offset)"
@@ -82,11 +82,11 @@ export type RotationSaveRequest = { pattern: SchedulePattern | null; reason?: st
                 </label>
               }
             </div>
-            <p class="mt-2 text-xs text-slate-500">{{ 'rotation.hint' | t }}</p>
+            <p class="mt-2 text-xs text-muted">{{ 'rotation.hint' | t }}</p>
           </div>
         </div>
 
-        <label class="mt-4 block text-slate-500" for="rotation-reason">{{
+        <label class="mt-4 block text-muted" for="rotation-reason">{{
           'salon.edit.reason' | t
         }}</label>
         <input
@@ -98,7 +98,7 @@ export type RotationSaveRequest = { pattern: SchedulePattern | null; reason?: st
           formControlName="reason"
         />
 
-        <div class="flex gap-2 pt-4">
+        <div class="flex flex-wrap gap-2 pt-4">
           <button
             pButton
             type="submit"
@@ -133,9 +133,9 @@ export type RotationSaveRequest = { pattern: SchedulePattern | null; reason?: st
       </form>
     } @else {
       <div
-        class="flex max-w-2xl items-center gap-4 rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm"
+        class="flex flex-wrap max-w-2xl items-center gap-4 rounded-lg border border-divider bg-panel px-6 py-3 text-sm"
       >
-        <p class="grow" data-testid="rotation-summary" [class.text-slate-500]="!pattern()">
+        <p class="grow" data-testid="rotation-summary" [class.text-muted]="!pattern()">
           {{ summary() }}
         </p>
         @if (writable()) {

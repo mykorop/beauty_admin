@@ -55,8 +55,8 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (filters(); as filters) {
-      <div class="mb-4 flex flex-wrap items-end gap-3">
-        <label class="flex flex-col gap-1 text-xs text-slate-600">
+      <div class="appointment-filters mb-4 flex flex-wrap items-end gap-3">
+        <label class="flex flex-col gap-1 text-xs text-muted">
           {{ 'appointments.filter.from' | t }}
           <input
             pInputText
@@ -67,7 +67,7 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
             (change)="setFilter({ from: $any($event.target).value })"
           />
         </label>
-        <label class="flex flex-col gap-1 text-xs text-slate-600">
+        <label class="flex flex-col gap-1 text-xs text-muted">
           {{ 'appointments.filter.to' | t }}
           <input
             pInputText
@@ -107,9 +107,9 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
       </div>
 
       @if (rows(); as rows) {
-        <table class="w-full max-w-6xl rounded-lg border border-slate-200 bg-white text-left text-sm">
-          <thead class="text-xs text-slate-500">
-            <tr class="border-b border-slate-200">
+        <div class="profile-table-scroll" tabindex="0" role="region" [attr.aria-label]="'nav.appointments' | t"><table class="profile-data-table appointments-table">
+          <thead class="text-xs text-muted">
+            <tr class="border-b border-divider">
               <th class="w-10 px-3 py-3"></th>
               <th class="px-4 py-3 font-normal">{{ 'appointments.column.when' | t }}</th>
               <th class="px-4 py-3 font-normal">{{ 'appointments.column.client' | t }}</th>
@@ -124,15 +124,15 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
           <tbody>
             @for (row of rows; track row.appointment.appointmentId) {
               <tr
-                class="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                class="cursor-pointer border-b border-divider last:border-0 hover:bg-raised"
                 data-testid="appointment-row"
-                [class.bg-amber-50]="row.stale"
+                [class.appointment-stale]="row.stale"
                 (click)="toggle(row.appointment)"
               >
                 <td class="px-3 py-3">
                   <button
                     type="button"
-                    class="pi text-slate-500"
+                    class="appointment-toggle pi text-muted"
                     data-testid="appointment-row-toggle"
                     [class.pi-chevron-right]="!isOpen(row.appointment)"
                     [class.pi-chevron-down]="isOpen(row.appointment)"
@@ -143,7 +143,7 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
                 <td class="px-4 py-3 whitespace-nowrap">
                   <span data-testid="appointment-row-when">{{ row.when }}</span>
                   @if (row.stale) {
-                    <p class="text-xs text-amber-700" data-testid="appointment-row-stale">
+                    <p class="text-xs text-warning whitespace-normal" data-testid="appointment-row-stale">
                       {{ 'appointments.stale' | t }}
                     </p>
                   }
@@ -168,33 +168,33 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
                 </td>
               </tr>
               @if (isOpen(row.appointment)) {
-                <tr class="border-b border-slate-100 bg-slate-50/50" data-testid="appointment-details">
+                <tr class="border-b border-divider bg-raised" data-testid="appointment-details">
                   <td></td>
                   <td class="px-4 py-4" [attr.colspan]="columns()">
                     @if (details(); as details) {
                       <app-appointment-details [details]="details" (changed)="absorb($event)" />
                     } @else if (detailsFailed()) {
-                      <p class="text-slate-600" data-testid="appointment-details-failed">{{ 'card.failed' | t }}</p>
+                      <p class="text-muted" data-testid="appointment-details-failed">{{ 'card.failed' | t }}</p>
                     } @else {
-                      <p class="text-slate-500" data-testid="appointment-details-loading">{{ 'appointments.details.loading' | t }}</p>
+                      <p class="text-muted" data-testid="appointment-details-loading">{{ 'appointments.details.loading' | t }}</p>
                     }
                   </td>
                 </tr>
               }
             } @empty {
               <tr>
-                <td [attr.colspan]="columns() + 1" class="py-8 text-center text-slate-600" data-testid="appointments-empty">
+                <td [attr.colspan]="columns() + 1" class="py-8 text-center text-muted" data-testid="appointments-empty">
                   {{ 'appointments.empty' | t }}
                 </td>
               </tr>
             }
           </tbody>
-        </table>
-        <p class="mt-2 max-w-6xl text-xs text-slate-500" data-testid="appointments-readonly">
+        </table></div>
+        <p class="mt-2 max-w-6xl text-xs text-muted" data-testid="appointments-readonly">
           {{ 'appointments.readonly' | t }}
         </p>
       } @else if (failed()) {
-        <p class="text-slate-600" data-testid="appointments-failed">{{ 'card.failed' | t }}</p>
+        <p class="text-muted" data-testid="appointments-failed">{{ 'card.failed' | t }}</p>
       }
     }
   `,

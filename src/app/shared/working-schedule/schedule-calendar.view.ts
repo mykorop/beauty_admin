@@ -17,16 +17,6 @@ const STATUS_KEYS: Record<Exclude<CalendarDayStatus, 'OPEN' | 'CUSTOM_HOURS'>, T
   BOUNDS_CLOSED: 'schedule.calendar.boundsClosed',
 };
 
-const STATUS_CLASSES: Record<CalendarDayStatus, string> = {
-  OPEN: 'bg-white',
-  CUSTOM_HOURS: 'bg-sky-50',
-  CLOSED: 'bg-slate-50 text-slate-400',
-  PATTERN_OFF: 'bg-slate-50 text-slate-400',
-  DAY_OFF: 'bg-amber-50',
-  BLOCKED: 'bg-amber-50',
-  BOUNDS_CLOSED: 'bg-amber-50',
-};
-
 /**
  * One month of a Робочий графік as a Клієнт would meet it: on which days the Майстер can be booked
  * and in which windows, why not on the others, and the Записи already standing. It draws whatever
@@ -38,8 +28,8 @@ const STATUS_CLASSES: Record<CalendarDayStatus, string> = {
   imports: [ButtonDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="max-w-5xl text-sm" data-testid="schedule-calendar">
-      <div class="mb-3 flex items-center gap-2">
+    <div class="schedule-calendar max-w-5xl text-sm" data-testid="schedule-calendar">
+      <div class="mb-3 flex flex-wrap items-center gap-2">
         <button
           pButton
           type="button"
@@ -65,36 +55,36 @@ const STATUS_CLASSES: Record<CalendarDayStatus, string> = {
           [attr.aria-label]="'schedule.calendar.next' | t"
           (click)="monthChange.emit(shift(1))"
         ></button>
-        <span class="ml-auto text-xs text-slate-500">{{ 'schedule.calendar.note' | t }}</span>
+        <span class="calendar-note text-xs text-muted">{{ 'schedule.calendar.note' | t }}</span>
       </div>
 
-      <div class="grid grid-cols-7 overflow-hidden rounded-lg border border-slate-200 bg-slate-200 gap-px">
+      <div class="profile-table-scroll" tabindex="0" role="region" [attr.aria-label]="'schedule.calendar.title' | t">
+      <div class="calendar-grid">
         @for (name of weekdays(); track $index) {
-          <div class="bg-slate-50 px-2 py-1 text-xs text-slate-500 first-letter:uppercase">
+          <div class="bg-raised px-3 py-2 text-xs text-muted first-letter:uppercase">
             {{ name }}
           </div>
         }
         @for (day of days(); track day.date) {
           <div
-            class="min-h-24 px-2 py-1"
+            class="calendar-cell"
             data-testid="calendar-day"
-            [class]="day.classes"
-            [class.opacity-50]="!day.inMonth"
+            [class.outside-month]="!day.inMonth"
             [attr.data-date]="day.date"
             [attr.data-status]="day.status"
             [attr.title]="day.reason"
           >
             <div class="flex items-center justify-between">
               <span
-                class="text-xs"
-                [class.font-semibold]="day.isToday"
-                [class.text-sky-700]="day.isToday"
+                class="calendar-date text-xs"
+                [class.is-today]="day.isToday"
+                [attr.aria-current]="day.isToday ? 'date' : null"
                 [attr.data-testid]="day.isToday ? 'calendar-today' : null"
                 >{{ day.dayOfMonth }}</span
               >
               @if (day.appointments.active > 0) {
                 <span
-                  class="rounded-full bg-sky-100 px-2 text-xs text-sky-800"
+                  class="calendar-count"
                   data-testid="calendar-appointments"
                   [attr.title]="'schedule.calendar.appointments' | t: { count: day.appointments.active }"
                   >{{ day.appointments.active }}</span
@@ -103,17 +93,18 @@ const STATUS_CLASSES: Record<CalendarDayStatus, string> = {
             </div>
             <div class="mt-1 text-xs" data-testid="calendar-day-hours">{{ day.label }}</div>
             @if (day.reason) {
-              <div class="truncate text-xs text-slate-500" data-testid="calendar-day-reason">
+              <div class="mt-1 text-xs text-muted" data-testid="calendar-day-reason">
                 {{ day.reason }}
               </div>
             }
             @if (day.appointments.cancelled > 0) {
-              <div class="text-xs text-slate-400" data-testid="calendar-cancelled">
+              <div class="mt-1 text-xs text-muted" data-testid="calendar-cancelled">
                 {{ 'schedule.calendar.cancelled' | t: { count: day.appointments.cancelled } }}
               </div>
             }
           </div>
         }
+      </div>
       </div>
     </div>
   `,
@@ -153,7 +144,6 @@ export class ScheduleCalendar {
       .flat()
       .map((day) => ({
         ...day,
-        classes: STATUS_CLASSES[day.status],
         label:
           day.status === 'OPEN'
             ? formatSlots(day.slots)

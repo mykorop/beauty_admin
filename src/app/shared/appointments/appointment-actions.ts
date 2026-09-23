@@ -71,7 +71,7 @@ const OFFERS: StatusOffer[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (actionable()) {
-      <div class="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4" data-testid="appointment-actions">
+      <div class="mt-4 flex flex-wrap gap-2 border-t border-divider pt-4" data-testid="appointment-actions">
         @for (offer of offers; track offer.status) {
           <button
             pButton
@@ -122,7 +122,7 @@ const OFFERS: StatusOffer[] = [
         (confirmed)="applyReschedule($event)"
       />
     } @else {
-      <p class="mt-4 border-t border-slate-200 pt-4 text-xs text-slate-500" data-testid="appointment-actions-closed">
+      <p class="mt-4 border-t border-divider pt-4 text-xs text-muted" data-testid="appointment-actions-closed">
         {{ 'appointments.action.closed' | t }}
       </p>
     }

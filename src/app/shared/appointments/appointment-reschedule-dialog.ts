@@ -1,14 +1,17 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
   effect,
+  ElementRef,
   inject,
   input,
   model,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -42,6 +45,7 @@ import { formatVenueDateTime, venueDate, venueToday } from '../venue-date';
   selector: 'app-appointment-reschedule-dialog',
   imports: [ButtonDirective, Dialog, InputText, ReactiveFormsModule, Textarea, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(keydown.escape)': 'onEscape($event)' },
   template: `
     <p-dialog
       [modal]="true"
@@ -49,21 +53,27 @@ import { formatVenueDateTime, venueDate, venueToday } from '../venue-date';
       [resizable]="false"
       [dismissableMask]="!busy()"
       [closable]="!busy()"
-      [closeOnEscape]="!busy()"
+      [closeOnEscape]="false"
       [header]="'appointments.reschedule.title' | t"
-      [style]="{ width: '40rem' }"
-      [(visible)]="visible"
+      styleClass="reason-dialog reschedule-dialog"
+      [focusOnShow]="false"
+      (onShow)="focusDay()"
+      (onHide)="restoreFocus()"
+      [visible]="visible()"
+      (visibleChange)="onVisibilityChange($event)"
     >
       <div class="flex flex-col gap-4 text-sm" data-testid="reschedule-dialog">
-        <p class="text-slate-700" data-testid="reschedule-current">
+        <p class="text-ink" data-testid="reschedule-current">
           {{ 'appointments.reschedule.current' | t: { when: currentWhen() } }}
         </p>
 
-        <label class="flex w-48 flex-col gap-1 text-xs text-slate-600">
+        <label class="flex w-48 flex-col gap-1 text-xs text-muted">
           {{ 'appointments.reschedule.day' | t }}
           <input
             pInputText
+            #dayInput
             type="date"
+            [disabled]="busy()"
             data-testid="reschedule-day"
             [min]="today()"
             [value]="day()"
@@ -77,15 +87,10 @@ import { formatVenueDateTime, venueDate, venueToday } from '../venue-date';
               @for (slot of slots; track slot.startAtUtc) {
                 <button
                   type="button"
-                  class="rounded border px-3 py-1"
+                  class="reschedule-slot"
                   data-testid="reschedule-slot"
                   [attr.data-status]="slot.status"
                   [attr.aria-pressed]="picked() === slot.startAtUtc"
-                  [class.border-sky-500]="picked() === slot.startAtUtc"
-                  [class.bg-sky-50]="picked() === slot.startAtUtc"
-                  [class.border-slate-200]="picked() !== slot.startAtUtc"
-                  [class.text-slate-400]="slot.status !== 'available'"
-                  [class.line-through]="slot.status === 'booked'"
                   [disabled]="slot.status !== 'available' || busy()"
                   (click)="picked.set(slot.startAtUtc)"
                 >
@@ -94,24 +99,25 @@ import { formatVenueDateTime, venueDate, venueToday } from '../venue-date';
               }
             </div>
           } @else {
-            <p class="text-slate-600" data-testid="reschedule-no-slots">
+            <p class="text-muted" data-testid="reschedule-no-slots">
               {{ 'appointments.reschedule.noSlots' | t }}
             </p>
           }
         } @else if (failed()) {
-          <p class="text-slate-600" data-testid="reschedule-slots-failed">
+          <p class="text-muted" data-testid="reschedule-slots-failed">
             {{ 'appointments.reschedule.slotsFailed' | t }}
           </p>
         } @else {
-          <p class="text-slate-500" data-testid="reschedule-slots-loading">
+          <p class="text-muted" data-testid="reschedule-slots-loading">
             {{ 'appointments.details.loading' | t }}
           </p>
         }
 
-        <label class="flex flex-col gap-1 text-slate-500" for="reschedule-reason">
+        <label class="flex flex-col gap-1 text-muted" for="reschedule-reason">
           {{ 'reasonDialog.reasonOptional' | t }}
           <textarea
             pTextarea
+            #reasonInput
             id="reschedule-reason"
             data-testid="reschedule-reason"
             rows="3"
@@ -154,6 +160,11 @@ export class AppointmentRescheduleDialog {
   /** The chosen instant and the reason behind it — the body of the перенесення, already trimmed. */
   readonly confirmed = output<{ startDateTime: string; reason?: string }>();
 
+  private readonly document = inject(DOCUMENT);
+  private readonly dayInput = viewChild<ElementRef<HTMLInputElement>>('dayInput');
+  private readonly reasonInput = viewChild<ElementRef<HTMLTextAreaElement>>('reasonInput');
+  private returnFocus: HTMLElement | null = null;
+  private returnRegion: HTMLElement | null = null;
   private readonly client = inject(AppointmentsClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly i18n = inject(I18nService);
@@ -175,10 +186,17 @@ export class AppointmentRescheduleDialog {
   private readonly asked = new Subject<string>();
 
   constructor() {
+    this.destroyRef.onDestroy(() => queueMicrotask(() => this.restoreFocus()));
+    effect(() => {
+      if (this.visible() && this.busy()) this.reasonInput()?.nativeElement.focus();
+    });
     // Every opening starts from the day the Запис is on now — the commonest move is within it —
     // and forgets whatever the last opening had picked or typed.
     effect(() => {
       if (this.visible()) {
+        const active = this.document.activeElement;
+        this.returnFocus = active instanceof HTMLElement ? active : null;
+        this.returnRegion = this.returnFocus?.closest('main') ?? null;
         this.reason.reset();
         this.picked.set(null);
         this.pickDay(this.startDay());
@@ -202,6 +220,27 @@ export class AppointmentRescheduleDialog {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((page) => this.slots.set(page.slotOptions));
+  }
+
+  protected focusDay(): void {
+    this.dayInput()?.nativeElement.focus();
+  }
+
+  protected onVisibilityChange(visible: boolean): void {
+    // PrimeNG's opening-time backdrop listener must also respect the current busy state.
+    if (!this.busy()) this.visible.set(visible);
+  }
+
+  protected onEscape(event: Event): void {
+    event.stopPropagation();
+    this.onVisibilityChange(false);
+  }
+
+  protected restoreFocus(): void {
+    const target = this.returnFocus?.isConnected ? this.returnFocus : this.returnRegion;
+    if (target?.isConnected) target.focus();
+    this.returnFocus = null;
+    this.returnRegion = null;
   }
 
   /** The Запис's own day on the venue's clock — where the dialog opens. */
