@@ -6,6 +6,6 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
   selector: 'app-card-tab-stub-page',
   imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<p class="text-slate-600" data-testid="card-tab-stub">{{ 'stub.comingSoon' | t }}</p>`,
+  template: `<p class="text-muted" data-testid="card-tab-stub">{{ 'stub.comingSoon' | t }}</p>`,
 })
 export class CardTabStubPage {}

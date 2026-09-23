@@ -1,7 +1,5 @@
-import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { Toast } from 'primeng/toast';
 
 @Component({
@@ -18,28 +16,4 @@ import { Toast } from 'primeng/toast';
     <router-outlet />
   `,
 })
-export class App {
-  constructor() {
-    const document = inject(DOCUMENT);
-    const router = inject(Router);
-    // Explicit route scopes remain until ticket 05 consolidates the completed theme.
-    // Body-mounted overlays share the route theme regardless of OS preference.
-    const syncTheme = (url: string) => {
-      const path = url.split(/[?;#]/)[0];
-      const profiles = /^\/(salons|independent-masters|clients)(\/|$)/.test(path);
-      const migrated =
-        /^\/(salons|independent-masters|clients)(\/[^/]+(\/masters\/[^/]+)?(\/(profile|services|roster|invites|hours|schedule|appointments|reviews|media|history))?)?\/?$/.test(
-          path,
-        );
-      document.documentElement.classList.toggle('bookme-profile', profiles);
-      document.documentElement.classList.toggle(
-        'bookme-dark',
-        /^\/(login|dashboard|appointments|reviews|audit-log)$/.test(path) || migrated,
-      );
-    };
-    syncTheme(router.url);
-    router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
-      if (event instanceof NavigationEnd) syncTheme(event.urlAfterRedirects);
-    });
-  }
-}
+export class App {}

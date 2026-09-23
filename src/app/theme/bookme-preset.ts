@@ -3,48 +3,46 @@ import Aura from '@primeuix/themes/aura';
 
 // Aura's default dark feedback uses saturated 500 text; use lighter text on its tinted surfaces.
 const feedback = {
-  error: { color: 'light-dark({red.600}, {red.300})' },
-  info: { color: 'light-dark({blue.600}, {blue.300})' },
-  warn: { color: 'light-dark({yellow.600}, {yellow.300})' },
-  success: { color: 'light-dark({green.600}, {green.300})' },
+  error: { color: '{red.300}' },
+  info: { color: '{blue.300}' },
+  warn: { color: '{yellow.300}' },
+  success: { color: '{green.300}' },
 };
 
-/** Keep Aura's light values during the staged migration (remove with ticket 05).
- * Dark values also reach body-mounted overlays through the document's route scope.
- */
+/** One explicit dark theme, including overlays mounted outside the shell. */
 export const BookMePreset = definePreset(Aura, {
   semantic: {
     focusRing: { width: '3px', offset: '3px' },
     primary: {
-      color: 'light-dark({emerald.500}, var(--bm-accent))',
-      contrastColor: 'light-dark(#ffffff, var(--bm-bg))',
-      hoverColor: 'light-dark({emerald.600}, var(--bm-accent-hover))',
-      activeColor: 'light-dark({emerald.700}, var(--bm-accent-active))',
+      color: 'var(--bm-accent)',
+      contrastColor: 'var(--bm-bg)',
+      hoverColor: 'var(--bm-accent-hover)',
+      activeColor: 'var(--bm-accent-active)',
     },
     surface: {
-      400: 'light-dark({slate.400}, var(--bm-muted))',
-      500: 'light-dark({slate.500}, var(--bm-input-border))',
-      600: 'light-dark({slate.600}, var(--bm-input-border))',
-      700: 'light-dark({slate.700}, var(--bm-border))',
-      800: 'light-dark({slate.800}, var(--bm-raised))',
-      900: 'light-dark({slate.900}, var(--bm-panel))',
-      950: 'light-dark({slate.950}, var(--bm-bg))',
+      400: 'var(--bm-muted)',
+      500: 'var(--bm-input-border)',
+      600: 'var(--bm-input-border)',
+      700: 'var(--bm-border)',
+      800: 'var(--bm-raised)',
+      900: 'var(--bm-panel)',
+      950: 'var(--bm-bg)',
     },
     text: {
-      color: 'light-dark({surface.700}, var(--bm-text))',
-      hoverColor: 'light-dark({surface.800}, var(--bm-text))',
-      mutedColor: 'light-dark({surface.500}, var(--bm-muted))',
-      hoverMutedColor: 'light-dark({surface.600}, var(--bm-text))',
+      color: 'var(--bm-text)',
+      hoverColor: 'var(--bm-text)',
+      mutedColor: 'var(--bm-muted)',
+      hoverMutedColor: 'var(--bm-text)',
     },
     highlight: {
-      background: 'light-dark({primary.50}, var(--bm-accent))',
-      focusBackground: 'light-dark({primary.100}, var(--bm-accent-hover))',
-      color: 'light-dark({primary.700}, var(--bm-bg))',
-      focusColor: 'light-dark({primary.800}, var(--bm-bg))',
+      background: 'var(--bm-accent)',
+      focusBackground: 'var(--bm-accent-hover)',
+      color: 'var(--bm-bg)',
+      focusColor: 'var(--bm-bg)',
     },
     formField: {
-      color: 'light-dark({surface.700}, var(--bm-text))',
-      hoverBorderColor: 'light-dark({surface.400}, var(--bm-text))',
+      color: 'var(--bm-text)',
+      hoverBorderColor: 'var(--bm-text)',
       focusRing: { width: '3px', style: 'solid', color: '{primary.color}', offset: '3px' },
     },
   },
@@ -55,24 +53,24 @@ export const BookMePreset = definePreset(Aura, {
       root: {
         borderRadius: '0.5rem',
         secondary: {
-          borderColor: 'light-dark({surface.100}, var(--bm-input-border))',
-          hoverBorderColor: 'light-dark({surface.200}, var(--bm-text))',
-          activeBackground: 'light-dark({surface.300}, var(--bm-border))',
+          borderColor: 'var(--bm-input-border)',
+          hoverBorderColor: 'var(--bm-text)',
+          activeBackground: 'var(--bm-border)',
         },
       },
       outlined: {
-        primary: { borderColor: 'light-dark({primary.200}, var(--bm-accent))' },
-        secondary: { borderColor: 'light-dark({surface.200}, var(--bm-input-border))' },
-        danger: { borderColor: 'light-dark({red.200}, {red.400})' },
+        primary: { borderColor: 'var(--bm-accent)' },
+        secondary: { borderColor: 'var(--bm-input-border)' },
+        danger: { borderColor: '{red.400}' },
       },
     },
     togglebutton: {
       root: {
-        borderColor: 'light-dark({surface.100}, var(--bm-input-border))',
-        checkedBorderColor: 'light-dark({surface.100}, var(--bm-accent))',
-        checkedColor: 'light-dark({surface.900}, var(--bm-bg))',
+        borderColor: 'var(--bm-input-border)',
+        checkedBorderColor: 'var(--bm-accent)',
+        checkedColor: 'var(--bm-bg)',
       },
-      content: { checkedBackground: 'light-dark({surface.0}, var(--bm-accent))' },
+      content: { checkedBackground: 'var(--bm-accent)' },
     },
   },
 });

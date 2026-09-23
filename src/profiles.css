@@ -48,19 +48,6 @@
     min-width: 0;
     overflow-wrap: anywhere;
   }
-  /* Staged migration: ticket 04 owns the remaining tab bodies. Keep their original
-     colours and body-mounted overlays readable inside the new frame until then. */
-  html:not(.bookme-dark) .profile-content {
-    color-scheme: light;
-    background: #f8fafc;
-    color: #0f172a;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    overflow-x: auto;
-  }
-  html:not(.bookme-dark) .profile-content :focus-visible:not(.reason-dialog *) {
-    outline-color: #92400e;
-  }
   .profile-fields {
     display: grid;
     grid-template-columns: 14rem minmax(0, 1fr);

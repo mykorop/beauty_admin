@@ -72,7 +72,12 @@ test.describe('language', () => {
 });
 
 test.describe('backend refusals', () => {
-  test('a known error code is shown in the interface language', async ({ page, mockBackend }) => {
+  test('a known error code is shown in the interface language', async ({
+    page,
+    mockBackend,
+  }, info) => {
+    await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
+    await page.clock.setFixedTime(new Date('2026-09-23T09:00:00Z'));
     await mockBackend(ADMIN, {
       'GET /admin/me': apiError(500, 'INTERNAL_SERVER_ERROR', 'boom'),
       'GET /admin/stats/basic': EMPTY_STATS,
@@ -83,6 +88,9 @@ test.describe('backend refusals', () => {
 
     await expect(page.getByTestId('toast')).toContainText('Помилка на сервері. Спробуйте пізніше.');
     await expect(page.getByTestId('toast')).not.toContainText('boom');
+    await expect(page.getByRole('alert')).toHaveCSS('color', 'rgb(252, 165, 165)');
+    await page.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: info.outputPath('toast-sign-in.png'), animations: 'disabled' });
   });
 
   test('an unknown error code is shown as it is', async ({ page, mockBackend }) => {
@@ -111,6 +119,7 @@ test.describe('session', () => {
     // shell returns to, not about the section.
     await signIn(page, ADMIN, '/audit-log');
     await expect(page.getByTestId('section-title')).toHaveText('Журнал дій');
+    await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(24, 26, 29)');
 
     // What an expired refresh token leaves behind: no usable tokens in the browser.
     await page.evaluate(() => {
@@ -121,8 +130,11 @@ test.describe('session', () => {
     await page.goto('/audit-log?city=Chisinau');
 
     await expect(page).toHaveURL(/\/login\?returnUrl=%2Faudit-log%3Fcity%3DChisinau/);
+    await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
+    await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(24, 26, 29)');
 
     await signIn(page, ADMIN, page.url());
     await expect(page).toHaveURL(/\/audit-log\?city=Chisinau$/);
+    await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(24, 26, 29)');
   });
 });

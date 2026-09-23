@@ -13,7 +13,10 @@ import {
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
 
 test.describe('sign-in', () => {
-  test('password, then TOTP, then the shell with the email from /admin/me', async ({ page, mockBackend }) => {
+  test('password, then TOTP, then the shell with the email from /admin/me', async ({
+    page,
+    mockBackend,
+  }) => {
     const api = await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/stats/basic': EMPTY_STATS,
@@ -102,7 +105,10 @@ test.describe('sign-in', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('an admin token the backend refuses is signed out with the same refusal', async ({ page, mockBackend }) => {
+  test('an admin token the backend refuses is signed out with the same refusal', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, { 'GET /admin/me': apiError(403, 'FORBIDDEN') });
 
     await signIn(page, ADMIN);
@@ -131,8 +137,11 @@ test.describe('sign-in', () => {
 
     await page.getByTestId('sign-out').click();
     await expect(page).toHaveURL(/\/login$/);
+    await expect(page.locator('main')).toHaveCount(1);
+    await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(24, 26, 29)');
 
     await page.goto('/salons');
     await expect(page).toHaveURL(/\/login\?returnUrl=%2Fsalons/);
+    await expect(page.getByTestId('login-email')).toHaveCSS('color-scheme', 'dark');
   });
 });

@@ -25,7 +25,7 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   --bm-bg: #181a1d;
   --bm-panel: #1e2024;
   --bm-raised: #25282d;
@@ -50,10 +50,6 @@ html:lang(ru) {
     sans-serif;
 }
 
-.bookme-dark {
-  color-scheme: dark;
-}
-
 html,
 body {
   height: 100%;
@@ -61,6 +57,8 @@ body {
 
 body {
   margin: 0;
+  background: var(--bm-bg);
+  color: var(--bm-text);
 }
 
 @layer components {
@@ -233,11 +231,6 @@ body {
     min-height: 0;
     overflow: auto;
     padding: 1.5rem;
-    background: #f8fafc;
-    color: #0f172a;
-  }
-  html.bookme-dark .shell-workspace,
-  html.bookme-profile .shell-workspace {
     background: var(--bm-bg);
     color: var(--bm-text);
   }
@@ -331,11 +324,11 @@ body {
     min-height: 2.25rem;
     cursor: pointer;
   }
-  .bookme-dark :focus-visible {
+  :focus-visible {
     outline: 3px solid var(--bm-accent);
     outline-offset: 3px;
   }
-  .bookme-dark .p-select-option-selected {
+  .p-select-option-selected {
     font-weight: 600;
     text-decoration: underline;
     text-underline-offset: 0.2em;
@@ -366,10 +359,10 @@ body {
   .profile-table .p-tag {
     white-space: normal;
   }
-  .bookme-dark .p-select-overlay {
+  .p-select-overlay {
     max-width: calc(100vw - 2rem);
   }
-  .bookme-dark .p-select-option {
+  .p-select-option {
     white-space: normal;
     overflow-wrap: anywhere;
   }

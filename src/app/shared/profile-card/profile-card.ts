@@ -17,7 +17,7 @@ export type ProfileCardTab = { path: string; labelKey: TranslationKey };
   selector: 'app-profile-card',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'profile-card bookme-dark' },
+  host: { class: 'profile-card' },
   template: `
     <a class="profile-back" data-testid="card-back" [routerLink]="backLink()">
       <i class="pi pi-arrow-left" aria-hidden="true"></i>
