@@ -1,10 +1,11 @@
-import { DestroyRef, inject, Injectable, signal } from '@angular/core';
-import { type Observable, ReplaySubject, Subscription } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { type Observable, ReplaySubject } from 'rxjs';
 import {
   type Appointment,
   type AppointmentDetails,
   AppointmentsClient,
 } from '../../core/api/appointments.client';
+import { listLevel } from '../profile-card/card-lifetime';
 
 /** The Запис open in a list, as far as its read has got. */
 export type OpenedAppointment = {
@@ -38,34 +39,33 @@ export type OpenedAppointment = {
  * venue's window, a Клієнт's history by cursor, a platform day or window; the list only says when
  * it shows a new one. Provided by the list, so the actions under its open Запис reach it too; a
  * Запис's own reads and actions are addressed by its id alone, whichever list it was opened from.
+ *
+ * The binding is the request scope's (`RequestScope`): the list shown is a level inside the opening
+ * of the card it sits on, and the open Запис a level inside the list.
  */
 @Injectable()
 export class AppointmentInteraction<R extends Appointment = Appointment> {
   private readonly client = inject(AppointmentsClient);
 
-  private readonly shown = signal<R[] | null>(null);
-  private readonly openedNow = signal<OpenedAppointment | null>(null);
+  /** The list shown: a new one drops whatever the last one asked, its open Запис with it. */
+  private readonly listScope = listLevel();
+  /** The Запис open in it: opening another, or closing it, drops the read of its details. */
+  private readonly openedScope = this.listScope.nested();
+
+  private readonly shown = this.listScope.state<R[] | null>(null);
+  private readonly openedNow = this.listScope.state<OpenedAppointment | null>(null);
 
   /** The list as shown: what it was given, with every action answered in it since. */
   readonly rows = this.shown.asReadonly();
   /** The Запис open, or `null`. */
   readonly opened = this.openedNow.asReadonly();
 
-  /** Counts the lists shown: an action's answer is matched to the one it was taken in. */
-  private listShown = 0;
-  private detailsRead = Subscription.EMPTY;
-
-  constructor() {
-    inject(DestroyRef).onDestroy(() => this.detailsRead.unsubscribe());
-  }
-
   /**
    * A new list — `null` while it is being read. The open Запис closes, and nothing asked in the
    * last list reaches this one.
    */
   show(rows: R[] | null): void {
-    this.listShown++;
-    this.close();
+    this.listScope.renew();
     this.shown.set(rows);
   }
 
@@ -97,25 +97,19 @@ export class AppointmentInteraction<R extends Appointment = Appointment> {
    * already worded it.
    */
   act(action: Observable<AppointmentDetails>): Observable<AppointmentDetails> {
-    const listShown = this.listShown;
     const answer = new ReplaySubject<AppointmentDetails>(1);
     // Never dropped, not even with the tab: a change the backend was asked for is not undone by
     // leaving, and its refusal is still worded wherever the administrator is by then.
-    action.subscribe({
-      next: (updated) => {
-        this.absorb(updated, listShown);
-        answer.next(updated);
-      },
-      error: (error: unknown) => answer.error(error),
-      complete: () => answer.complete(),
-    });
+    action.subscribe(answer);
+    // The list hears it first, and only while it is the list the action was taken in.
+    this.listScope.run(answer, { next: (updated) => this.absorb(updated) });
     return answer.asObservable();
   }
 
   private open(appointmentId: string): void {
-    this.detailsRead.unsubscribe();
+    this.openedScope.renew();
     this.openedNow.set({ appointmentId, details: null, failed: false });
-    this.detailsRead = this.client.details(appointmentId).subscribe({
+    this.openedScope.run(this.client.details(appointmentId), {
       next: (details) => this.openedNow.set({ appointmentId, details, failed: false }),
       // Including a Запис that has since vanished: the row says so instead of a toast.
       error: () => this.openedNow.set({ appointmentId, details: null, failed: true }),
@@ -123,14 +117,11 @@ export class AppointmentInteraction<R extends Appointment = Appointment> {
   }
 
   private close(): void {
-    this.detailsRead.unsubscribe();
+    this.openedScope.renew();
     this.openedNow.set(null);
   }
 
-  private absorb(updated: AppointmentDetails, listShown: number): void {
-    if (listShown !== this.listShown) {
-      return;
-    }
+  private absorb(updated: AppointmentDetails): void {
     this.shown.update(
       (rows) =>
         rows?.map((row) =>
@@ -141,7 +132,7 @@ export class AppointmentInteraction<R extends Appointment = Appointment> {
     );
     if (this.isOpen(updated.appointmentId)) {
       // The row and the details now say the same; a read still under way would part them again.
-      this.detailsRead.unsubscribe();
+      this.openedScope.renew();
       this.openedNow.set({ appointmentId: updated.appointmentId, details: updated, failed: false });
     }
   }

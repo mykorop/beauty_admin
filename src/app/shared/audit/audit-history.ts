@@ -1,11 +1,10 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, type OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { ButtonDirective } from 'primeng/button';
-import { Subject, switchMap } from 'rxjs';
-import { AuditClient, type AuditEntry, type AuditPage, type AuditTargetType } from '../../core/api/audit.client';
+import { AuditClient, type AuditTargetType } from '../../core/api/audit.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { feed } from '../feed';
 import { formatVenueDateTime } from '../venue-date';
 import { AuditEntryDetails } from './audit-entry-details';
 
@@ -23,7 +22,7 @@ import { AuditEntryDetails } from './audit-entry-details';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'moderation-page' },
   template: `
-    @if (entries(); as entries) {
+    @if (history.items(); as entries) {
       <div class="flex max-w-4xl flex-col gap-3">
         @for (entry of entries; track entry.auditId) {
           <article class="audit-history-card rounded-lg border border-divider bg-panel p-4 text-sm" data-testid="history-entry">
@@ -37,7 +36,7 @@ import { AuditEntryDetails } from './audit-entry-details';
         } @empty {
           <p class="content-state text-muted" data-testid="history-empty">{{ emptyKey() | t }}</p>
         }
-        @if (nextCursor()) {
+        @if (history.hasMore()) {
           <div>
             <button
               pButton
@@ -46,23 +45,22 @@ import { AuditEntryDetails } from './audit-entry-details';
               size="small"
               data-testid="history-more"
               [label]="'history.more' | t"
-              [loading]="loading()"
-              (click)="more.next()"
+              [loading]="history.loading()"
+              (click)="history.loadMore()"
             ></button>
           </div>
         }
       </div>
-    } @else if (failed()) {
+    } @else if (history.failed()) {
       <p class="content-state text-danger" role="alert" data-testid="history-failed">{{ 'card.failed' | t }}</p>
     } @else {
       <p class="content-state text-muted" role="status" data-testid="history-loading">{{ 'common.loading' | t }}</p>
     }
   `,
 })
-export class AuditHistory implements OnInit {
+export class AuditHistory {
   private readonly i18n = inject(I18nService);
   private readonly client = inject(AuditClient);
-  private readonly destroyRef = inject(DestroyRef);
 
   readonly targetType = input.required<AuditTargetType>();
   readonly targetId = input.required<string>();
@@ -71,38 +69,10 @@ export class AuditHistory implements OnInit {
   /** What "nothing happened here yet" says — a Салон and a Майстер word it differently. */
   readonly emptyKey = input.required<TranslationKey>();
 
-  protected readonly entries = signal<AuditEntry[] | null>(null);
-  protected readonly nextCursor = signal<string | null>(null);
-  protected readonly loading = signal(false);
-  protected readonly failed = signal(false);
-  protected readonly more = new Subject<void>();
-
-  /** Not the constructor: a required input has no value until Angular has set it. */
-  ngOnInit(): void {
-    const loadPage = (cursor?: string) => {
-      this.loading.set(true);
-      return this.client.forTarget(this.targetType(), this.targetId(), cursor);
-    };
-    const appendPage = {
-      next: ({ items, nextCursor }: AuditPage) => {
-        this.entries.update((shown) => [...(shown ?? []), ...items]);
-        this.nextCursor.set(nextCursor);
-        this.loading.set(false);
-      },
-      // The interceptor has already worded the refusal as a toast.
-      error: () => {
-        this.failed.set(this.entries() === null);
-        this.loading.set(false);
-      },
-    };
-    loadPage().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(appendPage);
-    this.more
-      .pipe(
-        switchMap(() => loadPage(this.nextCursor() ?? undefined)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(appendPage);
-  }
+  protected readonly history = feed({
+    query: () => ({ type: this.targetType(), id: this.targetId() }),
+    read: ({ type, id }, cursor) => this.client.forTarget(type, id, cursor),
+  });
 
   protected venueDate(iso: string): string {
     return formatVenueDateTime(iso, this.i18n.locale(), this.timezone());

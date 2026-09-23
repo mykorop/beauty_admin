@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonDirective } from 'primeng/button';
 import { Select } from 'primeng/select';
 import { Tag } from 'primeng/tag';
-import { catchError, EMPTY, exhaustMap, startWith, Subject, switchMap } from 'rxjs';
 import {
   APPOINTMENT_STATUS_SEVERITY,
   APPOINTMENT_STATUSES,
@@ -18,6 +16,7 @@ import { AppointmentDetailsPanel } from '../../shared/appointments/appointment-d
 import { AppointmentInteraction } from '../../shared/appointments/appointment-interaction';
 import { appointmentStatusLabel, formatPrice } from '../../shared/appointments/appointment-wording';
 import { isStaleBooking } from '../../shared/appointments/appointment-filters';
+import { feed } from '../../shared/feed';
 import { formatVenueDateTime } from '../../shared/venue-date';
 import { ClientCardStore } from './client-card.store';
 
@@ -148,7 +147,7 @@ import { ClientCardStore } from './client-card.store';
       <p class="mt-2 max-w-6xl text-xs text-muted" data-testid="appointments-readonly">
         {{ 'appointments.readonly' | t }}
       </p>
-      @if (nextCursor()) {
+      @if (appointments.hasMore()) {
         <div class="mt-3">
           <button
             pButton
@@ -157,12 +156,12 @@ import { ClientCardStore } from './client-card.store';
             size="small"
             data-testid="appointments-more"
             [label]="'history.more' | t"
-            [loading]="loading()"
-            (click)="more.next()"
+            [loading]="appointments.loading()"
+            (click)="appointments.loadMore()"
           ></button>
         </div>
       }
-    } @else if (failed()) {
+    } @else if (appointments.failed()) {
       <p class="text-muted" data-testid="appointments-failed">{{ 'card.failed' | t }}</p>
     }
   `,
@@ -183,14 +182,24 @@ export class ClientAppointmentsTab {
    * Клієнт is another list even where the card keeps this tab standing between the two.
    */
   private readonly asked = computed(
-    () => ({ clientId: this.card.client()?.clientId ?? null, status: this.status() }),
-    { equal: (left, right) => left.clientId === right.clientId && left.status === right.status },
+    () => {
+      const clientId = this.card.client()?.clientId;
+      return clientId ? { clientId, status: this.status() } : null;
+    },
+    {
+      equal: (left, right) => left?.clientId === right?.clientId && left?.status === right?.status,
+    },
   );
 
-  protected readonly nextCursor = signal<string | null>(null);
-  protected readonly loading = signal(false);
-  protected readonly failed = signal(false);
-  protected readonly more = new Subject<void>();
+  /**
+   * Another Клієнт or another status starts the feed over, and a page asked for the old one is
+   * dropped; an older page is the same list read further.
+   */
+  protected readonly appointments = feed({
+    query: this.asked,
+    read: ({ clientId, status }, cursor) => this.clients.appointments(clientId, { status, cursor }),
+    list: this.interaction,
+  });
 
   protected readonly statusOptions = computed(() =>
     APPOINTMENT_STATUSES.map((value) => ({ value, label: this.i18n.t(`appointments.status.${value}`) })),
@@ -215,41 +224,4 @@ export class ClientAppointmentsTab {
       })) ?? null
     );
   });
-
-  constructor() {
-    toObservable(this.asked)
-      .pipe(
-        // Another Клієнт or another status starts the feed over; the answer to the old one is dropped.
-        switchMap(({ clientId, status }) => {
-          this.interaction.show(null);
-          this.nextCursor.set(null);
-          if (clientId === null) {
-            return EMPTY;
-          }
-          return this.more.pipe(
-            startWith(undefined),
-            exhaustMap(() => {
-              this.loading.set(true);
-              this.failed.set(false);
-              return this.clients
-                .appointments(clientId, { status, cursor: this.nextCursor() ?? undefined })
-                // The interceptor has already worded the refusal as a toast; rows already shown stay.
-                .pipe(
-                  catchError(() => {
-                    this.failed.set(true);
-                    this.loading.set(false);
-                    return EMPTY;
-                  }),
-                );
-            }),
-          );
-        }),
-        takeUntilDestroyed(),
-      )
-      .subscribe((page) => {
-        this.interaction.append(page.items);
-        this.nextCursor.set(page.nextCursor);
-        this.loading.set(false);
-      });
-  }
 }

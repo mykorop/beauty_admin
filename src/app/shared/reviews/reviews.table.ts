@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Button, ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Tag } from 'primeng/tag';
-import { catchError, combineLatest, EMPTY, exhaustMap, map, startWith, Subject, switchMap } from 'rxjs';
+import { map } from 'rxjs';
 import { REVIEW_STATES, ReviewsClient, type Review } from '../../core/api/reviews.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { feed } from '../feed';
 import { ReasonDialog } from '../reason-dialog/reason-dialog';
 import { formatVenueDateTime } from '../venue-date';
 import type { ReviewFilterName, ReviewsFeed } from './reviews.feed';
@@ -57,24 +58,26 @@ export class ReviewsTable {
   /** A control is drawn only when the open feed can actually be asked for it. */
   protected readonly shows = (filter: ReviewFilterName): boolean => this.feed().filters.includes(filter);
 
-  private readonly filters$ = this.route.queryParamMap.pipe(map(parseReviewFilters));
-  protected readonly filters = toSignal(this.filters$, {
+  protected readonly filters = toSignal(this.route.queryParamMap.pipe(map(parseReviewFilters)), {
     initialValue: parseReviewFilters(this.route.snapshot.queryParamMap),
   });
   protected readonly filtered = computed(() =>
     this.feed().filters.some((name) => this.filters()[name] !== null),
   );
 
-  private readonly reviews = signal<Review[] | null>(null);
-  protected readonly nextCursor = signal<string | null>(null);
-  protected readonly loading = signal(false);
-  protected readonly failed = signal(false);
+  /**
+   * A new feed or new filters, or «Оновити», start it over; a page asked under the old ones is
+   * dropped.
+   */
+  protected readonly reviews = feed({
+    query: () => ({ source: this.feed(), timezone: this.timezone(), filters: this.filters() }),
+    read: ({ source, timezone, filters }, cursor) => source.list(filters, timezone, cursor),
+  });
+  /** Reviews an action has answered with since this list was read, by id: drawn as answered. */
+  private readonly answered = this.reviews.listState<ReadonlyMap<string, Review>>(new Map());
   protected readonly busy = signal(false);
   /** The review whose confirmation is open, or `null`. */
-  protected readonly asked = signal<Review | null>(null);
-
-  protected readonly reload = new Subject<void>();
-  protected readonly more = new Subject<void>();
+  protected readonly asked = this.reviews.listState<Review | null>(null);
 
   protected readonly ratingOptions = [5, 4, 3, 2, 1].map((value) => ({
     value,
@@ -88,55 +91,20 @@ export class ReviewsTable {
     const locale = this.i18n.locale();
     const timezone = this.timezone();
     return (
-      this.reviews()?.map((review) => ({
-        review,
-        when: formatVenueDateTime(review.createdAt, locale, timezone),
-        masterRating: String(review.masterRating),
-        // A visit to a Незалежний майстер rates no Салон; the equal number the row carries would
-        // read as one.
-        salonRating: review.salonId ? String(review.salonRating) : '—',
-        hidden: review.hiddenAt !== null,
-      })) ?? null
+      this.reviews.items()?.map((row) => {
+        const review = this.answered().get(row.reviewId) ?? row;
+        return {
+          review,
+          when: formatVenueDateTime(review.createdAt, locale, timezone),
+          masterRating: String(review.masterRating),
+          // A visit to a Незалежний майстер rates no Салон; the equal number the row carries would
+          // read as one.
+          salonRating: review.salonId ? String(review.salonRating) : '—',
+          hidden: review.hiddenAt !== null,
+        };
+      }) ?? null
     );
   });
-
-  constructor() {
-    combineLatest([
-      toObservable(this.feed),
-      toObservable(this.timezone),
-      this.filters$,
-      this.reload.pipe(startWith(undefined)),
-    ])
-      .pipe(
-        // A new feed or new filters start it over; an answer to the old question is dropped.
-        switchMap(([feed, timezone, filters]) => {
-          this.reviews.set(null);
-          this.nextCursor.set(null);
-          this.asked.set(null);
-          return this.more.pipe(
-            startWith(undefined),
-            exhaustMap(() => {
-              this.loading.set(true);
-              this.failed.set(false);
-              return feed.list(filters, timezone, this.nextCursor() ?? undefined).pipe(
-                // The interceptor has already worded the refusal as a toast; rows already shown stay.
-                catchError(() => {
-                  this.failed.set(true);
-                  this.loading.set(false);
-                  return EMPTY;
-                }),
-              );
-            }),
-          );
-        }),
-        takeUntilDestroyed(),
-      )
-      .subscribe(({ items, nextCursor }) => {
-        this.reviews.update((shown) => [...(shown ?? []), ...items]);
-        this.nextCursor.set(nextCursor);
-        this.loading.set(false);
-      });
-  }
 
   protected setFilter(change: Partial<ReviewFilters>): void {
     // A cleared date input reports '', a cleared select `null`.
@@ -177,9 +145,7 @@ export class ReviewsTable {
       next: (updated) => {
         this.busy.set(false);
         this.asked.set(null);
-        this.reviews.update(
-          (shown) => shown?.map((row) => (row.reviewId === updated.reviewId ? updated : row)) ?? shown,
-        );
+        this.answered.update((answered) => new Map(answered).set(updated.reviewId, updated));
       },
       error: () => this.busy.set(false),
     });

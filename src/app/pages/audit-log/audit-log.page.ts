@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Button, ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
-import { catchError, combineLatest, EMPTY, exhaustMap, map, startWith, Subject, switchMap } from 'rxjs';
+import { map } from 'rxjs';
 import {
   AUDIT_ACTIONS,
   AUDIT_TARGET_TYPES,
@@ -15,6 +15,7 @@ import {
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AuditEntryDetails } from '../../shared/audit/audit-entry-details';
+import { feed } from '../../shared/feed';
 import { PLATFORM_TIME_ZONE } from '../../shared/platform-clock';
 import { formatVenueDateTime } from '../../shared/venue-date';
 import {
@@ -50,20 +51,17 @@ export class AuditLogPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  private readonly filters$ = this.route.queryParamMap.pipe(map(parseAuditLogFilters));
-  protected readonly filters = toSignal(this.filters$, {
+  protected readonly filters = toSignal(this.route.queryParamMap.pipe(map(parseAuditLogFilters)), {
     initialValue: parseAuditLogFilters(this.route.snapshot.queryParamMap),
   });
   protected readonly filtered = computed(() => Object.values(this.filters()).some((value) => value !== null));
 
-  protected readonly entries = signal<AuditEntry[] | null>(null);
-  protected readonly nextCursor = signal<string | null>(null);
-  protected readonly loading = signal(false);
-  protected readonly failed = signal(false);
-  private readonly expanded = signal<ReadonlySet<string>>(new Set());
-
-  protected readonly reload = new Subject<void>();
-  protected readonly more = new Subject<void>();
+  /** New filters, or «Оновити», start the log over; a page asked under the old ones is dropped. */
+  protected readonly log = feed({
+    query: () => toApiFilters(this.filters()),
+    read: (query, cursor) => this.client.list(query, cursor),
+  });
+  private readonly expanded = this.log.listState<ReadonlySet<string>>(new Set());
 
   protected readonly targetTypeOptions = computed(() =>
     AUDIT_TARGET_TYPES.map((value) => ({ value, label: this.i18n.t(`audit.targetType.${value}`) })),
@@ -71,40 +69,6 @@ export class AuditLogPage {
   protected readonly actionOptions = computed(() =>
     AUDIT_ACTIONS.map((value) => ({ value, label: this.i18n.t(`audit.action.${value}`) })),
   );
-
-  constructor() {
-    combineLatest([this.filters$, this.reload.pipe(startWith(undefined))])
-      .pipe(
-        // New filters (or «Оновити») start the log over; an answer to the old question is dropped.
-        switchMap(([filters]) => {
-          this.entries.set(null);
-          this.nextCursor.set(null);
-          this.expanded.set(new Set());
-          const query = toApiFilters(filters);
-          return this.more.pipe(
-            startWith(undefined),
-            exhaustMap(() => {
-              this.loading.set(true);
-              this.failed.set(false);
-              return this.client.list(query, this.nextCursor() ?? undefined).pipe(
-                // The interceptor has already worded the refusal as a toast; rows already shown stay.
-                catchError(() => {
-                  this.failed.set(true);
-                  this.loading.set(false);
-                  return EMPTY;
-                }),
-              );
-            }),
-          );
-        }),
-        takeUntilDestroyed(),
-      )
-      .subscribe(({ items, nextCursor }) => {
-        this.entries.update((shown) => [...(shown ?? []), ...items]);
-        this.nextCursor.set(nextCursor);
-        this.loading.set(false);
-      });
-  }
 
   protected setFilter(change: Partial<AuditLogFilters>): void {
     // A cleared date input reports '', a cleared select `null`.

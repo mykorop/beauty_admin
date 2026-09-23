@@ -145,6 +145,22 @@ const client = (overrides: Record<string, unknown> = {}) => ({
 const tab = (page: Page, path: string) =>
   page.locator(`a[data-testid="card-tab"][href$="/${path}"]`);
 
+/** A row of a Салон's «Історія»; the specs tell rows apart by their reason. */
+const historyEntry = (overrides: Record<string, unknown> = {}) => ({
+  auditId: 'a1',
+  adminId: 'e2e-user-sub',
+  adminEmail: ADMIN.email,
+  targetType: 'salon',
+  targetId: 's1',
+  salonId: 's1',
+  action: 'salon.profile.update',
+  createdAt: '2026-09-21T10:00:00.000Z',
+  changes: [],
+  reason: 'Beauty Lab edit',
+  affected: [],
+  ...overrides,
+});
+
 test.describe('картка Салону', () => {
   test('a Блокування answered after the card moved on leaves the next Салон, its dialog and its count alone', async ({
     page,
@@ -342,6 +358,62 @@ test.describe('картка Салону', () => {
     await expect(page.getByTestId('card-blocked-banner')).toContainText('Spam');
     await expect(page.getByTestId('card-title')).toHaveText('Nail Studio');
   });
+
+  test('a page of «Історія» answered after the card moved on stays out of the next Салон’s', async ({
+    page,
+    mockBackend,
+  }) => {
+    const latePage = holdResponse(
+      apiOk({
+        items: [historyEntry({ auditId: 'a2', reason: 'Older Beauty Lab edit' })],
+        nextCursor: null,
+      }),
+    );
+    const nailStudioEntry = (overrides: Record<string, unknown>) =>
+      historyEntry({ targetId: 's2', salonId: 's2', reason: 'Nail Studio edit', ...overrides });
+    const cursors: (string | null)[] = [];
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon()),
+      'GET /admin/salons/s2': apiOk(salon(NAIL_STUDIO)),
+      'GET /admin/audit': (url) => {
+        const cursor = url.searchParams.get('cursor');
+        if (url.searchParams.get('target') === 'salon:s1') {
+          return cursor
+            ? latePage.respond()
+            : apiOk({ items: [historyEntry()], nextCursor: 'next-s1' });
+        }
+        cursors.push(cursor);
+        return cursor
+          ? apiOk({
+              items: [nailStudioEntry({ auditId: 'b2', reason: 'Older Nail Studio edit' })],
+              nextCursor: null,
+            })
+          : apiOk({ items: [nailStudioEntry({ auditId: 'b1' })], nextCursor: 'next-s2' });
+      },
+    });
+    await signIn(page, ADMIN, '/salons/s1/history');
+    const entries = page.getByTestId('history-entry');
+    await expect(entries).toHaveCount(1);
+
+    await page.getByTestId('history-more').click();
+    await latePage.requested;
+
+    await goBackTo(page, '/salons/s2/history');
+    await expect(page.getByTestId('card-title')).toHaveText('Nail Studio');
+    await expect(entries).toHaveCount(1);
+    await expect(entries.nth(0)).toContainText('Nail Studio edit');
+
+    await latePage.release();
+    // This Салон's own older page: by the time it is drawn, the late one has had its chance.
+    await page.getByTestId('history-more').click();
+
+    await expect(entries).toHaveCount(2);
+    await expect(entries.nth(0)).toContainText('Nail Studio edit');
+    await expect(entries.nth(1)).toContainText('Older Nail Studio edit');
+    await expect(page.getByTestId('history-more')).toHaveCount(0);
+    expect(cursors).toEqual([null, 'next-s2']);
+  });
 });
 
 test.describe('картка Майстра салону', () => {
@@ -402,6 +474,8 @@ test.describe('картка Майстра салону', () => {
       'GET /admin/salons/s2/masters/m1': apiOk(salonMaster({ commissionPercent: 25 })),
       'DELETE /admin/salons/s1/masters/m1': lateRemoval.respond,
       'GET /admin/reviews': apiOk({ items: [], nextCursor: null }),
+      // The Ростер the spec ends on reads itself as it opens.
+      'GET /admin/salons/s2/masters': apiOk({ items: [] }),
     });
     await signIn(page, ADMIN, '/salons/s1/masters/m1/profile');
 
