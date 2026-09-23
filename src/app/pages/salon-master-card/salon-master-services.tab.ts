@@ -39,7 +39,7 @@ import { SalonMasterStore } from './salon-master.store';
       />
     } @else if (rows(); as rows) {
       @if (writable()) {
-        <div class="mb-3 flex flex-wrap max-w-6xl items-center justify-end gap-3">
+        <div class="mb-3 flex flex-wrap items-center justify-end gap-3">
           @if (available().length === 0) {
             <span class="text-xs text-muted" data-testid="copy-new-none">{{
               'copies.new.none' | t

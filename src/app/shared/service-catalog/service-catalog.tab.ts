@@ -47,7 +47,7 @@ import type { CatalogService, ServiceCatalogPort } from './service-catalog.model
       }
     } @else if (rows(); as rows) {
       @if (writable()) {
-        <div class="mb-3 flex flex-wrap max-w-6xl justify-end">
+        <div class="mb-3 flex flex-wrap justify-end">
           <button
             pButton
             type="button"

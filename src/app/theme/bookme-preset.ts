@@ -67,10 +67,11 @@ export const BookMePreset = definePreset(Aura, {
     togglebutton: {
       root: {
         borderColor: 'var(--bm-input-border)',
+        checkedBackground: 'var(--bm-accent)',
         checkedBorderColor: 'var(--bm-accent)',
         checkedColor: 'var(--bm-bg)',
       },
-      content: { checkedBackground: 'var(--bm-accent)' },
+      content: { checkedBackground: 'transparent', checkedShadow: 'none' },
     },
   },
 });
