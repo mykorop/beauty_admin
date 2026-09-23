@@ -8,23 +8,31 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { ProgressBar } from 'primeng/progressbar';
 import { SelectButton } from 'primeng/selectbutton';
+import { Tag } from 'primeng/tag';
 import { exhaustMap, type Subscription, takeWhile, timer } from 'rxjs';
 import {
+  ATTENTION_FLAGS,
   type AppointmentsDay,
+  type AttentionFlag,
   type DetailedStats,
   type DetailedStatsState,
   type GrowthDay,
   StatsClient,
+  type StatsWindow,
 } from '../../core/api/stats.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
 import { formatBuiltAt } from '../../shared/built-at';
 import { calendarDayAsUtcDate } from '../../shared/calendar-day';
+import { PLATFORM_TIME_ZONE } from '../../shared/platform-clock';
+import { formatRating } from '../../shared/rating';
+import { formatVenueDate } from '../../shared/venue-date';
 import {
   CHART_SERIES_COLORS,
   type ChartPoint,
@@ -33,7 +41,12 @@ import {
 } from '../../shared/charts/column-chart';
 import {
   appointmentTotals,
+  attentionCounts,
+  attentionFiltered,
+  attentionLink,
   daysFrom,
+  lowRatedFeed,
+  profileCardLink,
   weeksFrom,
   growthTotals,
   periodStart,
@@ -70,8 +83,8 @@ type GrowthStep = 'day' | 'week';
 
 /**
  * «Детальна статистика» — the lower half of the dashboard: a button that has the backend read the
- * whole table (ADR-0003), a bar that follows it, and the three charts of the last result — growth,
- * Записи and Вартість Записів.
+ * whole table (ADR-0003), a bar that follows it, and the last result — the three charts of growth,
+ * Записи and Вартість Записів, the tops, the quality block and «Потребують уваги».
  *
  * The backend works in the background and one run at a time, so this polls until the run ends; a
  * dashboard opened while one is under way picks it up and follows it too. The last result stays on
@@ -80,7 +93,17 @@ type GrowthStep = 'day' | 'week';
  */
 @Component({
   selector: 'app-detailed-stats',
-  imports: [Button, ColumnChart, FormsModule, Message, ProgressBar, SelectButton, TranslatePipe],
+  imports: [
+    Button,
+    ColumnChart,
+    FormsModule,
+    Message,
+    ProgressBar,
+    RouterLink,
+    SelectButton,
+    Tag,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './detailed-stats.section.html',
 })
@@ -99,6 +122,8 @@ export class DetailedStatsSection {
 
   protected readonly period = signal<StatsPeriod>('90');
   protected readonly growthStep = signal<GrowthStep>('day');
+  /** The «Потребують уваги» filters chosen; none chosen shows everyone. */
+  protected readonly attentionChosen = signal<AttentionFlag[]>([]);
 
   protected readonly run = computed(() => this.state()?.run ?? null);
   protected readonly result = computed(() => this.state()?.result ?? null);
@@ -194,6 +219,8 @@ export class DetailedStatsSection {
       year: 'numeric',
       timeZone: 'UTC',
     });
+    const rating = (value: number | null, reviews: number) =>
+      value === null ? '—' : formatRating(locale, value, reviews);
     return {
       count: (value: number) => count.format(value),
       compact: (value: number) => compact.format(value),
@@ -204,6 +231,12 @@ export class DetailedStatsSection {
         label: short.format(calendarDayAsUtcDate(day)),
         title: long.format(calendarDayAsUtcDate(day)),
       }),
+      /** A window of calendar days, as one range: «25 серпня – 23 вересня 2026 р.». */
+      window: ({ from, to }: StatsWindow) =>
+        date.formatRange(calendarDayAsUtcDate(from), calendarDayAsUtcDate(to)),
+      /** An instant as the day it fell on in Chișinău — the calendar every figure here is cut on. */
+      platformDay: (iso: string | null) => formatVenueDate(iso, locale, PLATFORM_TIME_ZONE),
+      rating,
       weekPoint: (monday: string): ChartPoint => ({
         key: monday,
         label: short.format(calendarDayAsUtcDate(monday)),
@@ -216,6 +249,15 @@ export class DetailedStatsSection {
   protected readonly view = computed(() => {
     const result = this.result();
     return result ? this.chartsOf(result) : null;
+  });
+
+  /**
+   * The tops, the quality block and «Потребують уваги» of the last result. They describe the
+   * moment it was built over windows of their own, so the period above does not cut them.
+   */
+  protected readonly standing = computed(() => {
+    const result = this.result();
+    return result ? this.standingOf(result) : null;
   });
 
   private followSubscription: Subscription | undefined;
@@ -348,6 +390,96 @@ export class DetailedStatsSection {
       formatCount: formats.count,
       formatMdl: formats.mdl,
       formatCompact: formats.compact,
+    };
+  }
+
+  private standingOf(result: DetailedStats) {
+    const formats = this.formats();
+    const { tops, quality, attention } = result;
+    const counts = attentionCounts(attention.items);
+
+    return {
+      topsWindow: formats.window(tops.window),
+      tops: [
+        {
+          key: 'salons',
+          titleKey: 'stats.tops.salons' as TranslationKey,
+          rows: tops.salons.map((salon) => ({
+            key: salon.salonId,
+            name: salon.name || salon.salonId,
+            city: salon.city,
+            appointments: formats.count(salon.appointments),
+            link: profileCardLink('salon', salon.salonId) as string[] | null,
+          })),
+        },
+        {
+          key: 'independentMasters',
+          titleKey: 'stats.tops.independentMasters' as TranslationKey,
+          rows: tops.independentMasters.map((master) => ({
+            key: master.masterId,
+            name: master.name || master.masterId,
+            city: master.city,
+            appointments: formats.count(master.appointments),
+            link: profileCardLink('independentMaster', master.masterId) as string[] | null,
+          })),
+        },
+        {
+          key: 'cities',
+          titleKey: 'stats.tops.cities' as TranslationKey,
+          // A city is not a profile: there is no card to open.
+          rows: tops.cities.map((city) => ({
+            key: city.cityCode || city.city,
+            name: city.city,
+            city: '',
+            appointments: formats.count(city.appointments),
+            link: null as string[] | null,
+          })),
+        },
+      ],
+      quality: {
+        window: formats.window(quality.window),
+        reviews: formats.count(quality.reviews),
+        averageRating: formats.rating(quality.averageRating, quality.reviews),
+        lowRated: formats.count(quality.lowRated),
+        profiles: quality.lowRatedProfiles.map((profile) => ({
+          key: `${profile.kind}:${profile.id}`,
+          name: profile.name || profile.id,
+          kindKey: `stats.quality.kind.${profile.kind}` as TranslationKey,
+          lowRated: formats.count(profile.lowRated),
+          feed: lowRatedFeed(profile, quality.window),
+        })),
+      },
+      attention: {
+        empty: attention.items.length === 0,
+        filters: ATTENTION_FLAGS.map((flag) => ({
+          value: flag,
+          label: this.i18n.t('stats.attention.filter', {
+            label: this.i18n.t(`stats.attention.flag.${flag}` as TranslationKey),
+            count: formats.count(counts[flag]),
+          }),
+        })),
+        rows: attentionFiltered(attention.items, this.attentionChosen()).map((item) => ({
+          key: `${item.kind}:${item.salonId ?? ''}:${item.id}`,
+          name: item.name || item.id,
+          kindKey: `stats.attention.kind.${item.kind}` as TranslationKey,
+          salonName: item.kind === 'salonMaster' ? item.salonName || item.salonId : null,
+          city: item.city || '—',
+          link: attentionLink(item),
+          registered: formats.platformDay(item.createdAt),
+          lastAppointment: item.lastAppointmentAt
+            ? formats.platformDay(item.lastAppointmentAt)
+            : null,
+          flags: item.flags.map((flag) => `stats.attention.flag.${flag}` as TranslationKey),
+          missing:
+            item.gaps.length === 0
+              ? null
+              : this.i18n.t('stats.attention.missing', {
+                  gaps: item.gaps
+                    .map((gap) => this.i18n.t(`stats.attention.gap.${gap}` as TranslationKey))
+                    .join(', '),
+                }),
+        })),
+      },
     };
   }
 }

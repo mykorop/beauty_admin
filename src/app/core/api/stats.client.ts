@@ -45,10 +45,87 @@ export type AppointmentsDay = {
 /** Вартість Записів of one day in MDL — without the cancelled and the no-shows. Not revenue. */
 export type AppointmentValueDay = { day: string; past: number; ahead: number };
 
+/** The calendar days a figure reads, both inclusive, ending on the result's `today`. */
+export type StatsWindow = { from: string; to: string };
+
+export type TopSalon = { salonId: string; name: string; city: string; appointments: number };
+export type TopMaster = { masterId: string; name: string; city: string; appointments: number };
+/** `cityCode` is empty for a profile older than the city directory. */
+export type TopCity = { cityCode: string; city: string; appointments: number };
+
+/**
+ * Who pulls the platform over the last 30 days: the Записи that were or will be served — the same
+ * set as Вартість Записів — of active profiles only. Ten of each at most.
+ */
+export type StatsTops = {
+  window: StatsWindow;
+  salons: TopSalon[];
+  independentMasters: TopMaster[];
+  cities: TopCity[];
+};
+
+/**
+ * Where the bad reviews of the week are. A visit to a Салон sits in the Салон's feed, one to a
+ * Незалежний майстер in his — the moderation feed opens on either. `name` is empty when the
+ * profile row is not in the table.
+ */
+export type LowRatedProfile = {
+  kind: 'salon' | 'master';
+  id: string;
+  name: string;
+  lowRated: number;
+};
+
+/** Блок якості: the visible reviews of the last 7 days — a hidden one counts nowhere. */
+export type StatsQuality = {
+  window: StatsWindow;
+  reviews: number;
+  /** The mean score of the place visited; `null` while there is nothing to average. */
+  averageRating: number | null;
+  /** Reviews where either score is 2 or lower. */
+  lowRated: number;
+  lowRatedProfiles: LowRatedProfile[];
+};
+
+/** The five independent reasons for «Потребують уваги». */
+export const ATTENTION_FLAGS = [
+  'noRecentAppointments',
+  'noServices',
+  'noSchedule',
+  'incompleteProfile',
+  'inDeletedSalon',
+] as const;
+export type AttentionFlag = (typeof ATTENTION_FLAGS)[number];
+
+/** What an incomplete profile lacks: `specialization` and `avatar` are asked only of a Майстер. */
+export type ProfileGap = 'description' | 'photos' | 'specialization' | 'avatar';
+
+/**
+ * One profile that needs attention. `salon` and `independentMaster` open their card; a
+ * `salonMaster` is stuck on the Ростер of the Видалений Салон named by `salonId` and opens his
+ * card inside that Ростер, where вилучення is.
+ */
+export type AttentionItem = {
+  kind: 'salon' | 'independentMaster' | 'salonMaster';
+  id: string;
+  salonId: string | null;
+  salonName: string | null;
+  name: string;
+  city: string;
+  createdAt: string | null;
+  /** The start of the latest Запис that has begun, in any state. */
+  lastAppointmentAt: string | null;
+  flags: AttentionFlag[];
+  gaps: ProfileGap[];
+};
+
+export type StatsAttention = { window: StatsWindow; items: AttentionItem[] };
+
 /**
  * The last result of the Детальна статистика. Days are `YYYY-MM-DD` on the platform's calendar
  * (`timeZone`, Chișinău), dense — a quiet day is a zero, not a gap — from the first day anything
- * happened to today, or later where Записи are booked ahead.
+ * happened to today, or later where Записи are booked ahead. The tops, the quality block and
+ * «Потребують уваги» describe the moment it was built.
  */
 export type DetailedStats = {
   runId: string;
@@ -63,6 +140,9 @@ export type DetailedStats = {
   growth: { daily: GrowthDay[]; weekly: GrowthDay[]; undated: number };
   appointments: { daily: AppointmentsDay[]; undated: number };
   value: { currency: 'MDL'; daily: AppointmentValueDay[]; unconverted: number };
+  tops: StatsTops;
+  quality: StatsQuality;
+  attention: StatsAttention;
 };
 
 /** One run of the Детальна статистика, as the dashboard follows it. */

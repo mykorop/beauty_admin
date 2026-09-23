@@ -41,6 +41,21 @@ const appointments = (day: string, counts: Record<string, number> = {}) => ({
   ...counts,
 });
 
+/** One profile of «Потребують уваги» — an active Салон unless told otherwise. */
+const attention = (overrides: Record<string, unknown> = {}) => ({
+  kind: 'salon',
+  id: 's',
+  salonId: null,
+  salonName: null,
+  name: 'Salon',
+  city: 'Chișinău',
+  createdAt: '2026-02-01T10:00:00.000Z',
+  lastAppointmentAt: null,
+  flags: [],
+  gaps: [],
+  ...overrides,
+});
+
 /**
  * A result built at noon on Wednesday 23 September 2026. The dashboard cuts its periods from the
  * result's own `today`, never from the browser's clock, so these figures read the same any day.
@@ -84,10 +99,111 @@ const result = (overrides: Record<string, unknown> = {}) => ({
     ],
     unconverted: 0,
   },
+  tops: {
+    window: { from: '2026-08-25', to: '2026-09-23' },
+    salons: [
+      { salonId: 's1', name: 'Beauty Lab', city: 'Chișinău', appointments: 42 },
+      { salonId: 's2', name: 'Nails & Co', city: 'Bălți', appointments: 17 },
+    ],
+    independentMasters: [{ masterId: 'm1', name: 'Ana Rusu', city: 'Orhei', appointments: 9 }],
+    cities: [
+      { cityCode: '0100000', city: 'Chișinău', appointments: 42 },
+      { cityCode: '0300000', city: 'Bălți', appointments: 17 },
+      { cityCode: '6400000', city: 'Orhei', appointments: 9 },
+    ],
+  },
+  quality: {
+    window: { from: '2026-09-17', to: '2026-09-23' },
+    reviews: 12,
+    averageRating: 4.25,
+    lowRated: 3,
+    lowRatedProfiles: [
+      { kind: 'salon', id: 's2', name: 'Nails & Co', lowRated: 2 },
+      { kind: 'master', id: 'm1', name: 'Ana Rusu', lowRated: 1 },
+    ],
+  },
+  attention: {
+    window: { from: '2026-08-25', to: '2026-09-23' },
+    items: [
+      attention({
+        id: 's3',
+        name: 'Quiet Studio',
+        lastAppointmentAt: '2026-07-14T09:00:00.000Z',
+        flags: ['noRecentAppointments', 'incompleteProfile'],
+        gaps: ['description', 'photos'],
+      }),
+      attention({
+        kind: 'independentMaster',
+        id: 'm4',
+        name: 'Vera Lungu',
+        city: 'Bălți',
+        flags: ['noServices', 'noSchedule'],
+      }),
+      attention({
+        kind: 'salonMaster',
+        id: 'm9',
+        salonId: 'dead',
+        salonName: 'Salon Ex',
+        name: 'Ion Rusu',
+        createdAt: null,
+        flags: ['inDeletedSalon'],
+      }),
+    ],
+  },
   ...overrides,
 });
 
 const detailed = (state: { run: unknown; result: unknown }): MockResponse => apiOk(state);
+
+/** The Видалений Салон the stuck Майстер of the list above is left on — as its card reads it. */
+const deletedSalon = {
+  salonId: 'dead',
+  name: 'Salon Ex',
+  ownerName: 'Dan Ex',
+  description: '',
+  addressStreet: '',
+  addressHouseNumber: '',
+  addressCityCode: '0100000',
+  addressCity: 'Chișinău',
+  addressState: '',
+  addressZipCode: '',
+  addressCountry: 'Moldova',
+  locationLatitude: null,
+  locationLongitude: null,
+  phone: '',
+  email: 'dan@salon-ex.md',
+  timezone: 'Europe/Chisinau',
+  rating: 0,
+  reviewCount: 0,
+  bufferMinutes: 10,
+  bookingForwardDays: 30,
+  brandColor: null,
+  language: 'ro',
+  status: 'deleted',
+  deletedAt: '2026-06-01T10:00:00.000Z',
+  blockedAt: null,
+  blockedReason: null,
+  shortLinks: { random: null, handle: null },
+  createdAt: '2026-01-10T22:30:00.000Z',
+  updatedAt: '2026-06-01T10:00:00.000Z',
+};
+
+/** His place on that Ростер. */
+const stuckMaster = {
+  masterId: 'm9',
+  isOwner: false,
+  masterName: 'Ion Rusu',
+  masterAvatar: '',
+  email: 'ion@bookme.md',
+  specialization: 'barber',
+  status: 'ACTIVE',
+  commissionPercent: 40,
+  bookingForwardDays: 14,
+  rating: 0,
+  reviewCount: 0,
+  joinedAt: '2026-02-01T10:00:00.000Z',
+  updatedAt: null,
+};
 
 test.describe('Детальна статистика', () => {
   test('before the first run the dashboard says so and offers to count', async ({
@@ -296,5 +412,199 @@ test.describe('Детальна статистика', () => {
     await expect(tooltip).toContainText('25 вересня 2026');
     await expect(tooltip).toContainText('Заброньовано наперед');
     await expect(tooltip).toContainText('Усього: 3');
+  });
+});
+
+test.describe('Детальна статистика: топи, якість, «Потребують уваги»', () => {
+  const succeeded = () => detailed({ run: run({ status: 'succeeded' }), result: result() });
+
+  test('the tops of the last 30 days name who pulls the platform and lead to their cards', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': EMPTY_STATS,
+      'GET /admin/stats/detailed': succeeded(),
+    });
+    await signIn(page, ADMIN);
+
+    await expect(page.getByTestId('tops-window')).toContainText('25 серпня');
+    await expect(page.getByTestId('tops-window')).toContainText('23 вересня');
+
+    const salons = page.getByTestId('top-salons');
+    await expect(salons.getByTestId('top-salons-row')).toHaveCount(2);
+    await expect(salons.getByTestId('top-salons-row').first()).toContainText('Beauty Lab');
+    await expect(salons.getByTestId('top-salons-row').first()).toContainText('42');
+    await expect(salons.getByRole('link', { name: 'Beauty Lab' })).toHaveAttribute(
+      'href',
+      '/salons/s1',
+    );
+    await expect(
+      page.getByTestId('top-independentMasters').getByRole('link', { name: 'Ana Rusu' }),
+    ).toHaveAttribute('href', '/independent-masters/m1');
+
+    // A city is not a profile: nothing to open.
+    const cities = page.getByTestId('top-cities');
+    await expect(cities.getByTestId('top-cities-row')).toHaveCount(3);
+    await expect(cities.getByRole('link')).toHaveCount(0);
+
+    // The period cuts the charts only; the tops read their own 30 days.
+    await page.getByTestId('detailed-stats-period').getByText('Рік').click();
+    await expect(salons.getByTestId('top-salons-row')).toHaveCount(2);
+  });
+
+  test('the quality block counts the week and opens the moderation feed where the bad reviews are', async ({
+    page,
+    mockBackend,
+  }) => {
+    const feedQueries: URLSearchParams[] = [];
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': EMPTY_STATS,
+      'GET /admin/stats/detailed': succeeded(),
+      // The feed's pickers read the cached lists.
+      'GET /admin/salons': apiOk({ items: [], builtAt: '2026-09-23T09:00:00.000Z' }),
+      'GET /admin/masters': apiOk({ items: [], builtAt: '2026-09-23T09:00:00.000Z' }),
+      'GET /admin/reviews': (url) => {
+        feedQueries.push(url.searchParams);
+        return apiOk({ items: [], nextCursor: null });
+      },
+    });
+    await signIn(page, ADMIN);
+
+    await expect(page.getByTestId('quality-reviews')).toHaveText('12');
+    await expect(page.getByTestId('quality-average')).toHaveText('4,3');
+    await expect(page.getByTestId('quality-low-rated')).toHaveText('3');
+
+    const profiles = page.getByTestId('quality-profile');
+    await expect(profiles).toHaveCount(2);
+    await expect(profiles.first()).toContainText('Nails & Co');
+    await expect(profiles.first()).toContainText('Салон');
+    await expect(profiles.nth(1)).toContainText('Майстер');
+
+    await profiles.first().getByRole('link', { name: 'Nails & Co' }).click();
+
+    await expect(page).toHaveURL(
+      /\/reviews\?salonId=s2&from=2026-09-17&to=2026-09-23&state=visible$/,
+    );
+    await expect.poll(() => feedQueries.length).toBeGreaterThan(0);
+    const query = feedQueries[feedQueries.length - 1];
+    expect(query.get('salonId')).toBe('s2');
+    expect(query.get('state')).toBe('visible');
+    // The week the block read, as Chișinău lived it: 17 September 00:00 to 24 September 00:00.
+    expect(query.get('from')).toBe('2026-09-16T21:00:00.000Z');
+    expect(query.get('to')).toBe('2026-09-23T21:00:00.000Z');
+  });
+
+  test('«Потребують уваги» shows whoever carries any chosen flag, and says what is wrong', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': EMPTY_STATS,
+      'GET /admin/stats/detailed': succeeded(),
+    });
+    await signIn(page, ADMIN);
+
+    const rows = page.getByTestId('attention-row');
+    await expect(rows).toHaveCount(3);
+
+    const quiet = rows.filter({ hasText: 'Quiet Studio' });
+    await expect(quiet).toContainText('Без Записів за 30 днів');
+    await expect(quiet).toContainText('Незавершений профіль');
+    await expect(quiet.getByTestId('attention-missing')).toHaveText('Бракує: опису, фото');
+    await expect(quiet).toContainText('14 лип');
+    await expect(quiet.getByTestId('attention-link')).toHaveAttribute('href', '/salons/s3');
+
+    const vera = rows.filter({ hasText: 'Vera Lungu' });
+    await expect(vera).toContainText('Незалежний майстер');
+    await expect(vera).toContainText('Не було');
+    await expect(vera.getByTestId('attention-link')).toHaveAttribute(
+      'href',
+      '/independent-masters/m4',
+    );
+
+    const stuck = rows.filter({ hasText: 'Ion Rusu' });
+    await expect(stuck).toContainText('Майстер салону · Ростер Салону «Salon Ex»');
+    await expect(stuck.getByTestId('attention-link')).toHaveAttribute(
+      'href',
+      '/salons/dead/masters/m9',
+    );
+
+    const filters = page.getByTestId('attention-filters');
+    await expect(filters).toContainText('Без послуг · 1');
+    await expect(filters).toContainText('Незавершений профіль · 1');
+
+    await filters.getByText(/^Без послуг/).click();
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('Vera Lungu');
+
+    // Filters add up: any of the chosen flags, not all of them.
+    await filters.getByText(/^У Видаленому Салоні/).click();
+    await expect(rows).toHaveCount(2);
+
+    await filters.getByText(/^Без послуг/).click();
+    await filters.getByText(/^У Видаленому Салоні/).click();
+    await expect(rows).toHaveCount(3);
+  });
+
+  test('a Майстер stuck in a Видалений Салон opens where he can be taken off its Ростер', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': EMPTY_STATS,
+      'GET /admin/stats/detailed': succeeded(),
+      'GET /admin/salons/dead': apiOk(deletedSalon),
+      'GET /admin/salons/dead/masters/m9': apiOk(stuckMaster),
+    });
+    await signIn(page, ADMIN);
+
+    await page
+      .getByTestId('attention-row')
+      .filter({ hasText: 'Ion Rusu' })
+      .getByTestId('attention-link')
+      .click();
+
+    await expect(page).toHaveURL(/\/salons\/dead\/masters\/m9\/profile$/);
+    await expect(page.getByTestId('card-deleted-banner')).toBeVisible();
+    await expect(page.getByTestId('master-remove')).toBeVisible();
+  });
+
+  test('with nobody to attend to, no bad review and no Запис, each section says so', async ({
+    page,
+    mockBackend,
+  }) => {
+    const quiet = result({
+      tops: {
+        window: { from: '2026-08-25', to: '2026-09-23' },
+        salons: [],
+        independentMasters: [],
+        cities: [],
+      },
+      quality: {
+        window: { from: '2026-09-17', to: '2026-09-23' },
+        reviews: 0,
+        averageRating: null,
+        lowRated: 0,
+        lowRatedProfiles: [],
+      },
+      attention: { window: { from: '2026-08-25', to: '2026-09-23' }, items: [] },
+    });
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/stats/basic': EMPTY_STATS,
+      'GET /admin/stats/detailed': detailed({ run: run({ status: 'succeeded' }), result: quiet }),
+    });
+    await signIn(page, ADMIN);
+
+    await expect(page.getByTestId('top-salons')).toContainText('Жодного Запису за ці дні.');
+    await expect(page.getByTestId('quality-average')).toHaveText('—');
+    await expect(page.getByTestId('quality-none')).toBeVisible();
+    await expect(page.getByTestId('attention-empty')).toContainText('Нікого');
+    await expect(page.getByTestId('attention-filters')).toContainText('Без послуг · 0');
   });
 });

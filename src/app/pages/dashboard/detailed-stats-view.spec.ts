@@ -1,7 +1,16 @@
-import type { AppointmentsDay, DetailedStatsRun, GrowthDay } from '../../core/api/stats.client';
+import type {
+  AppointmentsDay,
+  AttentionItem,
+  DetailedStatsRun,
+  GrowthDay,
+} from '../../core/api/stats.client';
 import {
   appointmentTotals,
+  attentionCounts,
+  attentionFiltered,
+  attentionLink,
   daysFrom,
+  lowRatedFeed,
   weeksFrom,
   growthTotals,
   periodStart,
@@ -24,6 +33,20 @@ const appointments = (day: string, counts: Partial<AppointmentsDay> = {}): Appoi
   cancelled: 0,
   noShow: 0,
   ...counts,
+});
+
+const attentionItem = (overrides: Partial<AttentionItem> = {}): AttentionItem => ({
+  kind: 'salon',
+  id: 's',
+  salonId: null,
+  salonName: null,
+  name: 'Salon',
+  city: 'Chișinău',
+  createdAt: '2026-01-10T10:00:00.000Z',
+  lastAppointmentAt: null,
+  flags: [],
+  gaps: [],
+  ...overrides,
 });
 
 const run = (overrides: Partial<DetailedStatsRun> = {}): DetailedStatsRun => ({
@@ -172,6 +195,70 @@ describe('detailed stats view', () => {
     it('has no share without an estimate', () => {
       expect(runProgress(run({ scannedItems: 1250, estimatedItems: null }))).toBeNull();
       expect(runProgress(run({ scannedItems: 0, estimatedItems: 0 }))).toBeNull();
+    });
+  });
+
+  describe('«Потребують уваги»', () => {
+    const quiet = attentionItem({ id: 'quiet', flags: ['noRecentAppointments'] });
+    const bare = attentionItem({ id: 'bare', flags: ['noServices', 'noSchedule'] });
+    const stuck = attentionItem({
+      kind: 'salonMaster',
+      id: 'm1',
+      salonId: 'dead',
+      flags: ['inDeletedSalon'],
+    });
+    const items = [quiet, bare, stuck];
+
+    it('shows everyone while no filter is chosen', () => {
+      expect(attentionFiltered(items, [])).toEqual(items);
+    });
+
+    it('shows whoever carries any of the chosen flags', () => {
+      expect(attentionFiltered(items, ['noSchedule']).map(({ id }) => id)).toEqual(['bare']);
+      expect(
+        attentionFiltered(items, ['noRecentAppointments', 'inDeletedSalon']).map(({ id }) => id),
+      ).toEqual(['quiet', 'm1']);
+    });
+
+    it('counts every flag on its own — one profile adds to each it carries', () => {
+      expect(attentionCounts(items)).toEqual({
+        noRecentAppointments: 1,
+        noServices: 1,
+        noSchedule: 1,
+        incompleteProfile: 0,
+        inDeletedSalon: 1,
+      });
+    });
+
+    it('leads a profile to its card, and a stuck Майстер to his place in the Ростер he can be taken off', () => {
+      expect(attentionLink(attentionItem({ kind: 'salon', id: 's1' }))).toEqual(['/salons', 's1']);
+      expect(attentionLink(attentionItem({ kind: 'independentMaster', id: 'm2' }))).toEqual([
+        '/independent-masters',
+        'm2',
+      ]);
+      expect(attentionLink(stuck)).toEqual(['/salons', 'dead', 'masters', 'm1']);
+    });
+  });
+
+  describe('lowRatedFeed', () => {
+    const week = { from: '2026-09-17', to: '2026-09-23' };
+
+    it('opens the moderation feed on the profile, the week and the visible reviews', () => {
+      // `rating: null` is the router's way of leaving the parameter out.
+      expect(lowRatedFeed({ kind: 'salon', id: 's1', name: 'Lux', lowRated: 2 }, week)).toEqual({
+        salonId: 's1',
+        from: '2026-09-17',
+        to: '2026-09-23',
+        rating: null,
+        state: 'visible',
+      });
+      expect(lowRatedFeed({ kind: 'master', id: 'm1', name: 'Ana', lowRated: 1 }, week)).toEqual({
+        masterId: 'm1',
+        from: '2026-09-17',
+        to: '2026-09-23',
+        rating: null,
+        state: 'visible',
+      });
     });
   });
 });

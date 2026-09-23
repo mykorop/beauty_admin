@@ -64,7 +64,8 @@
       [class.opacity-60]="running()"
       data-testid="detailed-stats-result"
     >
-      <!-- One row of controls above everything it scopes: every chart and figure below is cut to it. -->
+      <!-- One row of controls above everything it scopes: every chart below is cut to it. The tops,
+           the quality block and «Потребують уваги» further down read windows of their own. -->
       <div class="mb-4 flex flex-wrap items-end gap-4">
         <label class="flex flex-col gap-1 text-xs text-slate-600">
           {{ 'stats.period.label' | t }}
@@ -209,6 +210,227 @@
           </p>
         }
       </div>
+
+      @if (standing(); as standing) {
+        <div class="mt-8" data-testid="detailed-stats-tops">
+          <div class="mb-1 flex flex-wrap items-baseline gap-x-3">
+            <h3 class="text-base font-semibold text-slate-800">{{ 'stats.tops.title' | t }}</h3>
+            <span class="text-sm text-slate-600" data-testid="tops-window">{{
+              standing.topsWindow
+            }}</span>
+          </div>
+          <p class="mb-3 max-w-3xl text-xs text-slate-500">{{ 'stats.tops.hint' | t }}</p>
+          <div class="grid gap-4 lg:grid-cols-3">
+            @for (top of standing.tops; track top.key) {
+              <div
+                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                [attr.data-testid]="'top-' + top.key"
+              >
+                <h4 class="mb-2 text-sm font-medium text-slate-700">{{ top.titleKey | t }}</h4>
+                @if (top.rows.length === 0) {
+                  <p class="text-sm text-slate-500">{{ 'stats.tops.empty' | t }}</p>
+                } @else {
+                  <table class="w-full text-left text-sm">
+                    <thead class="sr-only">
+                      <tr>
+                        <th>#</th>
+                        <th>{{ top.titleKey | t }}</th>
+                        <th>{{ 'stats.tops.appointments' | t }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of top.rows; track row.key; let place = $index) {
+                        <tr
+                          class="border-b border-slate-100 last:border-0"
+                          [attr.data-testid]="'top-' + top.key + '-row'"
+                        >
+                          <td class="w-6 py-1.5 align-top text-xs tabular-nums text-slate-400">
+                            {{ place + 1 }}
+                          </td>
+                          <td class="py-1.5 pr-2">
+                            @if (row.link; as link) {
+                              <a class="font-medium hover:underline" [routerLink]="link">{{
+                                row.name
+                              }}</a>
+                            } @else {
+                              <span class="font-medium">{{ row.name }}</span>
+                            }
+                            @if (row.city) {
+                              <div class="text-xs text-slate-500">{{ row.city }}</div>
+                            }
+                          </td>
+                          <td class="py-1.5 text-right align-top font-semibold tabular-nums">
+                            {{ row.appointments }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div
+          class="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+          data-testid="detailed-stats-quality"
+        >
+          <div class="mb-3 flex flex-wrap items-baseline gap-x-3">
+            <h3 class="text-base font-semibold text-slate-800">{{ 'stats.quality.title' | t }}</h3>
+            <span class="text-sm text-slate-600">{{ standing.quality.window }}</span>
+            <span class="flex-1"></span>
+            <a
+              class="text-sm text-sky-700 hover:underline"
+              routerLink="/reviews"
+              data-testid="quality-open-feed"
+              >{{ 'stats.quality.openFeed' | t }}</a
+            >
+          </div>
+          <div class="mb-3 flex flex-wrap gap-8">
+            <div>
+              <p class="text-xs text-slate-600">{{ 'stats.quality.reviews' | t }}</p>
+              <p class="text-2xl font-semibold text-slate-900" data-testid="quality-reviews">
+                {{ standing.quality.reviews }}
+              </p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-600">{{ 'stats.quality.average' | t }}</p>
+              <p class="text-2xl font-semibold text-slate-900" data-testid="quality-average">
+                {{ standing.quality.averageRating }}
+              </p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-600">{{ 'stats.quality.lowRated' | t }}</p>
+              <p class="text-2xl font-semibold text-slate-900" data-testid="quality-low-rated">
+                {{ standing.quality.lowRated }}
+              </p>
+            </div>
+          </div>
+          <p class="mb-3 max-w-3xl text-xs text-slate-500">{{ 'stats.quality.hint' | t }}</p>
+          @if (standing.quality.profiles.length === 0) {
+            <p class="text-sm text-slate-500" data-testid="quality-none">
+              {{ 'stats.quality.none' | t }}
+            </p>
+          } @else {
+            <h4 class="mb-1 text-sm font-medium text-slate-700">{{ 'stats.quality.where' | t }}</h4>
+            <ul class="max-w-xl">
+              @for (profile of standing.quality.profiles; track profile.key) {
+                <li
+                  class="flex items-baseline gap-2 border-b border-slate-100 py-1.5 text-sm last:border-0"
+                  data-testid="quality-profile"
+                >
+                  <a
+                    class="font-medium hover:underline"
+                    routerLink="/reviews"
+                    [queryParams]="profile.feed"
+                    >{{ profile.name }}</a
+                  >
+                  <span class="text-xs text-slate-500">{{ profile.kindKey | t }}</span>
+                  <span class="flex-1"></span>
+                  <span class="font-semibold tabular-nums">{{ profile.lowRated }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="mt-6" data-testid="detailed-stats-attention">
+          <div class="mb-1 flex flex-wrap items-baseline gap-x-3">
+            <h3 class="text-base font-semibold text-slate-800">
+              {{ 'stats.attention.title' | t }}
+            </h3>
+          </div>
+          <p class="mb-3 max-w-3xl text-xs text-slate-500">{{ 'stats.attention.hint' | t }}</p>
+          <p-selectbutton
+            class="mb-3 block"
+            data-testid="attention-filters"
+            size="small"
+            optionLabel="label"
+            optionValue="value"
+            [multiple]="true"
+            [options]="standing.attention.filters"
+            [ngModel]="attentionChosen()"
+            (ngModelChange)="attentionChosen.set($event ?? [])"
+          />
+          @if (standing.attention.rows.length === 0) {
+            <p class="text-sm text-slate-600" data-testid="attention-empty">
+              {{
+                (standing.attention.empty
+                  ? 'stats.attention.empty'
+                  : 'stats.attention.emptyFiltered'
+                ) | t
+              }}
+            </p>
+          } @else {
+            <div class="overflow-x-auto">
+              <table
+                class="w-full rounded-lg border border-slate-200 bg-white text-left text-sm shadow-sm"
+              >
+                <thead class="text-xs text-slate-500">
+                  <tr class="border-b border-slate-200">
+                    <th class="px-4 py-2 font-normal">
+                      {{ 'stats.attention.column.profile' | t }}
+                    </th>
+                    <th class="px-4 py-2 font-normal">{{ 'stats.attention.column.city' | t }}</th>
+                    <th class="px-4 py-2 font-normal">
+                      {{ 'stats.attention.column.registered' | t }}
+                    </th>
+                    <th class="px-4 py-2 font-normal">
+                      {{ 'stats.attention.column.lastAppointment' | t }}
+                    </th>
+                    <th class="px-4 py-2 font-normal">{{ 'stats.attention.column.flags' | t }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of standing.attention.rows; track row.key) {
+                    <tr
+                      class="border-b border-slate-100 align-top last:border-0"
+                      data-testid="attention-row"
+                    >
+                      <td class="px-4 py-2">
+                        <a
+                          class="font-medium hover:underline"
+                          data-testid="attention-link"
+                          [routerLink]="row.link"
+                          >{{ row.name }}</a
+                        >
+                        <div class="text-xs text-slate-500">
+                          {{ row.kindKey | t }}
+                          @if (row.salonName; as salonName) {
+                            · {{ 'stats.attention.inSalon' | t: { name: salonName } }}
+                          }
+                        </div>
+                      </td>
+                      <td class="px-4 py-2">{{ row.city }}</td>
+                      <td class="px-4 py-2 whitespace-nowrap">{{ row.registered }}</td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        {{ row.lastAppointment ?? ('stats.attention.never' | t) }}
+                      </td>
+                      <td class="px-4 py-2">
+                        <div class="flex flex-wrap gap-1">
+                          @for (flag of row.flags; track flag) {
+                            <p-tag
+                              severity="warn"
+                              data-testid="attention-flag"
+                              [value]="flag | t"
+                            />
+                          }
+                        </div>
+                        @if (row.missing; as missing) {
+                          <div class="mt-1 text-xs text-slate-500" data-testid="attention-missing">
+                            {{ missing }}
+                          </div>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
     </div>
   }
 </section>

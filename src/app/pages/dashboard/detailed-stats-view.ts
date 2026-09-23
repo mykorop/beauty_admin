@@ -1,10 +1,17 @@
-import type {
-  AppointmentsDay,
-  AppointmentValueDay,
-  DetailedStatsRun,
-  GrowthDay,
+import {
+  ATTENTION_FLAGS,
+  type AppointmentsDay,
+  type AppointmentValueDay,
+  type AttentionFlag,
+  type AttentionItem,
+  type DetailedStatsRun,
+  type GrowthDay,
+  type LowRatedProfile,
+  type StatsWindow,
 } from '../../core/api/stats.client';
+import type { ReviewsScope } from '../../core/api/reviews.client';
 import { addCalendarDays } from '../../shared/calendar-day';
+import { toQueryParams } from '../../shared/reviews/review-filters';
 
 /**
  * How far back the charts look. The backend sends the whole history day by day; the period is only
@@ -105,4 +112,66 @@ export function runProgress(run: DetailedStatsRun): number | null {
     return null;
   }
   return Math.min(99, Math.floor((run.scannedItems / run.estimatedItems) * 100));
+}
+
+/**
+ * «Потребують уваги» cut by the chosen filters: whoever carries **any** of them. The five are
+ * independent reasons to call, so choosing two shows both lists, not the few on both; choosing
+ * none shows everyone.
+ */
+export function attentionFiltered(
+  items: readonly AttentionItem[],
+  chosen: readonly AttentionFlag[],
+): AttentionItem[] {
+  return chosen.length === 0
+    ? [...items]
+    : items.filter((item) => item.flags.some((flag) => chosen.includes(flag)));
+}
+
+/** How many profiles carry each flag — the figure beside each filter. */
+export function attentionCounts(items: readonly AttentionItem[]): Record<AttentionFlag, number> {
+  const counts = Object.fromEntries(ATTENTION_FLAGS.map((flag) => [flag, 0])) as Record<
+    AttentionFlag,
+    number
+  >;
+  for (const item of items) {
+    for (const flag of item.flags) {
+      counts[flag] += 1;
+    }
+  }
+  return counts;
+}
+
+/** The card of a Салон or of a Незалежний майстер — where every row naming one leads. */
+export function profileCardLink(kind: 'salon' | 'independentMaster', id: string): string[] {
+  return kind === 'salon' ? ['/salons', id] : ['/independent-masters', id];
+}
+
+/**
+ * Where a row of «Потребують уваги» leads: the profile's own card — or, for a Майстер stuck on
+ * the Ростер of a Видалений Салон, his card inside that Ростер, where вилучення is: the one way
+ * he gets off it.
+ */
+export function attentionLink(item: AttentionItem): string[] {
+  return item.kind === 'salonMaster'
+    ? ['/salons', item.salonId ?? '', 'masters', item.id]
+    : profileCardLink(item.kind, item.id);
+}
+
+/**
+ * The address of the стрічка модерації opened on one profile, on the week the quality block read
+ * and on the visible reviews — the ones it counts. The feed filters by one exact score only, so
+ * «2 or lower» cannot be asked of it: the moderator sees the whole week of that profile, the bad
+ * ones among it, and can narrow it from there.
+ */
+export function lowRatedFeed(
+  profile: LowRatedProfile,
+  window: StatsWindow,
+): Record<string, string | number | null> {
+  const scope: ReviewsScope =
+    profile.kind === 'salon' ? { salonId: profile.id } : { masterId: profile.id };
+  return {
+    ...scope,
+    ...toQueryParams({ from: window.from, to: window.to, rating: null, state: 'visible' }),
+  };
 }
