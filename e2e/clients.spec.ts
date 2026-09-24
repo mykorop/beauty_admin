@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { apiError, apiOk } from './fixtures/api-mock';
 import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
+import { expectEveryAction, expectOnlyCancellation } from './fixtures/appointment-offers';
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
 
@@ -58,6 +59,20 @@ const appointment = (overrides: Record<string, unknown> = {}) => ({
   isManual: false,
   venueName: 'Beauty Lab',
   timezone: 'Europe/Chisinau',
+  ...overrides,
+});
+
+/** The card of a Запис as it opens under its row — the Місце it was made in may be changed. */
+const details = (row: ReturnType<typeof appointment>, overrides: Record<string, unknown> = {}) => ({
+  ...row,
+  updatedAt: '2026-09-20T10:00:00.000Z',
+  clientId: 'c1',
+  clientPhone: '+37360000001',
+  salonName: row.salonId ? row.venueName : null,
+  venueStatus: 'active',
+  services: [{ serviceId: 'svc1', name: 'Стрижка', durationMinutes: 45, price: 350 }],
+  totalDurationMinutes: 45,
+  notes: null,
   ...overrides,
 });
 
@@ -214,6 +229,39 @@ test.describe('client card', () => {
     await expect(page.getByTestId('appointment-row')).toHaveCount(1);
     const asked = mock.bodies['GET /admin/clients/c1/appointments'];
     expect(asked).toHaveLength(2);
+  });
+
+  test('offers over each Запис what its own Місце allows — not what his own state does', async ({
+    page,
+    mockBackend,
+  }) => {
+    const own = {
+      appointmentId: 'a2',
+      masterId: 'm9',
+      masterName: 'Ana Rusu',
+      salonId: null,
+      venueName: 'Ana Rusu',
+    };
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      // His card only reads, yet what may be done over his Записи is their venues' to say.
+      'GET /admin/clients/c1': apiOk(
+        client({ status: 'deleted', deletedAt: '2026-08-01T09:00:00.000Z' }),
+      ),
+      'GET /admin/clients/c1/appointments': apiOk({
+        items: [appointment(), appointment(own)],
+        nextCursor: null,
+      }),
+      'GET /admin/appointments/a1': apiOk(details(appointment(), { venueStatus: 'deleted' })),
+      'GET /admin/appointments/a2': apiOk(details(appointment(own))),
+    });
+    await signIn(page, ADMIN, '/clients/c1/appointments');
+
+    await page.getByTestId('appointment-row').first().click();
+    await expectOnlyCancellation(page);
+
+    await page.getByTestId('appointment-row').nth(1).click();
+    await expectEveryAction(page);
   });
 
   test('lists the відгуки he wrote, hidden ones included, and can hide one', async ({ page, mockBackend }) => {

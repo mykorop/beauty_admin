@@ -121,6 +121,7 @@ const details = (overrides: Record<string, unknown> = {}) => ({
   clientId: 'c1',
   clientPhone: '+37360000001',
   salonName: 'Beauty Lab',
+  venueStatus: 'active',
   services: [
     { serviceId: 'svc1', name: 'Стрижка', durationMinutes: 45, price: 350 },
     { serviceId: 'svc2', name: 'Укладка', durationMinutes: 30, price: 200 },

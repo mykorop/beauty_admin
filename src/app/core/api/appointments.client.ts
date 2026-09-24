@@ -2,6 +2,7 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import type { CardScope } from '../../shared/profile-card/card-scope';
+import type { ProfileStatus } from '../../shared/profile-status';
 import { adminApiUrl, salonPath } from './admin-api-url';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import type { TableRun } from './table-run.model';
@@ -64,6 +65,12 @@ export type AppointmentDetails = Appointment & {
   clientId: string | null;
   clientPhone: string;
   salonName: string | null;
+  /**
+   * The state of the Місце the Запис was made in — its Салон, or the Незалежний майстер who took
+   * it — which decides what may be done over it (`AppointmentActions`). `null` when the venue is
+   * gone: an unknown state, never a healthy-looking one.
+   */
+  venueStatus: ProfileStatus | null;
   services: AppointmentService[];
   totalDurationMinutes: number;
   notes: string | null;

@@ -30,12 +30,11 @@ import { AppointmentRescheduleDialog } from './appointment-reschedule-dialog';
  * closed Запис shows the line that says so instead, because "why can I not cancel this" is the
  * question a disabled row raises.
  *
- * Over a profile that is only read (`writable`) — a Видалений one, or a Майстер салону whose Салон
- * is Видалений — скасування alone stands: it is the one exception the backend makes there, so that
- * the Клієнт is not left before a closed door, and it refuses everything else. Whether the profile
- * may be changed is the list's to say: a card's tab knows it from the card's scope, while a list
- * that spans venues knows nothing of the venue and offers every action, the backend's refusal
- * standing guard.
+ * Over a Видалений Місце скасування alone stands: it is the one exception the backend makes there,
+ * so that the Клієнт is not left before a closed door, and it refuses everything else. Whether the
+ * Місце may be changed is the Запис's own card to say (`venueStatus`), not the list's: the Місце is
+ * the one the Запис was made in — its Салон, or the Незалежний майстер who took it, whatever Ростер
+ * he has joined since — and a list that spans venues has no one scope that could name it.
  *
  * Nothing here decides *whose* Запис it is: the three actions are addressed by the Запис's own id,
  * so one component serves every Записи list alike — a card's tab, a Клієнт's history, the
@@ -149,12 +148,19 @@ const OFFERS: StatusOffer[] = [
 })
 export class AppointmentActions {
   readonly details = input.required<AppointmentDetails>();
-  /** The Запис's profile may be changed — see above. */
-  readonly writable = input(true);
 
   private readonly client = inject(AppointmentsClient);
   private readonly interaction = inject(AppointmentInteraction);
   private readonly destroyRef = inject(DestroyRef);
+
+  /**
+   * The Місце the Запис was made in may be changed: a Заблокований one is changed like an active
+   * one, and a venue that is gone (`null`) is not taken for either.
+   */
+  protected readonly writable = computed(() => {
+    const venue = this.details().venueStatus;
+    return venue === 'active' || venue === 'blocked';
+  });
 
   protected readonly offers = computed(() =>
     this.writable() ? OFFERS : OFFERS.filter((offer) => offer.status === 'CANCELLED'),

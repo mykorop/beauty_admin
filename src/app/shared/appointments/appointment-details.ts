@@ -96,14 +96,12 @@ import { appointmentStatusLabel, formatPrice } from './appointment-wording';
         </div>
       </div>
 
-      <app-appointment-actions [details]="view.details" [writable]="writable()" />
+      <app-appointment-actions [details]="view.details" />
     }
   `,
 })
 export class AppointmentDetailsPanel {
   readonly details = input.required<AppointmentDetails>();
-  /** The Запис's profile may be changed, as far as the list knows (`AppointmentActions`). */
-  readonly writable = input(true);
 
   private readonly i18n = inject(I18nService);
 

@@ -1,5 +1,6 @@
 import { apiOk, type MockResponse, type MockRoutes } from './fixtures/api-mock';
 import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
+import { expectEveryAction, expectOnlyCancellation } from './fixtures/appointment-offers';
 
 /**
  * «Записи» — the наскрізний список of the whole platform.
@@ -71,6 +72,20 @@ const independent = appointment({
   venueName: 'Ana Rusu',
   serviceNames: ['Манікюр'],
   totalPrice: 400,
+});
+
+/** The card of a row as it opens under it — the Місце the Запис was made in may be changed. */
+const details = (row: Record<string, unknown>, overrides: Record<string, unknown> = {}) => ({
+  ...row,
+  updatedAt: '2026-09-20T10:00:00.000Z',
+  clientId: 'c1',
+  clientPhone: '+37360000001',
+  salonName: row['salonId'] ? row['venueName'] : null,
+  venueStatus: 'active',
+  services: [{ serviceId: 'svc1', name: 'Стрижка', durationMinutes: 45, price: 350 }],
+  totalDurationMinutes: 45,
+  notes: null,
+  ...overrides,
 });
 
 const run = (overrides: Record<string, unknown> = {}) => ({
@@ -304,16 +319,7 @@ test.describe('Записи всієї платформи за день', () => 
             result: gathered([booked]),
           });
         },
-        'GET /admin/appointments/a1': apiOk({
-          ...booked,
-          updatedAt: null,
-          clientId: 'c1',
-          clientPhone: '+37360000001',
-          salonName: 'Beauty Lab',
-          services: [{ serviceId: 'svc1', name: 'Стрижка', durationMinutes: 45, price: 350 }],
-          totalDurationMinutes: 45,
-          notes: null,
-        }),
+        'GET /admin/appointments/a1': apiOk(details(booked, { updatedAt: null })),
       }),
     );
     await signIn(page, ADMIN, `/appointments?date=${DAY}`);
@@ -427,23 +433,13 @@ test.describe('Записи одного Салону, Майстра чи Кл�
     mockBackend,
   }) => {
     const booked = appointment({ startTime: `${AHEAD}T06:00:00Z`, endTime: `${AHEAD}T06:45:00Z` });
-    const details = {
-      ...booked,
-      updatedAt: '2026-09-20T10:00:00.000Z',
-      clientId: 'c1',
-      clientPhone: '+37360000001',
-      salonName: 'Beauty Lab',
-      services: [{ serviceId: 'svc1', name: 'Стрижка', durationMinutes: 45, price: 350 }],
-      totalDurationMinutes: 45,
-      notes: null,
-    };
     const mock = await mockBackend(
       ADMIN,
       routes({
         'GET /admin/salons/s1/masters': ROSTER,
         [LIST]: apiOk({ items: [booked] }),
-        'GET /admin/appointments/a1': apiOk(details),
-        'PATCH /admin/appointments/a1': apiOk({ ...details, status: 'CANCELLED' }),
+        'GET /admin/appointments/a1': apiOk(details(booked)),
+        'PATCH /admin/appointments/a1': apiOk(details(booked, { status: 'CANCELLED' })),
       }),
     );
     await signIn(page, ADMIN, '/appointments?salonId=s1');
@@ -459,5 +455,41 @@ test.describe('Записи одного Салону, Майстра чи Кл�
     expect(mock.bodies['PATCH /admin/appointments/a1']).toEqual([
       { status: 'CANCELLED', updatedAt: '2026-09-20T10:00:00.000Z', reason: 'Салон не відповідає' },
     ]);
+  });
+
+  test('offer over each Запис what its own Місце allows — over a Видалений one, «Скасувати» alone', async ({
+    page,
+    mockBackend,
+  }) => {
+    // One Клієнт's Записи span venues, so no scope of the list can say what may be changed.
+    const atDeletedSalon = appointment({
+      startTime: `${AHEAD}T06:00:00Z`,
+      endTime: `${AHEAD}T06:45:00Z`,
+    });
+    const atBlockedMaster = appointment({
+      appointmentId: 'a2',
+      startTime: `${AHEAD}T09:00:00Z`,
+      endTime: `${AHEAD}T10:00:00Z`,
+      masterId: 'm9',
+      masterName: 'Ana Rusu',
+      salonId: null,
+      venueName: 'Ana Rusu',
+    });
+    await mockBackend(
+      ADMIN,
+      routes({
+        [LIST]: apiOk({ items: [atDeletedSalon, atBlockedMaster] }),
+        'GET /admin/appointments/a1': apiOk(details(atDeletedSalon, { venueStatus: 'deleted' })),
+        // A Заблокований Місце is changed like an active one.
+        'GET /admin/appointments/a2': apiOk(details(atBlockedMaster, { venueStatus: 'blocked' })),
+      }),
+    );
+    await signIn(page, ADMIN, '/appointments?clientId=c1');
+
+    await page.getByTestId('appointment-row').first().click();
+    await expectOnlyCancellation(page);
+
+    await page.getByTestId('appointment-row').nth(1).click();
+    await expectEveryAction(page);
   });
 });

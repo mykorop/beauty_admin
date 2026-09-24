@@ -122,6 +122,7 @@ const details = {
   updatedAt: NOW,
   clientPhone: salon.phone,
   salonName: salon.name,
+  venueStatus: 'active',
   services: [
     { serviceId: 'svc1', name: appointment.serviceNames[0], durationMinutes: 45, price: 1250.5 },
   ],

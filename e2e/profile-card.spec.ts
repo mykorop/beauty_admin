@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { apiOk, holdResponse, type MockResponse, type MockRoutes } from './fixtures/api-mock';
 import { ADMIN, expect, goBackTo, signIn, test } from './fixtures/app.fixture';
+import { expectOnlyCancellation } from './fixtures/appointment-offers';
 
 /**
  * What every profile card does whatever its kind: it opens on the profile its address names, opens
@@ -212,6 +213,7 @@ const booked = (overrides: Record<string, unknown> = {}) => ({
 const bookedList = (overrides: Record<string, unknown> = {}) =>
   apiOk({ timezone: 'Europe/Chisinau', items: [booked(overrides)] });
 
+/** The card of that Запис, as the backend answers it: its Місце is the Видалений profile's. */
 const bookedDetails = (overrides: Record<string, unknown> = {}) =>
   apiOk({
     ...booked(),
@@ -220,6 +222,7 @@ const bookedDetails = (overrides: Record<string, unknown> = {}) =>
     clientId: 'c1',
     clientPhone: '+37360000001',
     salonName: 'Beauty Lab',
+    venueStatus: 'deleted',
     services: [{ serviceId: 'svc1', name: 'Haircut', durationMinutes: 45, price: 500 }],
     totalDurationMinutes: 45,
     notes: null,
@@ -233,17 +236,6 @@ const tab = (page: Page, path: string) =>
 async function openTheAppointment(page: Page): Promise<void> {
   await tab(page, 'appointments').click();
   await page.getByTestId('appointment-row').click();
-}
-
-/**
- * Over a Видалений profile a Запис can still be cancelled — the one action over it the backend
- * allows there, so that no Клієнт is left before a closed door — and nothing else.
- */
-async function expectOnlyCancellation(page: Page): Promise<void> {
-  await expect(page.getByTestId('appointment-action-CANCELLED')).toBeVisible();
-  await expect(page.getByTestId('appointment-action-COMPLETED')).toHaveCount(0);
-  await expect(page.getByTestId('appointment-action-NO_SHOW')).toHaveCount(0);
-  await expect(page.getByTestId('appointment-action-reschedule')).toHaveCount(0);
 }
 
 type Kind = {
