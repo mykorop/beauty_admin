@@ -34,8 +34,9 @@ let reasonInputSequence = 0;
  * marking a Запис «завершено» or «не з'явився». They still ask, because neither can be undone, but
  * an explanation is not owed to anyone the way a cancellation's is.
  *
- * The dialog does not perform the action. The caller does, keeps `busy` true meanwhile, and closes
- * the dialog (`visible`) on success; on a refusal it stays open with the reason as typed.
+ * The dialog does not perform the action, so it can ask for a reason without one. `reasonAction`
+ * performs it: it keeps `busy` true meanwhile and closes the dialog (`visible`) on success; on a
+ * refusal it stays open with the reason as typed.
  */
 @Component({
   selector: 'app-reason-dialog',

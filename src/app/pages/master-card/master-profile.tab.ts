@@ -5,9 +5,10 @@ import type { MasterStatus } from '../../core/api/masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { cardDates, loadedCard } from '../../shared/profile-card/loaded-card';
 import { formatRating } from '../../shared/rating';
 import { specializationLabel } from '../../shared/specialization';
-import { MasterCardStore } from './master-card.store';
+import { MASTER_CARD } from './master-card';
 import { MasterProfileForm } from './master-profile.form';
 
 /**
@@ -22,15 +23,14 @@ import { MasterProfileForm } from './master-profile.form';
 })
 export class MasterProfileTab {
   private readonly i18n = inject(I18nService);
-  private readonly store = inject(MasterCardStore);
-  protected readonly master = this.store.master;
+  private readonly dates = cardDates();
+  private readonly card = loadedCard(MASTER_CARD);
+  protected readonly profile = this.card.profile;
+  protected readonly scope = this.card.scope;
   protected readonly editing = signal(false);
 
   protected readonly addressLines = computed(() => {
-    const master = this.master();
-    if (!master) {
-      return [];
-    }
+    const master = this.profile();
     return [
       [master.addressStreet, master.addressHouseNumber],
       [master.addressZipCode, master.addressCity],
@@ -42,19 +42,19 @@ export class MasterProfileTab {
   });
 
   protected readonly coordinates = computed(() => {
-    const master = this.master();
-    return master?.locationLatitude && master.locationLongitude
+    const master = this.profile();
+    return master.locationLatitude && master.locationLongitude
       ? `${master.locationLatitude}, ${master.locationLongitude}`
       : '—';
   });
 
   protected readonly specialization = computed(() =>
-    specializationLabel(this.i18n, this.master()?.specialization ?? ''),
+    specializationLabel(this.i18n, this.profile().specialization),
   );
 
   protected readonly rating = computed(() => {
-    const master = this.master();
-    return master ? formatRating(this.i18n.locale(), master.rating, master.reviewCount) : '—';
+    const master = this.profile();
+    return formatRating(this.i18n.locale(), master.rating, master.reviewCount);
   });
 
   /** The former Салон may itself be Заблокований or Видалений; the card says so beside its name. */
@@ -62,8 +62,8 @@ export class MasterProfileTab {
     return `profile.status.${status}`;
   }
 
-  protected readonly createdAt = computed(() => this.store.venueDate(this.master()?.createdAt));
-  protected readonly updatedAt = computed(() => this.store.venueDate(this.master()?.updatedAt));
-  protected readonly joinedAt = computed(() => this.store.venueDay(this.master()?.salon?.joinedAt));
-  protected readonly leftAt = computed(() => this.store.venueDay(this.master()?.salon?.leftAt));
+  protected readonly createdAt = computed(() => this.dates.dateTime(this.profile().createdAt));
+  protected readonly updatedAt = computed(() => this.dates.dateTime(this.profile().updatedAt));
+  protected readonly joinedAt = computed(() => this.dates.day(this.profile().salon?.joinedAt));
+  protected readonly leftAt = computed(() => this.dates.day(this.profile().salon?.leftAt));
 }

@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  output,
-  signal,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -14,18 +6,18 @@ import {
   type ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
-import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
 import { MASTER_SPECIALIZATIONS, type SalonMaster } from '../../core/api/salon-masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { concurrentEdit } from '../../shared/concurrent-edit';
+import { loadedCard } from '../../shared/profile-card/loaded-card';
 import { specializationLabel } from '../../shared/specialization';
 import { buildSalonMasterPatch, toSalonMasterFormValue } from './salon-master-patch';
-import { SalonMasterStore } from './salon-master.store';
+import { SALON_MASTER_CARD } from './salon-master-card';
 
 const numberValidators = (min: number, max: number, pattern: RegExp): ValidatorFn[] => [
   Validators.required,
@@ -45,126 +37,121 @@ const numberValidators = (min: number, max: number, pattern: RegExp): ValidatorF
   imports: [ReactiveFormsModule, ButtonDirective, InputText, Message, Select, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (master(); as master) {
-      <form
-        class="profile-fields profile-form"
-        data-testid="master-form"
-        [formGroup]="form"
-        (ngSubmit)="save()"
-      >
-        <label class="pt-2 text-muted" for="edit-specialization">{{
-          'master.field.specialization' | t
-        }}</label>
-        <p-select
-          inputId="edit-specialization"
-          data-testid="edit-specialization"
-          formControlName="specialization"
-          optionLabel="label"
-          optionValue="value"
-          [options]="specializationOptions()"
-        />
+    <form
+      class="profile-fields profile-form"
+      data-testid="master-form"
+      [formGroup]="form"
+      (ngSubmit)="edit.save()"
+    >
+      <label class="pt-2 text-muted" for="edit-specialization">{{
+        'master.field.specialization' | t
+      }}</label>
+      <p-select
+        inputId="edit-specialization"
+        data-testid="edit-specialization"
+        formControlName="specialization"
+        optionLabel="label"
+        optionValue="value"
+        [options]="specializationOptions()"
+      />
 
-        <label class="pt-2 text-muted" for="edit-commissionPercent">{{
-          'master.field.commissionPercent' | t
-        }}</label>
-        <input
-          pInputText
-          id="edit-commissionPercent"
-          data-testid="edit-commissionPercent"
-          type="number"
-          min="0"
-          max="100"
-          step="any"
-          formControlName="commissionPercent"
-          [invalid]="invalid('commissionPercent')"
-          [attr.aria-invalid]="invalid('commissionPercent')"
-        />
+      <label class="pt-2 text-muted" for="edit-commissionPercent">{{
+        'master.field.commissionPercent' | t
+      }}</label>
+      <input
+        pInputText
+        id="edit-commissionPercent"
+        data-testid="edit-commissionPercent"
+        type="number"
+        min="0"
+        max="100"
+        step="any"
+        formControlName="commissionPercent"
+        [invalid]="invalid('commissionPercent')"
+        [attr.aria-invalid]="invalid('commissionPercent')"
+      />
 
-        <label class="pt-2 text-muted" for="edit-bookingForwardDays">{{
-          'master.field.bookingHorizon' | t
-        }}</label>
-        <input
-          pInputText
-          id="edit-bookingForwardDays"
-          data-testid="edit-bookingForwardDays"
-          type="number"
-          min="1"
-          max="365"
-          step="1"
-          formControlName="bookingForwardDays"
-          [invalid]="invalid('bookingForwardDays')"
-          [attr.aria-invalid]="invalid('bookingForwardDays')"
-        />
+      <label class="pt-2 text-muted" for="edit-bookingForwardDays">{{
+        'master.field.bookingHorizon' | t
+      }}</label>
+      <input
+        pInputText
+        id="edit-bookingForwardDays"
+        data-testid="edit-bookingForwardDays"
+        type="number"
+        min="1"
+        max="365"
+        step="1"
+        formControlName="bookingForwardDays"
+        [invalid]="invalid('bookingForwardDays')"
+        [attr.aria-invalid]="invalid('bookingForwardDays')"
+      />
 
-        <label class="pt-2 text-muted" for="edit-reason">{{ 'salon.edit.reason' | t }}</label>
-        <input
-          pInputText
-          id="edit-reason"
-          data-testid="edit-reason"
-          maxlength="500"
-          [formControl]="reason"
-        />
+      <label class="pt-2 text-muted" for="edit-reason">{{ 'salon.edit.reason' | t }}</label>
+      <input
+        pInputText
+        id="edit-reason"
+        data-testid="edit-reason"
+        maxlength="500"
+        [formControl]="edit.reason"
+      />
 
-        <p class="field-wide text-xs text-muted">{{ 'salonMaster.edit.statusHint' | t }}</p>
+      <p class="field-wide text-xs text-muted">{{ 'salonMaster.edit.statusHint' | t }}</p>
 
-        @if (conflict()) {
-          <p-message
-            class="field-wide"
-            severity="warn"
-            icon="pi pi-exclamation-triangle"
-            data-testid="edit-conflict"
-          >
-            <div class="flex flex-wrap items-center gap-3">
-              <span>{{ 'salon.edit.conflict' | t }}</span>
-              <button
-                pButton
-                type="button"
-                size="small"
-                severity="warn"
-                data-testid="edit-reload"
-                [label]="'salon.edit.reload' | t"
-                [loading]="busy()"
-                (click)="reload()"
-              ></button>
-            </div>
-          </p-message>
-        }
+      @if (edit.conflict()) {
+        <p-message
+          class="field-wide"
+          severity="warn"
+          icon="pi pi-exclamation-triangle"
+          data-testid="edit-conflict"
+        >
+          <div class="flex flex-wrap items-center gap-3">
+            <span>{{ 'salon.edit.conflict' | t }}</span>
+            <button
+              pButton
+              type="button"
+              size="small"
+              severity="warn"
+              data-testid="edit-reload"
+              [label]="'salon.edit.reload' | t"
+              [loading]="edit.busy()"
+              (click)="edit.reload()"
+            ></button>
+          </div>
+        </p-message>
+      }
 
-        <div class="field-wide flex gap-2 pt-2">
-          <button
-            pButton
-            type="submit"
-            data-testid="edit-save"
-            [label]="'salon.edit.save' | t"
-            [disabled]="!canSave()"
-            [loading]="busy() && !conflict()"
-          ></button>
-          <button
-            pButton
-            type="button"
-            severity="secondary"
-            data-testid="edit-cancel"
-            [text]="true"
-            [label]="'salon.edit.cancel' | t"
-            [disabled]="busy()"
-            (click)="closed.emit()"
-          ></button>
-        </div>
-      </form>
-    }
+      <div class="field-wide flex gap-2 pt-2">
+        <button
+          pButton
+          type="submit"
+          data-testid="edit-save"
+          [label]="'salon.edit.save' | t"
+          [disabled]="!edit.canSave()"
+          [loading]="edit.busy() && !edit.conflict()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          data-testid="edit-cancel"
+          [text]="true"
+          [label]="'salon.edit.cancel' | t"
+          [disabled]="edit.busy()"
+          (click)="closed.emit()"
+        ></button>
+      </div>
+    </form>
   `,
 })
 export class SalonMasterForm {
-  private readonly store = inject(SalonMasterStore);
+  private readonly card = loadedCard(SALON_MASTER_CARD);
   private readonly i18n = inject(I18nService);
-  private readonly messages = inject(MessageService);
 
   /** Saved or cancelled — either way the tab goes back to reading. */
   readonly closed = output<void>();
 
-  protected readonly master = this.store.master;
-  protected readonly busy = signal(false);
-  protected readonly conflict = signal(false);
+  protected readonly profile = this.card.profile;
 
   protected readonly form = new FormGroup({
     specialization: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -175,14 +162,10 @@ export class SalonMasterForm {
     // The backend still accepts the legacy `0` («as the salon»), but nothing should write it anew.
     bookingForwardDays: new FormControl<number | null>(null, numberValidators(1, 365, /^\d+$/)),
   });
-  protected readonly reason = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.maxLength(500)],
-  });
 
   /** The platform's list; a stored value outside it stays selectable so the form opens valid. */
   protected readonly specializationOptions = computed(() => {
-    const stored = this.master()?.specialization;
+    const stored = this.profile().specialization;
     const values: readonly string[] =
       stored && !MASTER_SPECIALIZATIONS.some((value) => value === stored)
         ? [...MASTER_SPECIALIZATIONS, stored]
@@ -190,26 +173,19 @@ export class SalonMasterForm {
     return values.map((value) => ({ value, label: specializationLabel(this.i18n, value) }));
   });
 
-  private readonly value = toSignal(this.form.valueChanges, {
-    initialValue: this.form.getRawValue(),
+  /** The saved link is the card's — header and every tab included — before the form closes. */
+  protected readonly edit = concurrentEdit({
+    form: this.form,
+    current: this.profile,
+    changes: buildSalonMasterPatch,
+    save: (patch, reason) => this.card.update({ patch: patch ?? {}, reason }),
+    reload: () => this.card.reload(),
+    fill: (master) => this.resetTo(master),
+    saved: () => this.closed.emit(),
   });
-  private readonly patch = computed(() => {
-    this.value();
-    const master = this.master();
-    return master ? buildSalonMasterPatch(master, this.form.getRawValue()) : {};
-  });
-  private readonly status = toSignal(this.form.statusChanges, { initialValue: this.form.status });
-
-  protected readonly canSave = computed(
-    () =>
-      !this.busy() &&
-      !this.conflict() &&
-      this.status() === 'VALID' &&
-      Object.keys(this.patch()).length > 0,
-  );
 
   constructor() {
-    this.resetTo(this.master());
+    this.resetTo(this.profile());
   }
 
   protected invalid(control: keyof typeof this.form.controls): boolean {
@@ -217,46 +193,7 @@ export class SalonMasterForm {
     return field.invalid && field.dirty;
   }
 
-  /** The saved link is the card's — header and every tab included — before the form closes. */
-  protected save(): void {
-    if (!this.canSave() || this.reason.invalid) {
-      return;
-    }
-    this.busy.set(true);
-    this.store.update(
-      { patch: this.patch(), reason: this.reason.value.trim() || undefined },
-      {
-        next: () => {
-          this.messages.add({
-            severity: 'success',
-            summary: this.i18n.t('salon.edit.saved'),
-            life: 4000,
-          });
-          this.closed.emit();
-        },
-        // Every refusal but this one has already been worded as a toast; the form stays as typed.
-        error: (error) =>
-          this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
-        done: () => this.busy.set(false),
-      },
-    );
-  }
-
-  /** Drops what was typed and reopens the form on what the Власник салону saved meanwhile. */
-  protected reload(): void {
-    this.busy.set(true);
-    this.store.reload({
-      next: (fresh) => {
-        this.resetTo(fresh);
-        this.conflict.set(false);
-      },
-      done: () => this.busy.set(false),
-    });
-  }
-
-  private resetTo(master: SalonMaster | null): void {
-    if (master) {
-      this.form.reset(toSalonMasterFormValue(master));
-    }
+  private resetTo(master: SalonMaster): void {
+    this.form.reset(toSalonMasterFormValue(master));
   }
 }

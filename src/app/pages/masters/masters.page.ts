@@ -10,13 +10,13 @@ import { TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import type { Observable } from 'rxjs';
 import {
-  MASTER_STATUS_SEVERITY,
   type MasterListItem,
   type MasterStatus,
   MastersClient,
 } from '../../core/api/masters.client';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { PROFILE_STATUS_SEVERITY } from '../../shared/profile-status';
 import { ProfileTablePage, type ProfileList } from '../../shared/profile-table/profile-table.page';
 import { specializationLabel } from '../../shared/specialization';
 import { DEFAULT_MASTERS_TABLE_STATE, MASTER_SORT_FIELDS, type MasterSortField } from './masters-table-state';
@@ -53,7 +53,7 @@ export class MastersPage extends ProfileTablePage<MasterListItem, MasterSortFiel
 
   // PrimeNG hands the row template an untyped `$implicit`; these give the row its types back.
   protected statusSeverity(status: MasterStatus): 'success' | 'warn' | 'danger' {
-    return MASTER_STATUS_SEVERITY[status];
+    return PROFILE_STATUS_SEVERITY[status];
   }
 
   protected statusLabelKey(status: MasterStatus): TranslationKey {

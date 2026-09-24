@@ -1,209 +1,206 @@
-@if (salon(); as salon) {
-  <form
-    class="profile-fields profile-form"
-    data-testid="profile-form"
-    [formGroup]="form"
-    (ngSubmit)="save()"
-  >
-    <label class="pt-2 text-muted" for="edit-name">{{ 'salon.field.name' | t }}</label>
+@let salon = profile();
+<form
+  class="profile-fields profile-form"
+  data-testid="profile-form"
+  [formGroup]="form"
+  (ngSubmit)="edit.save()"
+>
+  <label class="pt-2 text-muted" for="edit-name">{{ 'salon.field.name' | t }}</label>
+  <input
+    pInputText
+    id="edit-name"
+    data-testid="edit-name"
+    formControlName="name"
+    [invalid]="invalid('name')"
+    [attr.aria-invalid]="invalid('name')"
+  />
+
+  <label class="pt-2 text-muted" for="edit-description">{{ 'salon.field.description' | t }}</label>
+  <textarea
+    pTextarea
+    id="edit-description"
+    data-testid="edit-description"
+    rows="4"
+    formControlName="description"
+    [invalid]="invalid('description')"
+    [attr.aria-invalid]="invalid('description')"
+  ></textarea>
+
+  <label class="pt-2 text-muted" for="edit-addressStreet">{{
+    'salon.field.addressStreet' | t
+  }}</label>
+  <input
+    pInputText
+    id="edit-addressStreet"
+    data-testid="edit-addressStreet"
+    formControlName="addressStreet"
+    [invalid]="invalid('addressStreet')"
+    [attr.aria-invalid]="invalid('addressStreet')"
+  />
+
+  <label class="pt-2 text-muted" for="edit-addressHouseNumber">{{
+    'salon.field.addressHouseNumber' | t
+  }}</label>
+  <input
+    pInputText
+    id="edit-addressHouseNumber"
+    data-testid="edit-addressHouseNumber"
+    formControlName="addressHouseNumber"
+    [invalid]="invalid('addressHouseNumber')"
+    [attr.aria-invalid]="invalid('addressHouseNumber')"
+  />
+
+  <label class="pt-2 text-muted" for="edit-addressCityCode">{{
+    'salon.field.addressCityCode' | t
+  }}</label>
+  <div>
     <input
       pInputText
-      id="edit-name"
-      data-testid="edit-name"
-      formControlName="name"
-      [invalid]="invalid('name')"
-      [attr.aria-invalid]="invalid('name')"
+      class="w-full"
+      id="edit-addressCityCode"
+      data-testid="edit-addressCityCode"
+      inputmode="numeric"
+      formControlName="addressCityCode"
+      [invalid]="invalid('addressCityCode')"
+      [attr.aria-invalid]="invalid('addressCityCode')"
     />
+    <p class="mt-1 text-xs text-muted">
+      {{ 'salon.edit.cityCodeHint' | t: { city: salon.addressCity || '—' } }}
+    </p>
+  </div>
 
-    <label class="pt-2 text-muted" for="edit-description">{{
-      'salon.field.description' | t
-    }}</label>
-    <textarea
-      pTextarea
-      id="edit-description"
-      data-testid="edit-description"
-      rows="4"
-      formControlName="description"
-      [invalid]="invalid('description')"
-      [attr.aria-invalid]="invalid('description')"
-    ></textarea>
+  <label class="pt-2 text-muted" for="edit-addressZipCode">{{
+    'salon.field.addressZipCode' | t
+  }}</label>
+  <input
+    pInputText
+    id="edit-addressZipCode"
+    data-testid="edit-addressZipCode"
+    placeholder="MD-2012"
+    formControlName="addressZipCode"
+    [invalid]="invalid('addressZipCode')"
+    [attr.aria-invalid]="invalid('addressZipCode')"
+  />
 
-    <label class="pt-2 text-muted" for="edit-addressStreet">{{
-      'salon.field.addressStreet' | t
-    }}</label>
+  <label class="pt-2 text-muted" for="edit-phone">{{ 'salon.field.phone' | t }}</label>
+  <input
+    pInputText
+    id="edit-phone"
+    data-testid="edit-phone"
+    type="tel"
+    formControlName="phone"
+    [invalid]="invalid('phone')"
+    [attr.aria-invalid]="invalid('phone')"
+  />
+
+  <label class="pt-2 text-muted" for="edit-email">{{ 'salon.field.accountEmail' | t }}</label>
+  <div>
     <input
       pInputText
-      id="edit-addressStreet"
-      data-testid="edit-addressStreet"
-      formControlName="addressStreet"
-      [invalid]="invalid('addressStreet')"
-      [attr.aria-invalid]="invalid('addressStreet')"
+      class="w-full"
+      id="edit-email"
+      data-testid="edit-email"
+      disabled
+      [value]="salon.email"
     />
+    <p class="mt-1 text-xs text-muted">{{ 'salon.edit.accountReadonly' | t }}</p>
+  </div>
 
-    <label class="pt-2 text-muted" for="edit-addressHouseNumber">{{
-      'salon.field.addressHouseNumber' | t
-    }}</label>
+  <label class="pt-2 text-muted" for="edit-bufferMinutes">{{ 'salon.field.buffer' | t }}</label>
+  <input
+    pInputText
+    id="edit-bufferMinutes"
+    data-testid="edit-bufferMinutes"
+    type="number"
+    min="0"
+    max="120"
+    step="1"
+    formControlName="bufferMinutes"
+    [invalid]="invalid('bufferMinutes')"
+    [attr.aria-invalid]="invalid('bufferMinutes')"
+  />
+
+  <label class="pt-2 text-muted" for="edit-bookingForwardDays">{{
+    'salon.field.bookingHorizon' | t
+  }}</label>
+  <input
+    pInputText
+    id="edit-bookingForwardDays"
+    data-testid="edit-bookingForwardDays"
+    type="number"
+    min="0"
+    max="365"
+    step="1"
+    formControlName="bookingForwardDays"
+    [invalid]="invalid('bookingForwardDays')"
+    [attr.aria-invalid]="invalid('bookingForwardDays')"
+  />
+
+  <label class="pt-2 text-muted" for="edit-brandColor">{{ 'salon.field.brandColor' | t }}</label>
+  <div>
     <input
       pInputText
-      id="edit-addressHouseNumber"
-      data-testid="edit-addressHouseNumber"
-      formControlName="addressHouseNumber"
-      [invalid]="invalid('addressHouseNumber')"
-      [attr.aria-invalid]="invalid('addressHouseNumber')"
+      class="w-full"
+      id="edit-brandColor"
+      data-testid="edit-brandColor"
+      placeholder="#aa3366"
+      formControlName="brandColor"
+      [invalid]="invalid('brandColor')"
+      [attr.aria-invalid]="invalid('brandColor')"
     />
+    <p class="mt-1 text-xs text-muted">{{ 'salon.edit.brandColorHint' | t }}</p>
+  </div>
 
-    <label class="pt-2 text-muted" for="edit-addressCityCode">{{
-      'salon.field.addressCityCode' | t
-    }}</label>
-    <div>
-      <input
-        pInputText
-        class="w-full"
-        id="edit-addressCityCode"
-        data-testid="edit-addressCityCode"
-        inputmode="numeric"
-        formControlName="addressCityCode"
-        [invalid]="invalid('addressCityCode')"
-        [attr.aria-invalid]="invalid('addressCityCode')"
-      />
-      <p class="mt-1 text-xs text-muted">
-        {{ 'salon.edit.cityCodeHint' | t: { city: salon.addressCity || '—' } }}
-      </p>
-    </div>
+  <label class="pt-2 text-muted" for="edit-reason">{{ 'salon.edit.reason' | t }}</label>
+  <input
+    pInputText
+    id="edit-reason"
+    data-testid="edit-reason"
+    maxlength="500"
+    [formControl]="edit.reason"
+  />
 
-    <label class="pt-2 text-muted" for="edit-addressZipCode">{{
-      'salon.field.addressZipCode' | t
-    }}</label>
-    <input
-      pInputText
-      id="edit-addressZipCode"
-      data-testid="edit-addressZipCode"
-      placeholder="MD-2012"
-      formControlName="addressZipCode"
-      [invalid]="invalid('addressZipCode')"
-      [attr.aria-invalid]="invalid('addressZipCode')"
-    />
+  @if (edit.conflict()) {
+    <p-message
+      class="field-wide"
+      severity="warn"
+      icon="pi pi-exclamation-triangle"
+      data-testid="edit-conflict"
+    >
+      <div class="flex flex-wrap items-center gap-3">
+        <span>{{ 'salon.edit.conflict' | t }}</span>
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="warn"
+          data-testid="edit-reload"
+          [label]="'salon.edit.reload' | t"
+          [loading]="edit.busy()"
+          (click)="edit.reload()"
+        ></button>
+      </div>
+    </p-message>
+  }
 
-    <label class="pt-2 text-muted" for="edit-phone">{{ 'salon.field.phone' | t }}</label>
-    <input
-      pInputText
-      id="edit-phone"
-      data-testid="edit-phone"
-      type="tel"
-      formControlName="phone"
-      [invalid]="invalid('phone')"
-      [attr.aria-invalid]="invalid('phone')"
-    />
-
-    <label class="pt-2 text-muted" for="edit-email">{{ 'salon.field.accountEmail' | t }}</label>
-    <div>
-      <input
-        pInputText
-        class="w-full"
-        id="edit-email"
-        data-testid="edit-email"
-        disabled
-        [value]="salon.email"
-      />
-      <p class="mt-1 text-xs text-muted">{{ 'salon.edit.accountReadonly' | t }}</p>
-    </div>
-
-    <label class="pt-2 text-muted" for="edit-bufferMinutes">{{ 'salon.field.buffer' | t }}</label>
-    <input
-      pInputText
-      id="edit-bufferMinutes"
-      data-testid="edit-bufferMinutes"
-      type="number"
-      min="0"
-      max="120"
-      step="1"
-      formControlName="bufferMinutes"
-      [invalid]="invalid('bufferMinutes')"
-      [attr.aria-invalid]="invalid('bufferMinutes')"
-    />
-
-    <label class="pt-2 text-muted" for="edit-bookingForwardDays">{{
-      'salon.field.bookingHorizon' | t
-    }}</label>
-    <input
-      pInputText
-      id="edit-bookingForwardDays"
-      data-testid="edit-bookingForwardDays"
-      type="number"
-      min="0"
-      max="365"
-      step="1"
-      formControlName="bookingForwardDays"
-      [invalid]="invalid('bookingForwardDays')"
-      [attr.aria-invalid]="invalid('bookingForwardDays')"
-    />
-
-    <label class="pt-2 text-muted" for="edit-brandColor">{{ 'salon.field.brandColor' | t }}</label>
-    <div>
-      <input
-        pInputText
-        class="w-full"
-        id="edit-brandColor"
-        data-testid="edit-brandColor"
-        placeholder="#aa3366"
-        formControlName="brandColor"
-        [invalid]="invalid('brandColor')"
-        [attr.aria-invalid]="invalid('brandColor')"
-      />
-      <p class="mt-1 text-xs text-muted">{{ 'salon.edit.brandColorHint' | t }}</p>
-    </div>
-
-    <label class="pt-2 text-muted" for="edit-reason">{{ 'salon.edit.reason' | t }}</label>
-    <input
-      pInputText
-      id="edit-reason"
-      data-testid="edit-reason"
-      maxlength="500"
-      [formControl]="reason"
-    />
-
-    @if (conflict()) {
-      <p-message
-        class="field-wide"
-        severity="warn"
-        icon="pi pi-exclamation-triangle"
-        data-testid="edit-conflict"
-      >
-        <div class="flex flex-wrap items-center gap-3">
-          <span>{{ 'salon.edit.conflict' | t }}</span>
-          <button
-            pButton
-            type="button"
-            size="small"
-            severity="warn"
-            data-testid="edit-reload"
-            [label]="'salon.edit.reload' | t"
-            [loading]="busy()"
-            (click)="reload()"
-          ></button>
-        </div>
-      </p-message>
-    }
-
-    <div class="field-wide flex gap-2 pt-2">
-      <button
-        pButton
-        type="submit"
-        data-testid="edit-save"
-        [label]="'salon.edit.save' | t"
-        [disabled]="!canSave()"
-        [loading]="busy() && !conflict()"
-      ></button>
-      <button
-        pButton
-        type="button"
-        severity="secondary"
-        data-testid="edit-cancel"
-        [text]="true"
-        [label]="'salon.edit.cancel' | t"
-        [disabled]="busy()"
-        (click)="closed.emit()"
-      ></button>
-    </div>
-  </form>
-}
+  <div class="field-wide flex gap-2 pt-2">
+    <button
+      pButton
+      type="submit"
+      data-testid="edit-save"
+      [label]="'salon.edit.save' | t"
+      [disabled]="!edit.canSave()"
+      [loading]="edit.busy() && !edit.conflict()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      data-testid="edit-cancel"
+      [text]="true"
+      [label]="'salon.edit.cancel' | t"
+      [disabled]="edit.busy()"
+      (click)="closed.emit()"
+    ></button>
+  </div>
+</form>

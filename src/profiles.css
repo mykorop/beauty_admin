@@ -43,7 +43,7 @@
     font-weight: 600;
   }
   .profile-content,
-  .profile-card [cardContext],
+  .profile-context,
   .profile-card .p-message {
     min-width: 0;
     overflow-wrap: anywhere;
@@ -113,7 +113,7 @@
   }
   .profile-data-table a,
   .profile-fields a,
-  .profile-card [cardContext] a {
+  .profile-context a {
     color: var(--bm-accent);
   }
   .profile-data-table .table-actions {

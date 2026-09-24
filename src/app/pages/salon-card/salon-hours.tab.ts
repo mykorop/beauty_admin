@@ -5,8 +5,9 @@ import { SalonsClient, type SalonDayHours } from '../../core/api/salons.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ButtonDirective } from 'primeng/button';
-import { SalonCardStore } from './salon-card.store';
+import { loadedCard } from '../../shared/profile-card/loaded-card';
 import { WEEK_ORDER, weekdayName } from '../../shared/weekday';
+import { SALON_CARD } from './salon-card';
 import { WeekHoursEditor, type WeekHoursSaveRequest } from '../../shared/working-schedule/week-hours.editor';
 
 /** Години роботи of the Салон by day of week: read first, edited on demand — never a Видалений one. */
@@ -18,7 +19,7 @@ import { WeekHoursEditor, type WeekHoursSaveRequest } from '../../shared/working
     @if (editing() && days(); as stored) {
       <app-week-hours-editor [stored]="stored" [save]="save" (saved)="days.set($event)" (closed)="editing.set(false)" />
     } @else if (week(); as week) {
-      @if (salon()?.status !== 'deleted') {
+      @if (scope().writable) {
         <div class="mb-3 flex max-w-xl justify-end">
           <button
             pButton
@@ -60,13 +61,14 @@ export class SalonHoursTab {
   private readonly i18n = inject(I18nService);
   private readonly client = inject(SalonsClient);
 
-  protected readonly salon = inject(SalonCardStore).salon;
+  private readonly card = loadedCard(SALON_CARD);
+  protected readonly scope = this.card.scope;
   protected readonly days = signal<SalonDayHours[] | null>(null);
   protected readonly failed = signal(false);
   protected readonly editing = signal(false);
 
   protected readonly save = (request: WeekHoursSaveRequest) =>
-    this.client.updateHours(this.salon()!.salonId, request).pipe(map((hours) => hours.days));
+    this.client.updateHours(this.card.profile().salonId, request).pipe(map((hours) => hours.days));
 
   protected readonly week = computed(() => {
     const days = this.days();
@@ -82,17 +84,13 @@ export class SalonHoursTab {
   });
 
   constructor() {
-    // The card renders its tabs only once the salon is loaded, and rebuilds them for another one.
-    const salonId = this.salon()?.salonId;
-    if (salonId) {
-      this.client
-        .hours(salonId)
-        .pipe(takeUntilDestroyed())
-        .subscribe({
-          next: (hours) => this.days.set(hours.days),
-          // The interceptor has already worded the refusal as a toast.
-          error: () => this.failed.set(true),
-        });
-    }
+    this.client
+      .hours(this.card.profile().salonId)
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (hours) => this.days.set(hours.days),
+        // The interceptor has already worded the refusal as a toast.
+        error: () => this.failed.set(true),
+      });
   }
 }

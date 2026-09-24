@@ -140,8 +140,8 @@
                 [attr.data-testid]="row.hidden ? 'review-unhide' : 'review-hide'"
                 [severity]="row.hidden ? 'primary' : 'danger'"
                 [label]="(row.hidden ? 'reviews.action.unhide' : 'reviews.action.hide') | t"
-                [disabled]="busy()"
-                (click)="ask(row.review)"
+                [disabled]="moderation.busy()"
+                (click)="moderation.ask(row.review)"
               ></button>
             </td>
           </tr>
@@ -182,16 +182,16 @@
   </p>
 }
 
-@if (asked(); as asked) {
+@if (moderation.asked(); as asked) {
   <app-reason-dialog
     [titleKey]="asked.hiddenAt ? 'reviews.unhide.title' : 'reviews.hide.title'"
     [confirmLabelKey]="asked.hiddenAt ? 'reviews.unhide.confirm' : 'reviews.hide.confirm'"
     [confirmSeverity]="asked.hiddenAt ? 'primary' : 'danger'"
-    [reasonRequired]="!asked.hiddenAt"
-    [busy]="busy()"
+    [reasonRequired]="moderation.reasonRequired()"
+    [busy]="moderation.busy()"
     [visible]="true"
-    (visibleChange)="closeUnless($event)"
-    (confirmed)="apply(asked, $event)"
+    (visibleChange)="$event || moderation.dismiss()"
+    (confirmed)="moderation.confirm($event)"
   >
     {{
       (asked.hiddenAt ? 'reviews.unhide.message' : 'reviews.hide.message')

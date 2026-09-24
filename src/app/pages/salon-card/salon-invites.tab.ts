@@ -9,8 +9,9 @@ import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
 import { feed } from '../../shared/feed';
+import { cardDates, loadedCard } from '../../shared/profile-card/loaded-card';
 import { specializationLabel } from '../../shared/specialization';
-import { SalonCardStore } from './salon-card.store';
+import { SALON_CARD } from './salon-card';
 
 /**
  * «Інвайти»: what the Салон has sent, newest first — to answer «the master never got the
@@ -59,14 +60,14 @@ import { SalonCardStore } from './salon-card.store';
                   @if (row.invite.respondedAt) {
                     <div class="mt-1 text-xs text-muted">
                       {{
-                        'invites.respondedAt' | t: { date: store.venueDate(row.invite.respondedAt) }
+                        'invites.respondedAt' | t: { date: dates.dateTime(row.invite.respondedAt) }
                       }}
                     </div>
                   }
                 </td>
-                <td class="px-4 py-3">{{ store.venueDate(row.invite.createdAt) }}</td>
+                <td class="px-4 py-3">{{ dates.dateTime(row.invite.createdAt) }}</td>
                 <td class="px-4 py-3" data-testid="invite-expiresAt">
-                  {{ store.venueDate(row.invite.expiresAt) }}
+                  {{ dates.dateTime(row.invite.expiresAt) }}
                 </td>
               </tr>
             } @empty {
@@ -102,10 +103,11 @@ import { SalonCardStore } from './salon-card.store';
 export class SalonInvitesTab {
   private readonly i18n = inject(I18nService);
   private readonly client = inject(SalonMastersClient);
-  protected readonly store = inject(SalonCardStore);
+  protected readonly dates = cardDates();
+  private readonly salonId = loadedCard(SALON_CARD).profile().salonId;
 
   protected readonly invites = feed({
-    query: () => this.store.salon()?.salonId ?? null,
+    query: () => this.salonId,
     read: (salonId, cursor) => this.client.invites(salonId, cursor),
   });
 

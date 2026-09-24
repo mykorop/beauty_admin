@@ -9,9 +9,10 @@ import { Select } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import type { Observable } from 'rxjs';
-import { SALON_STATUS_SEVERITY, type SalonListItem, SalonsClient, type SalonStatus } from '../../core/api/salons.client';
+import { type SalonListItem, SalonsClient, type SalonStatus } from '../../core/api/salons.client';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { PROFILE_STATUS_SEVERITY } from '../../shared/profile-status';
 import { ProfileTablePage, type ProfileList } from '../../shared/profile-table/profile-table.page';
 import { DEFAULT_TABLE_STATE, SALON_SORT_FIELDS, type SalonSortField } from './salons-table-state';
 
@@ -43,7 +44,7 @@ export class SalonsPage extends ProfileTablePage<SalonListItem, SalonSortField> 
 
   // PrimeNG hands the row template an untyped `$implicit`; these two give the status its type back.
   protected statusSeverity(status: SalonStatus): 'success' | 'warn' | 'danger' {
-    return SALON_STATUS_SEVERITY[status];
+    return PROFILE_STATUS_SEVERITY[status];
   }
 
   protected statusLabelKey(status: SalonStatus): TranslationKey {

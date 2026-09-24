@@ -4,6 +4,7 @@ import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { EDIT_CONFLICT_CODE } from './api-error';
 import { adminApiUrl } from './admin-api-url';
+import { withReason } from './reason-body';
 
 /** One Копія майстра as the table and the form read it. */
 export type MasterService = {
@@ -38,8 +39,6 @@ const copiesUrl = (salonId: string, masterId: string, serviceId?: string): strin
       serviceId ? `/${encodeURIComponent(serviceId)}` : ''
     }`,
   );
-
-const withReason = (reason: string | undefined) => (reason ? { reason } : {});
 
 /** The Копії майстра of one Майстер салону. Nothing here reaches the Каталог послуг. */
 @Injectable({ providedIn: 'root' })

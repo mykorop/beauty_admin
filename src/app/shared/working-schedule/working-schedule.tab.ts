@@ -1,19 +1,12 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  input,
-  type OnInit,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ButtonDirective } from 'primeng/button';
-import { catchError, EMPTY, forkJoin, type Observable, of, Subject, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, forkJoin, map, Subject, switchMap, tap } from 'rxjs';
 import type { DayHours, MasterSchedule, SchedulePattern } from '../../core/api/master-schedule.model';
+import { WorkingScheduleClient } from '../../core/api/working-schedule.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { cardScope } from '../profile-card/loaded-card';
 import { WEEK_ORDER, weekdayName } from '../weekday';
 import { RotationSection, type RotationSaveRequest } from './rotation.section';
 import { venueToday } from '../venue-date';
@@ -24,35 +17,17 @@ import { daysOutsideBounds, formatSlots, toWeekFormValue } from './week-hours';
 import { WeekHoursEditor, type WeekHoursSaveRequest } from './week-hours.editor';
 
 /**
- * Everything the Робочий графік tab does, bound to whose calendar it is.
- *
- * `bounds` is the whole difference between a Майстер салону and a Незалежний майстер: a roster
- * master works inside the Години роботи of his Салон (`domain.md` §1d), so the week is shown next
- * to them and a day that sticks out is marked; a Незалежний майстер answers to no salon week, so
- * `bounds: null` drops the column, the warning and the read that fetched them.
- */
-export type WorkingSchedulePort = {
-  /** The venue's clock, used only to pick the month the tab opens on. */
-  timezone: string;
-  /** A Видалений profile is read-only: the backend refuses every write here as well. */
-  writable: boolean;
-  read(window: { from: string; to: string }): Observable<MasterSchedule>;
-  /** The Години роботи this week has to stay inside, or `null` when nothing bounds it. */
-  bounds: Observable<DayHours[]> | null;
-  saveWeek(request: WeekHoursSaveRequest): Observable<DayHours[]>;
-  saveRotation(request: RotationSaveRequest): Observable<SchedulePattern | null>;
-  createTimeOff(request: TimeOffCreateRequest): Observable<unknown>;
-  removeTimeOff(groupId: string, reason?: string): Observable<unknown>;
-};
-
-/**
  * Робочий графік of a Майстер: his тижневі години — next to the Години роботи of his Салон where
  * there are any, so a mismatch shows at a glance — his Ротація, the month a Клієнт would meet, and
  * the Відсутності of that month.
  *
- * It knows neither whose calendar this is nor whether he works in a Салон: the `port` answers both.
- * The editor only gets the bounds to show, the calendar only a schedule to draw, the two sections
- * only the calls that write.
+ * Whose calendar this is, and whether a Салон bounds it, is the card's scope. The bounds are the
+ * whole difference between a Майстер салону and a Незалежний майстер: a roster master works inside
+ * the Години роботи of his Салон (`domain.md` §1d), so the week is shown next to them and a day that
+ * sticks out is marked; a Незалежний майстер answers to no salon week, so the column, the warning and
+ * the read that fetched them are all absent. The editor only gets the bounds to show, the calendar
+ * only a schedule to draw, the two sections only the calls that write — never in a Видалений
+ * profile, where the backend refuses every write as well.
  */
 @Component({
   selector: 'app-working-schedule',
@@ -149,12 +124,10 @@ export type WorkingSchedulePort = {
     }
   `,
 })
-export class WorkingScheduleTab implements OnInit {
+export class WorkingScheduleTab {
   private readonly i18n = inject(I18nService);
-  private readonly destroyRef = inject(DestroyRef);
-
-  /** Whose Робочий графік this is — every read and every write goes through it. */
-  readonly port = input.required<WorkingSchedulePort>();
+  private readonly client = inject(WorkingScheduleClient);
+  private readonly scope = cardScope();
 
   /** The schedule over the grid of `month()` — the two always change together. */
   protected readonly schedule = signal<MasterSchedule | null>(null);
@@ -164,7 +137,7 @@ export class WorkingScheduleTab implements OnInit {
   protected readonly editing = signal(false);
   protected readonly months = new Subject<string>();
 
-  protected readonly writable = computed(() => this.port().writable);
+  protected readonly writable = computed(() => this.scope().writable);
   /** A week nothing bounds shows one column and marks no day as sticking out. */
   protected readonly bounded = computed(() => this.bounds() !== null);
   /** Bounds that were never stored bound nothing — «не задано», not «зачинено». */
@@ -188,23 +161,28 @@ export class WorkingScheduleTab implements OnInit {
     }));
   });
 
-  protected readonly save = (request: WeekHoursSaveRequest) => this.port().saveWeek(request);
+  protected readonly save = (request: WeekHoursSaveRequest) =>
+    this.client.updateHours(this.scope(), request).pipe(map((hours) => hours.days));
 
-  protected readonly saveRotation = (request: RotationSaveRequest) => this.port().saveRotation(request);
+  protected readonly saveRotation = (request: RotationSaveRequest) =>
+    this.client
+      .updateSchedulePattern(this.scope(), request)
+      .pipe(map((stored) => stored.schedulePattern));
 
-  protected readonly createTimeOff = (request: TimeOffCreateRequest) => this.port().createTimeOff(request);
+  protected readonly createTimeOff = (request: TimeOffCreateRequest) =>
+    this.client.createTimeOff(this.scope(), request);
 
-  protected readonly removeTimeOff = (groupId: string, reason?: string) => this.port().removeTimeOff(groupId, reason);
+  protected readonly removeTimeOff = (groupId: string, reason?: string) =>
+    this.client.removeTimeOff(this.scope(), groupId, reason);
 
   protected readonly monthOf = monthOf;
 
-  // `port` is an input, so the first read waits for the bindings — not the constructor.
-  ngOnInit(): void {
-    const port = this.port();
-    this.month.set(monthOf(venueToday(port.timezone)));
+  constructor() {
+    const scope = this.scope();
+    this.month.set(monthOf(venueToday(scope.timezone)));
 
-    forkJoin({ bounds: port.bounds ?? of(null), schedule: this.read(this.month()) })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    forkJoin({ bounds: this.client.bounds(scope), schedule: this.read(this.month()) })
+      .pipe(takeUntilDestroyed())
       .subscribe({
         next: ({ bounds, schedule }) => {
           this.bounds.set(bounds);
@@ -224,7 +202,7 @@ export class WorkingScheduleTab implements OnInit {
             catchError(() => EMPTY),
           ),
         ),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntilDestroyed(),
       )
       .subscribe();
   }
@@ -240,7 +218,7 @@ export class WorkingScheduleTab implements OnInit {
   }
 
   private read(month: string) {
-    return this.port().read(monthWindow(month));
+    return this.client.read(this.scope(), monthWindow(month));
   }
 
   private show(month: string, schedule: MasterSchedule): void {
@@ -249,5 +227,3 @@ export class WorkingScheduleTab implements OnInit {
   }
 }
 
-/** Re-exported so a tab building a port imports the three request shapes from one place. */
-export type { RotationSaveRequest, TimeOffCreateRequest, WeekHoursSaveRequest };

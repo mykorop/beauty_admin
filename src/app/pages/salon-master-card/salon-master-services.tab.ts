@@ -9,14 +9,16 @@ import {
   type MasterService,
   SalonMasterServicesClient,
 } from '../../core/api/salon-master-services.client';
-import { type SalonService, SalonServicesClient } from '../../core/api/salon-services.client';
+import type { SalonService } from '../../core/api/salon-services.client';
+import { ServiceCatalogClient } from '../../core/api/service-catalog.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { loadedCard } from '../../shared/profile-card/loaded-card';
 import { serviceCategoryLabel } from '../../shared/service-category';
-import { SalonCardStore } from '../salon-card/salon-card.store';
+import { salonScope } from '../salon-card/salon-card';
 import { MasterServiceForm } from './master-service.form';
 import { isOffered, servicesWithoutCopy } from './master-service-patch';
-import { SalonMasterStore } from './salon-master.store';
+import { SALON_MASTER_CARD } from './salon-master-card';
 
 /**
  * Копії послуг of a Майстер салону: what he performs and for how much — his own ціна and тривалість
@@ -197,14 +199,12 @@ import { SalonMasterStore } from './salon-master.store';
 })
 export class SalonMasterServicesTab {
   private readonly i18n = inject(I18nService);
-  private readonly salonStore = inject(SalonCardStore);
   private readonly client = inject(SalonMasterServicesClient);
   private readonly messages = inject(MessageService);
+  private readonly card = loadedCard(SALON_MASTER_CARD);
 
-  // The card renders its tabs only once the salon and the master are loaded, and rebuilds them for
-  // another pair.
-  protected readonly salonId = this.salonStore.salon()?.salonId ?? '';
-  protected readonly masterId = inject(SalonMasterStore).master()?.masterId ?? '';
+  protected readonly salonId = this.card.context().salonId;
+  protected readonly masterId = this.card.profile().masterId;
   private readonly copies = signal<MasterService[] | null>(null);
   private readonly catalog = signal<SalonService[]>([]);
   protected readonly failed = signal(false);
@@ -214,8 +214,7 @@ export class SalonMasterServicesTab {
   /** The Копія whose removal waits for a second click. */
   protected readonly removing = signal<string | null>(null);
 
-  /** The backend refuses every write in a Видалений salon as well: `SALON_DELETED`. */
-  protected readonly writable = computed(() => this.salonStore.salon()?.status !== 'deleted');
+  protected readonly writable = computed(() => this.card.scope().writable);
 
   protected readonly available = computed(() =>
     servicesWithoutCopy(this.catalog(), this.copies() ?? [], this.i18n.locale()),
@@ -243,21 +242,20 @@ export class SalonMasterServicesTab {
   });
 
   constructor() {
-    if (this.salonId && this.masterId) {
-      forkJoin({
-        copies: this.client.list(this.salonId, this.masterId),
-        catalog: inject(SalonServicesClient).catalog(this.salonId),
-      })
-        .pipe(takeUntilDestroyed())
-        .subscribe({
-          next: ({ copies, catalog }) => {
-            this.copies.set(copies.items);
-            this.catalog.set(catalog.items);
-          },
-          // The interceptor has already worded the refusal as a toast.
-          error: () => this.failed.set(true),
-        });
-    }
+    forkJoin({
+      copies: this.client.list(this.salonId, this.masterId),
+      // The Каталог of his Салон, as the Салон's own card reads it: what a Копія is taken from.
+      catalog: inject(ServiceCatalogClient).list<SalonService>(salonScope(this.card.context())),
+    })
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: ({ copies, catalog }) => {
+          this.copies.set(copies.items);
+          this.catalog.set(catalog.items);
+        },
+        // The interceptor has already worded the refusal as a toast.
+        error: () => this.failed.set(true),
+      });
   }
 
   protected close(saved: MasterService | null): void {

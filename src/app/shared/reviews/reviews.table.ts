@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,6 +11,7 @@ import { REVIEW_STATES, ReviewsClient, type Review } from '../../core/api/review
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { feed } from '../feed';
+import { reasonAction } from '../reason-dialog/reason-action';
 import { ReasonDialog } from '../reason-dialog/reason-dialog';
 import { formatVenueDateTime } from '../venue-date';
 import type { ReviewFilterName, ReviewsFeed } from './reviews.feed';
@@ -75,9 +76,22 @@ export class ReviewsTable {
   });
   /** Reviews an action has answered with since this list was read, by id: drawn as answered. */
   private readonly answered = this.reviews.listState<ReadonlyMap<string, Review>>(new Map());
-  protected readonly busy = signal(false);
-  /** The review whose confirmation is open, or `null`. */
-  protected readonly asked = this.reviews.listState<Review | null>(null);
+
+  /**
+   * Приховання, or its undoing, of the review the dialog is open on. It belongs to the list it was
+   * taken in: a new list — other filters, «Оновити» — drops its answer, and its dialog with it.
+   * Returning a review only undoes the platform's own decision, so it is owed no explanation.
+   */
+  protected readonly moderation = reasonAction({
+    scope: this.reviews.scope,
+    run: (reason, review: Review) =>
+      review.hiddenAt
+        ? this.client.unhide(review.reviewId, reason || undefined)
+        : this.client.hide(review.reviewId, reason),
+    accept: (updated) =>
+      this.answered.update((answered) => new Map(answered).set(updated.reviewId, updated)),
+    reasonRequired: (review) => !review.hiddenAt,
+  });
 
   protected readonly ratingOptions = [5, 4, 3, 2, 1].map((value) => ({
     value,
@@ -116,39 +130,6 @@ export class ReviewsTable {
 
   protected resetFilters(): void {
     this.navigate(NO_REVIEW_FILTERS);
-  }
-
-  protected ask(review: Review): void {
-    this.asked.set(review);
-  }
-
-  protected closeUnless(visible: boolean): void {
-    if (!visible) {
-      this.asked.set(null);
-    }
-  }
-
-  /**
-   * One flight at a time, and the dialog closes only once the backend has agreed: a refusal — a
-   * review somebody already hid, a rating race it gave up on — leaves it open with the reason as
-   * typed, and the interceptor has already worded the code as a toast.
-   */
-  protected apply(review: Review, reason: string): void {
-    if (this.busy()) {
-      return;
-    }
-    this.busy.set(true);
-    const call = review.hiddenAt
-      ? this.client.unhide(review.reviewId, reason || undefined)
-      : this.client.hide(review.reviewId, reason);
-    call.subscribe({
-      next: (updated) => {
-        this.busy.set(false);
-        this.asked.set(null);
-        this.answered.update((answered) => new Map(answered).set(updated.reviewId, updated));
-      },
-      error: () => this.busy.set(false),
-    });
   }
 
   private navigate(filters: ReviewFilters): void {

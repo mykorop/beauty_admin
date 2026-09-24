@@ -6,16 +6,15 @@ import {
   inject,
   input,
   model,
-  signal,
 } from '@angular/core';
-import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { Message } from 'primeng/message';
-import { finalize } from 'rxjs';
-import { I18nService } from '../../i18n/i18n.service';
+import { AppointmentsClient } from '../../core/api/appointments.client';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { actionLevel } from '../profile-card/card-lifetime';
+import { cardScope } from '../profile-card/loaded-card';
+import { reasonAction } from '../reason-dialog/reason-action';
 import { ReasonDialog } from '../reason-dialog/reason-dialog';
-import type { UpcomingAppointmentsPort } from './appointments.model';
 
 /**
  * «N майбутніх Записів» — the warning a Видалений or Заблокований profile carries, and the one
@@ -33,6 +32,10 @@ import type { UpcomingAppointmentsPort } from './appointments.model';
  * The answer to a run is authoritative about what is left (`remaining` — the Записи the backend
  * refused plus whatever its cap left behind), so the count is taken from it rather than re-read.
  * A run that leaves something behind says so and invites another press: the action is idempotent.
+ *
+ * Whose Записи these are is the card's scope — the warning and the масове скасування read the same
+ * for a Салон and for a Незалежний майстер. Both the read and the run belong to the opening of the
+ * card they were asked on (`actionLevel`).
  */
 @Component({
   selector: 'app-upcoming-appointments',
@@ -58,8 +61,8 @@ import type { UpcomingAppointmentsPort } from './appointments.model';
             data-testid="upcoming-cancel-open"
             [outlined]="true"
             [label]="'upcoming.cancelAll' | t"
-            [disabled]="busy()"
-            (click)="open.set(true)"
+            [disabled]="cancelAll.busy()"
+            (click)="ask()"
           ></button>
         </span>
       </p-message>
@@ -67,17 +70,19 @@ import type { UpcomingAppointmentsPort } from './appointments.model';
     <app-reason-dialog
       titleKey="upcoming.title"
       confirmLabelKey="upcoming.confirm"
-      [busy]="busy()"
-      [(visible)]="open"
-      (confirmed)="cancelAll($event)"
+      [busy]="cancelAll.busy()"
+      [visible]="cancelAll.open()"
+      (visibleChange)="$event || cancelAll.dismiss()"
+      (confirmed)="cancelAll.confirm($event)"
     >
       {{ 'upcoming.message' | t: { name: subject(), count: count() } }}
     </app-reason-dialog>
   `,
 })
 export class UpcomingAppointments {
-  /** Whose future Записи these are — both calls go through it. */
-  readonly port = input.required<UpcomingAppointmentsPort>();
+  private readonly client = inject(AppointmentsClient);
+  private readonly scope = cardScope();
+
   /** The profile's own name, as the dialog names it. */
   readonly subject = input.required<string>();
   /** The profile is Видалений or Заблокований, so the number is a warning and gets a banner. */
@@ -91,16 +96,18 @@ export class UpcomingAppointments {
    */
   readonly count = model<number | null>(null);
 
-  private readonly i18n = inject(I18nService);
-  private readonly messages = inject(MessageService);
+  private readonly level = actionLevel();
 
-  protected readonly busy = signal(false);
-
-  /**
-   * The confirmation of the масове скасування. Two-way, because the Блокування dialog offers this
-   * action too — the card closes that one and opens this one.
-   */
-  readonly open = model(false);
+  /** The масове скасування itself: every Запис ahead, with one reason. */
+  protected readonly cancelAll = reasonAction({
+    scope: this.level,
+    run: (reason) => this.client.cancelUpcoming(this.scope(), reason),
+    accept: ({ remaining }) => this.count.set(remaining),
+    toast: ({ cancelled, remaining }) =>
+      remaining > 0
+        ? { key: 'upcoming.partial', params: { cancelled, remaining }, warn: true }
+        : { key: cancelled > 0 ? 'upcoming.done' : 'upcoming.none', params: { cancelled } },
+  });
 
   protected readonly showWarning = computed(() => this.warn() && (this.count() ?? 0) > 0);
 
@@ -115,42 +122,17 @@ export class UpcomingAppointments {
       this.requested = true;
       // A failed read leaves the count unknown, which shows nothing: the interceptor has already
       // worded the refusal, and a warning nobody can act on would be worse than no warning.
-      this.port()
-        .count()
-        .subscribe({ next: ({ count }) => this.count.set(count), error: () => undefined });
+      this.level.run(this.client.upcomingCount(this.scope()), {
+        next: ({ count }) => this.count.set(count),
+      });
     });
   }
 
-  protected cancelAll(reason: string): void {
-    if (this.busy()) {
-      return;
-    }
-    this.busy.set(true);
-    this.port()
-      .cancelAll(reason)
-      .pipe(finalize(() => this.busy.set(false)))
-      .subscribe({
-        next: ({ cancelled, remaining }) => {
-          this.count.set(remaining);
-          this.open.set(false);
-          this.messages.add(
-            remaining > 0
-              ? {
-                  severity: 'warn',
-                  summary: this.i18n.t('upcoming.partial', { cancelled, remaining }),
-                  life: 8000,
-                }
-              : {
-                  severity: 'success',
-                  summary: this.i18n.t(cancelled > 0 ? 'upcoming.done' : 'upcoming.none', {
-                    cancelled,
-                  }),
-                  life: 4000,
-                },
-          );
-        },
-        // Already worded as a toast; the dialog stays open with the reason as typed.
-        error: () => undefined,
-      });
+  /**
+   * Opens the confirmation of the масове скасування — from the banner, or from the Блокування
+   * dialog, which offers this action too: the card closes that one and opens this one.
+   */
+  ask(): void {
+    this.cancelAll.ask();
   }
 }

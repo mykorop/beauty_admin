@@ -9,13 +9,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ButtonDirective } from 'primeng/button';
-import type { Observable } from 'rxjs';
 import {
   AppointmentsClient,
   type AppointmentActionStatus,
   type AppointmentDetails,
 } from '../../core/api/appointments.client';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { reasonAction } from '../reason-dialog/reason-action';
 import { ReasonDialog } from '../reason-dialog/reason-dialog';
 import type { TranslationKey } from '../../i18n/translations';
 import { AppointmentInteraction } from './appointment-interaction';
@@ -94,7 +94,7 @@ const OFFERS: StatusOffer[] = [
             [severity]="offer.severity"
             [label]="offer.labelKey | t"
             [disabled]="busy()"
-            (click)="open.set(offer.status)"
+            (click)="statusChange.ask(offer)"
           ></button>
         }
         <button
@@ -110,26 +110,24 @@ const OFFERS: StatusOffer[] = [
         ></button>
       </div>
 
-      @for (offer of offers; track offer.status) {
-        @if (open() === offer.status) {
-          <app-reason-dialog
-            [titleKey]="offer.titleKey"
-            [confirmLabelKey]="offer.confirmKey"
-            [confirmSeverity]="offer.severity === 'danger' ? 'danger' : 'primary'"
-            [reasonRequired]="offer.reasonRequired"
-            [busy]="busy()"
-            [visible]="true"
-            (visibleChange)="closeUnless($event)"
-            (confirmed)="applyStatus(offer.status, $event)"
-          >
-            {{ offer.messageKey | t: { client: details().clientName || '—' } }}
-          </app-reason-dialog>
-        }
+      @if (statusChange.asked(); as offer) {
+        <app-reason-dialog
+          [titleKey]="offer.titleKey"
+          [confirmLabelKey]="offer.confirmKey"
+          [confirmSeverity]="offer.severity === 'danger' ? 'danger' : 'primary'"
+          [reasonRequired]="statusChange.reasonRequired()"
+          [busy]="statusChange.busy()"
+          [visible]="true"
+          (visibleChange)="$event || statusChange.dismiss()"
+          (confirmed)="statusChange.confirm($event)"
+        >
+          {{ offer.messageKey | t: { client: details().clientName || '—' } }}
+        </app-reason-dialog>
       }
 
       <app-appointment-reschedule-dialog
         [details]="details()"
-        [busy]="busy()"
+        [busy]="moving()"
         [(visible)]="rescheduling"
         (confirmed)="applyReschedule($event)"
       />
@@ -148,64 +146,61 @@ export class AppointmentActions {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly offers = OFFERS;
-  protected readonly busy = signal(false);
-  /** Which confirmation is open, or `null`. */
-  protected readonly open = signal<AppointmentActionStatus | null>(null);
   protected readonly rescheduling = signal(false);
+  /** A move is on its way. */
+  protected readonly moving = signal(false);
+
+  /**
+   * «скасувати», «завершено», «не з'явився»: the list takes the answer in whether or not this card
+   * is still open (`AppointmentInteraction.act`); the action only ends its own wait and closes its
+   * dialog.
+   */
+  protected readonly statusChange = reasonAction({
+    run: (reason, offer: StatusOffer) =>
+      this.interaction.act(
+        this.client.updateStatus(this.details().appointmentId, {
+          status: offer.status,
+          // The card the administrator is looking at: a Запис that moved since is refused rather
+          // than overwritten, and the toast says to reload.
+          updatedAt: this.details().updatedAt,
+          ...(reason ? { reason } : {}),
+        }),
+      ),
+    reasonRequired: (offer) => offer.reasonRequired,
+  });
+
+  /** One action over the Запис at a time, whichever it is. */
+  protected readonly busy = computed(() => this.statusChange.busy() || this.moving());
 
   /** Only a Запис still «заброньовано» can be closed or moved — every other transition is a 409. */
   protected readonly actionable = computed(() => this.details().status === 'BOOKED');
-
-  protected closeUnless(visible: boolean): void {
-    if (!visible) {
-      this.open.set(null);
-    }
-  }
-
-  protected applyStatus(status: AppointmentActionStatus, reason: string): void {
-    this.run(
-      this.client.updateStatus(this.details().appointmentId, {
-        status,
-        // The card the administrator is looking at: a Запис that moved since is refused rather
-        // than overwritten, and the toast says to reload.
-        updatedAt: this.details().updatedAt,
-        ...(reason ? { reason } : {}),
-      }),
-      () => this.open.set(null),
-    );
-  }
-
-  protected applyReschedule(request: { startDateTime: string; reason?: string }): void {
-    this.run(
-      this.client.reschedule(this.details().appointmentId, {
-        ...request,
-        updatedAt: this.details().updatedAt,
-      }),
-      () => this.rescheduling.set(false),
-    );
-  }
 
   /**
    * One flight at a time, and the dialog closes only once the backend has agreed: a refusal — an
    * hour taken in the meantime, a Видалений Салон — leaves it open with everything as typed, and
    * the interceptor has already worded the code as a toast.
    */
-  private run(call: Observable<AppointmentDetails>, close: () => void): void {
+  protected applyReschedule(request: { startDateTime: string; reason?: string }): void {
     if (this.busy()) {
       return;
     }
-    this.busy.set(true);
+    this.moving.set(true);
     // The list takes the answer in whether or not this card is still open; the card only ends its
     // own wait, and stops listening once it is gone.
     this.interaction
-      .act(call)
+      .act(
+        this.client.reschedule(this.details().appointmentId, {
+          ...request,
+          updatedAt: this.details().updatedAt,
+        }),
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.busy.set(false);
-          close();
+          this.moving.set(false);
+          this.rescheduling.set(false);
         },
-        error: () => this.busy.set(false),
+        error: () => this.moving.set(false),
       });
   }
 }

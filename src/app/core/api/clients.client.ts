@@ -2,19 +2,12 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
-import { adminApiUrl } from './admin-api-url';
+import { adminApiUrl, clientPath } from './admin-api-url';
 import type { AppointmentStatus, VenueAppointment } from './appointments.client';
 import type { ReviewsPage } from './reviews.client';
 
 /** A Клієнт wears the same three states as a Салон and a Майстер. */
 export type ClientStatus = 'active' | 'blocked' | 'deleted';
-
-/** PrimeNG tag severity of each state — the list and the card mark a Клієнт the same way. */
-export const CLIENT_STATUS_SEVERITY: Record<ClientStatus, 'success' | 'warn' | 'danger'> = {
-  active: 'success',
-  blocked: 'warn',
-  deleted: 'danger',
-};
 
 /**
  * One row of the Клієнти table. Narrower than a Салон's or a Майстер's on purpose: a Клієнт has no
@@ -63,7 +56,7 @@ export type Client = {
 export type ClientAppointmentsPage = { items: VenueAppointment[]; nextCursor: string | null };
 
 const clientUrl = (clientId: string, rest = ''): string =>
-  adminApiUrl(`/admin/clients/${encodeURIComponent(clientId)}${rest}`);
+  adminApiUrl(`${clientPath(clientId)}${rest}`);
 
 /**
  * Клієнти as the panel reads them. There is deliberately nothing here that **edits** one: the
@@ -108,18 +101,5 @@ export class ClientsClient {
     return this.http.get<ReviewsPage>(clientUrl(clientId, '/reviews'), {
       params: cursor ? { cursor } : {},
     });
-  }
-
-  /**
-   * Блокування, and its lifting — the Салон and Майстер twins of these, down to the mandatory
-   * reason and the card that comes back. What it does to a Клієнт is narrower: he signs in, sees
-   * his Записи and keeps every one already made; only a new booking is refused.
-   */
-  block(clientId: string, reason: string): Observable<Client> {
-    return this.http.post<Client>(clientUrl(clientId, '/block'), { reason });
-  }
-
-  unblock(clientId: string, reason: string): Observable<Client> {
-    return this.http.post<Client>(clientUrl(clientId, '/unblock'), { reason });
   }
 }

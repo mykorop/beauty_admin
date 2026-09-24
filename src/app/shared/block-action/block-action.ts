@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { ButtonDirective } from 'primeng/button';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import type { ReasonAction } from '../reason-dialog/reason-action';
 import { ReasonDialog } from '../reason-dialog/reason-dialog';
 
 /**
@@ -9,8 +10,8 @@ import { ReasonDialog } from '../reason-dialog/reason-dialog';
  *
  * It sits in the card's header rather than on a tab because Блокування is about the whole profile,
  * not about what any one tab shows — and because the banner it answers is right beside it. The
- * component performs nothing: the card keeps `busy` true while its own client call is in flight and
- * closes the dialog (`open`) on success, so a refusal leaves the reason exactly as it was typed.
+ * component performs nothing: the card's `action` does, and it closes the dialog on success only, so
+ * a refusal leaves the reason exactly as it was typed.
  *
  * Wording is deliberately shared between the Салон and the Незалежний майстер: the sentence names
  * the profile (`subject`) instead of its kind, so there is one set of keys and one description of
@@ -51,15 +52,16 @@ const UNBLOCK_COPY: BlockCopy = {
       [outlined]="true"
       [severity]="blocked() ? 'secondary' : 'danger'"
       [label]="openLabelKey() | t"
-      (click)="open.set(true)"
+      (click)="action().ask()"
     ></button>
     <app-reason-dialog
       [titleKey]="titleKey()"
       [confirmLabelKey]="confirmLabelKey()"
       [confirmSeverity]="blocked() ? 'primary' : 'danger'"
-      [busy]="busy()"
-      [(visible)]="open"
-      (confirmed)="confirmed.emit($event)"
+      [busy]="action().busy()"
+      [visible]="action().open()"
+      (visibleChange)="$event || action().dismiss()"
+      (confirmed)="action().confirm($event)"
     >
       {{ messageKey() | t: { name: subject() } }}
       @if (upcomingStated()) {
@@ -75,7 +77,7 @@ const UNBLOCK_COPY: BlockCopy = {
           data-testid="block-upcoming-cancel"
           [outlined]="true"
           [label]="'block.upcomingCancel' | t"
-          [disabled]="busy()"
+          [disabled]="action().busy()"
           (click)="cancelUpcoming.emit()"
         ></button>
       }
@@ -87,8 +89,11 @@ export class BlockAction {
   readonly blocked = input.required<boolean>();
   /** The profile's own name, as the dialog names it. */
   readonly subject = input.required<string>();
-  /** The card's call is in flight: nothing can be confirmed twice or dismissed from under it. */
-  readonly busy = input(false);
+  /**
+   * The card's Блокування, or its lifting: the direction is `blocked()` at the moment the reason is
+   * confirmed.
+   */
+  readonly action = input.required<ReasonAction<void>>();
 
   /**
    * How many Записи the profile still has ahead of it, or `null` while it is unknown.
@@ -100,9 +105,6 @@ export class BlockAction {
    */
   readonly upcomingCount = input<number | null>(null);
 
-  /** The trimmed, non-empty reason. The intent is `blocked()` at the moment it was confirmed. */
-  readonly confirmed = output<string>();
-
   /**
    * The administrator took the offer: leave Блокування alone and go to the масове скасування.
    *
@@ -111,9 +113,6 @@ export class BlockAction {
    * reasons — so this one closes this dialog and opens that one rather than bundling them.
    */
   readonly cancelUpcoming = output<void>();
-
-  /** Two-way: the card closes it once its own call has succeeded, and never before. */
-  readonly open = model(false);
 
   protected readonly upcomingStated = computed(
     () => !this.blocked() && (this.upcomingCount() ?? 0) > 0,

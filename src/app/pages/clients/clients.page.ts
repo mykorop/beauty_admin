@@ -10,13 +10,13 @@ import { TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import type { Observable } from 'rxjs';
 import {
-  CLIENT_STATUS_SEVERITY,
   type ClientListItem,
   type ClientStatus,
   ClientsClient,
 } from '../../core/api/clients.client';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { PROFILE_STATUS_SEVERITY } from '../../shared/profile-status';
 import { ProfileTablePage, type ProfileList } from '../../shared/profile-table/profile-table.page';
 import { CLIENT_SORT_FIELDS, DEFAULT_CLIENTS_TABLE_STATE, type ClientSortField } from './clients-table-state';
 
@@ -48,7 +48,7 @@ export class ClientsPage extends ProfileTablePage<ClientListItem, ClientSortFiel
 
   // PrimeNG hands the row template an untyped `$implicit`; these give the row its types back.
   protected statusSeverity(status: ClientStatus): 'success' | 'warn' | 'danger' {
-    return CLIENT_STATUS_SEVERITY[status];
+    return PROFILE_STATUS_SEVERITY[status];
   }
 
   protected statusLabelKey(status: ClientStatus): TranslationKey {

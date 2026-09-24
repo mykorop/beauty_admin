@@ -8,7 +8,7 @@ import {
   HttpResponse,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { MessageService } from 'primeng/api';
+import { MessageService, type ToastMessageOptions } from 'primeng/api';
 import { catchError, from, map, type Observable, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { I18nService } from '../../i18n/i18n.service';
@@ -50,6 +50,19 @@ function toApiError(error: HttpErrorResponse): ApiError {
 const sessionExpiredError = (): ApiError => new ApiError('UNAUTHORIZED', 'Session expired', UNAUTHORIZED);
 
 /**
+ * The toast a refusal is worded as. Also for the rare refusal the panel finds out on its own — a
+ * record a re-read no longer finds — so that it reads exactly like the backend's.
+ */
+export function refusalMessage(i18n: I18nService, code: string): ToastMessageOptions {
+  return {
+    severity: 'error',
+    summary: i18n.t('error.title'),
+    detail: i18n.errorMessage(code),
+    life: 8000,
+  };
+}
+
+/**
  * Everything a call to `/admin/*` has in common: the ID token goes out, the `{ success, data }`
  * envelope comes off, and a refusal becomes an `ApiError` shown as a toast worded by its
  * `error.code`. A 401 gets one forced token refresh and one retry; if that fails too the session
@@ -88,12 +101,7 @@ export const adminApiInterceptor: HttpInterceptorFn = (req, next) => {
       const apiError = error instanceof ApiError ? error : toApiError(error);
       const silent = apiError.status === UNAUTHORIZED || req.context.get(SILENT_ERROR_CODES).includes(apiError.code);
       if (!silent) {
-        messages.add({
-          severity: 'error',
-          summary: i18n.t('error.title'),
-          detail: i18n.errorMessage(apiError.code),
-          life: 8000,
-        });
+        messages.add(refusalMessage(i18n, apiError.code));
       }
       return throwError(() => apiError);
     }),

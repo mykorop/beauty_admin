@@ -1,7 +1,8 @@
 @if (editing()) {
   <app-master-profile-form (closed)="editing.set(false)" />
-} @else if (master(); as master) {
-  @if (master.status !== 'deleted') {
+} @else {
+  @let master = profile();
+  @if (scope().writable) {
     <div class="mb-3 flex flex-wrap max-w-4xl justify-end">
       <button
         pButton

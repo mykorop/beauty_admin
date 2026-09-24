@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { SalonMastersClient } from '../../core/api/salon-masters.client';
+import { cardDates, loadedCard } from '../../shared/profile-card/loaded-card';
 import { formatRating } from '../../shared/rating';
+import { reasonAction } from '../../shared/reason-dialog/reason-action';
 import { ReasonDialog } from '../../shared/reason-dialog/reason-dialog';
 import { specializationLabel } from '../../shared/specialization';
-import { SalonCardStore } from '../salon-card/salon-card.store';
+import { SALON_MASTER_CARD } from './salon-master-card';
 import { SalonMasterForm } from './salon-master.form';
-import { SalonMasterStore } from './salon-master.store';
 
 /**
  * Профіль of a Майстер салону — the data of his link to the Салон: read first, edited on demand,
@@ -24,7 +25,8 @@ import { SalonMasterStore } from './salon-master.store';
   template: `
     @if (editing()) {
       <app-salon-master-form (closed)="editing.set(false)" />
-    } @else if (master(); as master) {
+    } @else {
+      @let master = profile();
       <div class="mb-3 flex flex-wrap max-w-4xl justify-end gap-2">
         @if (canRemove()) {
           <button
@@ -36,10 +38,10 @@ import { SalonMasterStore } from './salon-master.store';
             data-testid="master-remove"
             [outlined]="true"
             [label]="'salonMaster.remove.open' | t"
-            (click)="removing.set(true)"
+            (click)="removal.ask()"
           ></button>
         }
-        @if (salon()?.status !== 'deleted') {
+        @if (scope().writable) {
           <button
             pButton
             type="button"
@@ -54,14 +56,12 @@ import { SalonMasterStore } from './salon-master.store';
       <app-reason-dialog
         titleKey="salonMaster.remove.title"
         confirmLabelKey="salonMaster.remove.confirm"
-        [busy]="busy()"
-        [(visible)]="removing"
-        (confirmed)="remove($event)"
+        [busy]="removal.busy()"
+        [visible]="removal.open()"
+        (visibleChange)="$event || removal.dismiss()"
+        (confirmed)="removal.confirm($event)"
       >
-        {{
-          'salonMaster.remove.message'
-            | t: { master: master.masterName, salon: salon()?.name ?? '' }
-        }}
+        {{ 'salonMaster.remove.message' | t: { master: master.masterName, salon: salon().name } }}
       </app-reason-dialog>
       <dl class="profile-fields">
         <dt class="text-muted">{{ 'master.field.name' | t }}</dt>
@@ -100,63 +100,52 @@ import { SalonMasterStore } from './salon-master.store';
         <dt class="text-muted">{{ 'salon.field.updatedAt' | t }}</dt>
         <dd data-testid="field-updatedAt">{{ updatedAt() }}</dd>
       </dl>
-      @if (salon(); as salon) {
-        <p class="mt-2 text-xs text-muted">
-          {{ 'salon.datesInVenueZone' | t: { timezone: salon.timezone } }}
-        </p>
-      }
+      <p class="mt-2 text-xs text-muted">
+        {{ 'salon.datesInVenueZone' | t: { timezone: scope().timezone } }}
+      </p>
     }
   `,
 })
 export class SalonMasterProfileTab {
   private readonly i18n = inject(I18nService);
-  private readonly salonStore = inject(SalonCardStore);
-  private readonly store = inject(SalonMasterStore);
-  private readonly messages = inject(MessageService);
+  private readonly masters = inject(SalonMastersClient);
+  private readonly dates = cardDates();
+  private readonly card = loadedCard(SALON_MASTER_CARD);
 
-  protected readonly salon = this.salonStore.salon;
-  protected readonly master = this.store.master;
+  protected readonly profile = this.card.profile;
+  protected readonly salon = this.card.context;
+  protected readonly scope = this.card.scope;
   protected readonly editing = signal(false);
-  protected readonly removing = signal(false);
-  protected readonly busy = signal(false);
+
+  /**
+   * Вилучення з Ростеру. The link stays on the Ростер as an ended one, so the card stays open on it
+   * with the status the answer brings.
+   */
+  protected readonly removal = reasonAction({
+    run: (reason) =>
+      this.card.change(
+        this.masters.remove(this.salon().salonId, this.profile().masterId, reason),
+        (master, { status }) => ({ ...master, status }),
+      ),
+    toast: 'salonMaster.remove.done',
+  });
 
   /** The backend refuses both as well: `OWNER_MASTER_PROTECTED`, and `NOT_FOUND` for an ended link. */
   protected readonly canRemove = computed(() => {
-    const master = this.master();
-    return !!master && !master.isOwner && master.status !== 'INACTIVE';
+    const master = this.profile();
+    return !master.isOwner && master.status !== 'INACTIVE';
   });
 
   protected readonly specialization = computed(() =>
-    specializationLabel(this.i18n, this.master()?.specialization ?? ''),
+    specializationLabel(this.i18n, this.profile().specialization),
   );
   protected readonly statusKey = computed<TranslationKey>(
-    () => `roster.status.${this.master()?.status ?? 'ACTIVE'}`,
+    () => `roster.status.${this.profile().status}`,
   );
   protected readonly rating = computed(() => {
-    const master = this.master();
-    return master ? formatRating(this.i18n.locale(), master.rating, master.reviewCount) : '—';
+    const master = this.profile();
+    return formatRating(this.i18n.locale(), master.rating, master.reviewCount);
   });
-  protected readonly joinedAt = computed(() => this.salonStore.venueDay(this.master()?.joinedAt));
-  protected readonly updatedAt = computed(() =>
-    this.salonStore.venueDate(this.master()?.updatedAt),
-  );
-
-  /** The dialog closes on success only: a refusal leaves it open with the reason as typed. */
-  protected remove(reason: string): void {
-    if (this.busy()) {
-      return;
-    }
-    this.busy.set(true);
-    this.store.remove(reason, {
-      next: () => {
-        this.removing.set(false);
-        this.messages.add({
-          severity: 'success',
-          summary: this.i18n.t('salonMaster.remove.done'),
-          life: 4000,
-        });
-      },
-      done: () => this.busy.set(false),
-    });
-  }
+  protected readonly joinedAt = computed(() => this.dates.day(this.profile().joinedAt));
+  protected readonly updatedAt = computed(() => this.dates.dateTime(this.profile().updatedAt));
 }

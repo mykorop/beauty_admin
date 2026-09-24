@@ -28,12 +28,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/salon-master-card/salon-master-card.page').then((m) => m.SalonMasterCardPage),
         loadChildren: () =>
-          import('./pages/salon-master-card/salon-master-card.tabs').then((m) => m.SALON_MASTER_CARD_ROUTES),
+          import('./pages/salon-master-card/salon-master-card').then((m) => m.SALON_MASTER_CARD_ROUTES),
       },
       {
         path: 'salons/:salonId',
         loadComponent: () => import('./pages/salon-card/salon-card.page').then((m) => m.SalonCardPage),
-        loadChildren: () => import('./pages/salon-card/salon-card.tabs').then((m) => m.SALON_CARD_ROUTES),
+        loadChildren: () => import('./pages/salon-card/salon-card').then((m) => m.SALON_CARD_ROUTES),
       },
       {
         path: 'independent-masters',
@@ -42,7 +42,7 @@ export const routes: Routes = [
       {
         path: 'independent-masters/:masterId',
         loadComponent: () => import('./pages/master-card/master-card.page').then((m) => m.MasterCardPage),
-        loadChildren: () => import('./pages/master-card/master-card.tabs').then((m) => m.MASTER_CARD_ROUTES),
+        loadChildren: () => import('./pages/master-card/master-card').then((m) => m.MASTER_CARD_ROUTES),
       },
       {
         path: 'clients',
@@ -51,7 +51,7 @@ export const routes: Routes = [
       {
         path: 'clients/:clientId',
         loadComponent: () => import('./pages/client-card/client-card.page').then((m) => m.ClientCardPage),
-        loadChildren: () => import('./pages/client-card/client-card.tabs').then((m) => m.CLIENT_CARD_ROUTES),
+        loadChildren: () => import('./pages/client-card/client-card').then((m) => m.CLIENT_CARD_ROUTES),
       },
       {
         path: 'appointments',

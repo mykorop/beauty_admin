@@ -28,7 +28,7 @@
             }}</span>
           }
         </a>
-        @if (writable()) {
+        @if (avatarWritable()) {
           <button
             pButton
             type="button"
@@ -37,7 +37,7 @@
             data-testid="media-avatar-delete"
             [outlined]="true"
             [label]="'media.delete' | t"
-            [disabled]="busy()"
+            [disabled]="removal.busy()"
             (click)="askAvatar(avatarUrl)"
           ></button>
         }
@@ -76,7 +76,7 @@
                 data-testid="media-photo-delete"
                 [outlined]="true"
                 [label]="'media.delete' | t"
-                [disabled]="busy()"
+                [disabled]="removal.busy()"
                 (click)="askPhoto(imageUrl)"
               ></button>
             }
@@ -160,7 +160,7 @@
                   data-testid="media-certificate-delete"
                   [outlined]="true"
                   [label]="'media.delete' | t"
-                  [disabled]="busy()"
+                  [disabled]="removal.busy()"
                   (click)="askCertificate(row.certificate)"
                 ></button>
               }
@@ -186,14 +186,14 @@
   </p>
 }
 
-@if (asked(); as asked) {
+@if (removal.asked(); as asked) {
   <app-reason-dialog
     [titleKey]="asked.titleKey"
     [confirmLabelKey]="'media.delete'"
-    [busy]="busy()"
+    [busy]="removal.busy()"
     [visible]="true"
-    (visibleChange)="closeUnless($event)"
-    (confirmed)="apply(asked, $event)"
+    (visibleChange)="$event || removal.dismiss()"
+    (confirmed)="removal.confirm($event)"
   >
     {{ asked.messageKey | t: { name: asked.name } }}
   </app-reason-dialog>

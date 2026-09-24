@@ -17,8 +17,9 @@ import { AppointmentInteraction } from '../../shared/appointments/appointment-in
 import { appointmentStatusLabel, formatPrice } from '../../shared/appointments/appointment-wording';
 import { isStaleBooking } from '../../shared/appointments/appointment-filters';
 import { feed } from '../../shared/feed';
+import { loadedCard } from '../../shared/profile-card/loaded-card';
 import { formatVenueDateTime } from '../../shared/venue-date';
-import { ClientCardStore } from './client-card.store';
+import { CLIENT_CARD } from './client-card';
 
 /**
  * Записи of one Клієнт — everywhere he has ever booked, newest first, each row opening into the
@@ -33,8 +34,8 @@ import { ClientCardStore } from './client-card.store';
  *
  * A Запис is never **made** here, and the actions over one are the Запис's own card, exactly as on
  * a Салон's tab: which Запис is open, its read and where an action's answer lands belong to
- * `AppointmentInteraction`. Another Клієнт or another status is a new list; an older page is the
- * same list read further.
+ * `AppointmentInteraction`. Another status is a new list; an older page is the same list read
+ * further.
  */
 @Component({
   selector: 'app-client-appointments-tab',
@@ -168,7 +169,7 @@ import { ClientCardStore } from './client-card.store';
 })
 export class ClientAppointmentsTab {
   private readonly clients = inject(ClientsClient);
-  private readonly card = inject(ClientCardStore);
+  private readonly clientId = loadedCard(CLIENT_CARD).profile().clientId;
   private readonly i18n = inject(I18nService);
 
   protected readonly interaction: AppointmentInteraction<VenueAppointment> =
@@ -178,26 +179,12 @@ export class ClientAppointmentsTab {
   protected readonly status = signal<AppointmentStatus | null>(null);
 
   /**
-   * Whose history, narrowed how. Read from the card as it opens and reopens, not once: another
-   * Клієнт is another list even where the card keeps this tab standing between the two.
-   */
-  private readonly asked = computed(
-    () => {
-      const clientId = this.card.client()?.clientId;
-      return clientId ? { clientId, status: this.status() } : null;
-    },
-    {
-      equal: (left, right) => left?.clientId === right?.clientId && left?.status === right?.status,
-    },
-  );
-
-  /**
-   * Another Клієнт or another status starts the feed over, and a page asked for the old one is
-   * dropped; an older page is the same list read further.
+   * Another status starts the feed over, and a page asked for the old one is dropped; an older page
+   * is the same list read further.
    */
   protected readonly appointments = feed({
-    query: this.asked,
-    read: ({ clientId, status }, cursor) => this.clients.appointments(clientId, { status, cursor }),
+    query: () => ({ status: this.status() }),
+    read: ({ status }, cursor) => this.clients.appointments(this.clientId, { status, cursor }),
     list: this.interaction,
   });
 

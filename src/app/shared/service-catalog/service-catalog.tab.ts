@@ -1,13 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  input,
-  type OnInit,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
@@ -15,20 +6,23 @@ import { Tag } from 'primeng/tag';
 import { finalize, forkJoin, type Observable } from 'rxjs';
 import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
 import { type Dictionaries, DictionariesClient } from '../../core/api/dictionaries.client';
+import { ServiceCatalogClient } from '../../core/api/service-catalog.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { cardScope } from '../profile-card/loaded-card';
 import { serviceCategoryLabel } from '../service-category';
 import { ServiceCatalogForm } from './service-catalog.form';
-import type { CatalogService, ServiceCatalogPort } from './service-catalog.model';
+import type { CatalogService } from './service-catalog.model';
 
 /**
  * A Каталог послуг: every service, deactivated ones included. Created, edited and deactivated here
  * — never deleted.
  *
- * Whose Каталог it is lives entirely in the `port` and in `copies`. A Салон's services are the
- * starting point for Копії майстрів, so the table counts them and repeats the rule that a new ціна
- * never reaches one; a Незалежний майстер has no Ростер under his Каталог, so neither the column
- * nor the note would say anything true, and both are absent.
+ * Whose Каталог it is is the card's scope. A Салон's services are the starting point for Копії
+ * майстрів — a Ростер stands under its Каталог — so the table counts them and repeats the rule that
+ * a new ціна never reaches one; a Незалежний майстер has no Ростер under his Каталог, so neither
+ * the column nor the note would say anything true, and both are absent. A Видалений profile is
+ * read-only: the backend refuses every write here as well.
  */
 @Component({
   selector: 'app-service-catalog',
@@ -38,7 +32,6 @@ import type { CatalogService, ServiceCatalogPort } from './service-catalog.model
     @if (editing(); as editing) {
       @if (dictionaries(); as dictionaries) {
         <app-service-catalog-form
-          [port]="port()"
           [service]="editing.service"
           [dictionaries]="dictionaries"
           [copies]="copies()"
@@ -177,18 +170,15 @@ import type { CatalogService, ServiceCatalogPort } from './service-catalog.model
     }
   `,
 })
-export class ServiceCatalogTab implements OnInit {
+export class ServiceCatalogTab {
   private readonly i18n = inject(I18nService);
   private readonly messages = inject(MessageService);
-  private readonly dictionariesClient = inject(DictionariesClient);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly catalog = inject(ServiceCatalogClient);
+  private readonly scope = cardScope();
 
-  /** Whose Каталог this is — every call the table and the form make goes through it. */
-  readonly port = input.required<ServiceCatalogPort>();
-  /** A Видалений profile is read-only: the backend refuses every write here as well. */
-  readonly writable = input(true);
+  protected readonly writable = computed(() => this.scope().writable);
   /** Копії майстрів can exist in this Каталог: the column and the cascade note belong to it. */
-  readonly copies = input(false);
+  protected readonly copies = computed(() => this.scope().capabilities.roster !== null);
 
   private readonly services = signal<CatalogService[] | null>(null);
   protected readonly dictionaries = signal<Dictionaries | null>(null);
@@ -213,10 +203,12 @@ export class ServiceCatalogTab implements OnInit {
     );
   });
 
-  // `port` is an input, so the first read waits for the bindings — not the constructor.
-  ngOnInit(): void {
-    forkJoin({ catalog: this.port().list(), dictionaries: this.dictionariesClient.get() })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+  constructor() {
+    forkJoin({
+      catalog: this.catalog.list(this.scope()),
+      dictionaries: inject(DictionariesClient).get(),
+    })
+      .pipe(takeUntilDestroyed())
       .subscribe({
         next: ({ catalog, dictionaries }) => {
           this.services.set(catalog.items);
@@ -235,12 +227,12 @@ export class ServiceCatalogTab implements OnInit {
   }
 
   protected deactivate(service: CatalogService): void {
-    this.toggle(this.port().deactivate(service.serviceId), 'services.deactivated');
+    this.toggle(this.catalog.deactivate(this.scope(), service.serviceId), 'services.deactivated');
   }
 
   protected activate(service: CatalogService): void {
     this.toggle(
-      this.port().update(service.serviceId, {
+      this.catalog.update(this.scope(), service.serviceId, {
         updatedAt: service.updatedAt,
         patch: { isActive: true },
       }),

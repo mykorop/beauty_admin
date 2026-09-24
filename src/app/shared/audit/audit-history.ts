@@ -1,20 +1,20 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ButtonDirective } from 'primeng/button';
-import { AuditClient, type AuditTargetType } from '../../core/api/audit.client';
+import { AuditClient } from '../../core/api/audit.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
-import type { TranslationKey } from '../../i18n/translations';
 import { feed } from '../feed';
+import { LOADED_CARD } from '../profile-card/loaded-card';
 import { formatVenueDateTime } from '../venue-date';
 import { AuditEntryDetails } from './audit-entry-details';
 
 /**
- * «Історія»: the Журнал дій rows about one target, newest first. Read again every time the tab
- * opens, so an edit saved a moment ago on another tab is already here.
+ * «Історія» of a card: the Журнал дій rows about its profile, newest first. Read again every time
+ * the tab opens, so an edit saved a moment ago on another tab is already here.
  *
- * Shared by the card of a Салон and the card of a Незалежний майстер — the two read the same log
- * and must not word it differently. The card that hosts it says whose rows to ask for and on whose
- * clock to date them.
+ * Shared by the cards of a Салон, a Незалежний майстер and a Клієнт — they read the same log and
+ * must not word it differently. The card's scope says whose rows to ask for and on whose clock to
+ * date them; its kind, how an empty one reads.
  */
 @Component({
   selector: 'app-audit-history',
@@ -34,7 +34,7 @@ import { AuditEntryDetails } from './audit-entry-details';
             <app-audit-entry-details [entry]="entry" />
           </article>
         } @empty {
-          <p class="content-state text-muted" data-testid="history-empty">{{ emptyKey() | t }}</p>
+          <p class="content-state text-muted" data-testid="history-empty">{{ emptyKey | t }}</p>
         }
         @if (history.hasMore()) {
           <div>
@@ -62,20 +62,20 @@ export class AuditHistory {
   private readonly i18n = inject(I18nService);
   private readonly client = inject(AuditClient);
 
-  readonly targetType = input.required<AuditTargetType>();
-  readonly targetId = input.required<string>();
-  /** The profile's own zone: every moment of a card is dated on it, never on the browser's. */
-  readonly timezone = input.required<string>();
-  /** What "nothing happened here yet" says — a Салон and a Майстер word it differently. */
-  readonly emptyKey = input.required<TranslationKey>();
+  private readonly card = inject(LOADED_CARD);
+  private readonly scope = this.card.scope;
+  /** Whose rows: one profile's for as long as the tab stands, whatever changes on it meanwhile. */
+  private readonly audit = this.scope().audit;
+  protected readonly emptyKey = this.card.kind.copy.historyEmpty ?? 'history.empty';
 
   protected readonly history = feed({
-    query: () => ({ type: this.targetType(), id: this.targetId() }),
+    query: () => this.audit,
     read: ({ type, id }, cursor) => this.client.forTarget(type, id, cursor),
   });
 
+  /** The profile's own clock: every moment of a card is dated on it, never on the browser's. */
   protected venueDate(iso: string): string {
-    return formatVenueDateTime(iso, this.i18n.locale(), this.timezone());
+    return formatVenueDateTime(iso, this.i18n.locale(), this.scope().timezone);
   }
 
   protected actionLabel(action: string): string {

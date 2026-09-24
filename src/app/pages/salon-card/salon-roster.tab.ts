@@ -2,17 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Tag } from 'primeng/tag';
-import {
-  SALON_MASTER_STATUS_SEVERITY,
-  type SalonMaster,
-  SalonMastersClient,
-} from '../../core/api/salon-masters.client';
+import { type SalonMaster, SalonMastersClient } from '../../core/api/salon-masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { cardDates, loadedCard } from '../../shared/profile-card/loaded-card';
+import { ROSTER_STATUS_SEVERITY } from '../../shared/profile-status';
 import { formatRating } from '../../shared/rating';
 import { specializationLabel } from '../../shared/specialization';
-import { SalonCardStore } from './salon-card.store';
+import { SALON_CARD } from './salon-card';
 
 /**
  * Ростер: everyone linked to the Салон, ended collaborations included. Read-only by design — a
@@ -118,9 +116,9 @@ import { SalonCardStore } from './salon-card.store';
 })
 export class SalonRosterTab {
   private readonly i18n = inject(I18nService);
-  private readonly store = inject(SalonCardStore);
+  private readonly dates = cardDates();
 
-  protected readonly salonId = this.store.salon()?.salonId ?? '';
+  protected readonly salonId = loadedCard(SALON_CARD).profile().salonId;
   private readonly masters = signal<SalonMaster[] | null>(null);
   protected readonly failed = signal(false);
 
@@ -131,24 +129,21 @@ export class SalonRosterTab {
         master,
         specialization: specializationLabel(this.i18n, master.specialization),
         statusKey: `roster.status.${master.status}` satisfies TranslationKey,
-        statusSeverity: SALON_MASTER_STATUS_SEVERITY[master.status] ?? 'secondary',
+        statusSeverity: ROSTER_STATUS_SEVERITY[master.status] ?? 'secondary',
         rating: formatRating(locale, master.rating, master.reviewCount),
-        joinedAt: this.store.venueDay(master.joinedAt),
+        joinedAt: this.dates.day(master.joinedAt),
       })) ?? null
     );
   });
 
   constructor() {
-    // The card renders its tabs only once the salon is loaded, and rebuilds them for another one.
-    if (this.salonId) {
-      inject(SalonMastersClient)
-        .roster(this.salonId)
-        .pipe(takeUntilDestroyed())
-        .subscribe({
-          next: (roster) => this.masters.set(roster.items),
-          // The interceptor has already worded the refusal as a toast.
-          error: () => this.failed.set(true),
-        });
-    }
+    inject(SalonMastersClient)
+      .roster(this.salonId)
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (roster) => this.masters.set(roster.items),
+        // The interceptor has already worded the refusal as a toast.
+        error: () => this.failed.set(true),
+      });
   }
 }

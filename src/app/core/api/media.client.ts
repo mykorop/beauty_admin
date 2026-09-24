@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
+import type { CardScope } from '../../shared/profile-card/card-scope';
 import { adminApiUrl } from './admin-api-url';
 
 /** One certificate of a profile, with the file behind it — which is what the tab is read for. */
@@ -34,59 +35,47 @@ export type ProfileMedia = {
 };
 
 /**
- * The content of a profile as the panel reads and moderates it.
+ * The content of a profile as the panel reads and moderates it — a Салон's or a Незалежний
+ * майстер's, at the profile's own path.
  *
  * There is deliberately nothing here that **uploads**: the content of a profile stays its owner's
  * business, and the backend has no endpoint for it either. Every write below destroys, and none of
- * them can be undone — the Cloudinary file is gone, not unlinked.
+ * them can be undone — the Cloudinary file is gone, not unlinked. Each answers with the whole tab,
+ * so it redraws from the answer.
  */
 @Injectable({ providedIn: 'root' })
 export class MediaClient {
   private readonly http = inject(HttpClient);
 
-  salon(salonId: string): Observable<ProfileMedia> {
-    return this.http.get<ProfileMedia>(adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/media`));
-  }
-
-  master(masterId: string): Observable<ProfileMedia> {
-    return this.http.get<ProfileMedia>(adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/media`));
+  read(scope: CardScope): Observable<ProfileMedia> {
+    return this.http.get<ProfileMedia>(adminApiUrl(`${scope.base}/media`));
   }
 
   /**
    * One photo out of a gallery. The URL is the address — `imagesUrls` is an unkeyed array, so an
-   * index would name a different picture the moment the owner reorders it. Answers with the whole
-   * tab, so it redraws from the answer.
+   * index would name a different picture the moment the owner reorders it.
    */
-  deleteSalonImage(salonId: string, imageUrl: string, reason: string): Observable<ProfileMedia> {
-    return this.http.delete<ProfileMedia>(adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/images`), {
+  deleteImage(scope: CardScope, imageUrl: string, reason: string): Observable<ProfileMedia> {
+    return this.http.delete<ProfileMedia>(adminApiUrl(`${scope.base}/images`), {
       body: { imageUrl, reason },
     });
   }
 
-  deleteMasterImage(masterId: string, imageUrl: string, reason: string): Observable<ProfileMedia> {
-    return this.http.delete<ProfileMedia>(adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/images`), {
-      body: { imageUrl, reason },
-    });
-  }
-
-  /** A Майстер only: a Салон has no avatar of its own. */
-  deleteMasterAvatar(masterId: string, reason: string): Observable<ProfileMedia> {
-    return this.http.delete<ProfileMedia>(adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/avatar`), {
+  /** Only where the profile has an avatar of its own (`CardCapabilities.avatar`). */
+  deleteAvatar(scope: CardScope, reason: string): Observable<ProfileMedia> {
+    return this.http.delete<ProfileMedia>(adminApiUrl(`${scope.base}/avatar`), {
       body: { reason },
     });
   }
 
   /** The certificate and its scan together. */
-  deleteSalonCertificate(salonId: string, certificateId: string, reason: string): Observable<ProfileMedia> {
+  deleteCertificate(
+    scope: CardScope,
+    certificateId: string,
+    reason: string,
+  ): Observable<ProfileMedia> {
     return this.http.delete<ProfileMedia>(
-      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/certificates/${encodeURIComponent(certificateId)}`),
-      { body: { reason } },
-    );
-  }
-
-  deleteMasterCertificate(masterId: string, certificateId: string, reason: string): Observable<ProfileMedia> {
-    return this.http.delete<ProfileMedia>(
-      adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/certificates/${encodeURIComponent(certificateId)}`),
+      adminApiUrl(`${scope.base}/certificates/${encodeURIComponent(certificateId)}`),
       { body: { reason } },
     );
   }

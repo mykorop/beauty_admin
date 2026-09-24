@@ -1,19 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
-import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
-import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
 import type { Master } from '../../core/api/masters.client';
 import { MASTER_SPECIALIZATIONS } from '../../core/api/salon-masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { concurrentEdit } from '../../shared/concurrent-edit';
+import { loadedCard } from '../../shared/profile-card/loaded-card';
 import { specializationLabel } from '../../shared/specialization';
-import { MasterCardStore } from './master-card.store';
+import { MASTER_CARD } from './master-card';
 import { buildMasterProfilePatch, toMasterProfileFormValue } from './master-profile-patch';
 
 /** The backend strips these before matching, so the form lets the administrator type them. */
@@ -43,16 +42,13 @@ const text = (validators: ValidatorFn[]) => new FormControl('', { nonNullable: t
   templateUrl: './master-profile.form.html',
 })
 export class MasterProfileForm {
-  private readonly store = inject(MasterCardStore);
+  private readonly card = loadedCard(MASTER_CARD);
   private readonly i18n = inject(I18nService);
-  private readonly messages = inject(MessageService);
 
   /** Saved or cancelled — either way the tab goes back to reading. */
   readonly closed = output<void>();
 
-  protected readonly master = this.store.master;
-  protected readonly busy = signal(false);
-  protected readonly conflict = signal(false);
+  protected readonly profile = this.card.profile;
 
   protected readonly form = new FormGroup({
     name: text([Validators.required, Validators.maxLength(200)]),
@@ -67,11 +63,10 @@ export class MasterProfileForm {
     bookingForwardDays: new FormControl<number | null>(null, wholeNumber(365)),
     brandColor: text([Validators.pattern(/^\s*(#[0-9a-fA-F]{6})?\s*$/)]),
   });
-  protected readonly reason = text([Validators.maxLength(500)]);
 
   /** The platform's list; a stored value outside it stays selectable so the form opens valid. */
   protected readonly specializationOptions = computed(() => {
-    const stored = this.master()?.specialization;
+    const stored = this.profile().specialization;
     const values: readonly string[] =
       stored && !MASTER_SPECIALIZATIONS.some((value) => value === stored)
         ? [...MASTER_SPECIALIZATIONS, stored]
@@ -79,20 +74,19 @@ export class MasterProfileForm {
     return values.map((value) => ({ value, label: specializationLabel(this.i18n, value) }));
   });
 
-  private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
-  private readonly patch = computed(() => {
-    this.value();
-    const master = this.master();
-    return master ? buildMasterProfilePatch(master, this.form.getRawValue()) : {};
+  /** The saved Майстер is the card's — header and every tab included — before the form closes. */
+  protected readonly edit = concurrentEdit({
+    form: this.form,
+    current: this.profile,
+    changes: buildMasterProfilePatch,
+    save: (patch, reason) => this.card.update({ patch: patch ?? {}, reason }),
+    reload: () => this.card.reload(),
+    fill: (master) => this.resetTo(master),
+    saved: () => this.closed.emit(),
   });
-  private readonly status = toSignal(this.form.statusChanges, { initialValue: this.form.status });
-
-  protected readonly canSave = computed(
-    () => !this.busy() && !this.conflict() && this.status() === 'VALID' && Object.keys(this.patch()).length > 0,
-  );
 
   constructor() {
-    this.resetTo(this.master());
+    this.resetTo(this.profile());
   }
 
   protected invalid(control: keyof typeof this.form.controls): boolean {
@@ -100,41 +94,7 @@ export class MasterProfileForm {
     return field.invalid && field.dirty;
   }
 
-  /** The saved Майстер is the card's — header and every tab included — before the form closes. */
-  protected save(): void {
-    if (!this.canSave() || this.reason.invalid) {
-      return;
-    }
-    this.busy.set(true);
-    this.store.updateProfile(
-      { patch: this.patch(), reason: this.reason.value.trim() || undefined },
-      {
-        next: () => {
-          this.messages.add({ severity: 'success', summary: this.i18n.t('salon.edit.saved'), life: 4000 });
-          this.closed.emit();
-        },
-        // Every refusal but this one has already been worded as a toast; the form stays as typed.
-        error: (error) => this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
-        done: () => this.busy.set(false),
-      },
-    );
-  }
-
-  /** Drops what was typed and reopens the form on what the Майстер saved meanwhile. */
-  protected reload(): void {
-    this.busy.set(true);
-    this.store.reload({
-      next: (fresh) => {
-        this.resetTo(fresh);
-        this.conflict.set(false);
-      },
-      done: () => this.busy.set(false),
-    });
-  }
-
-  private resetTo(master: Master | null): void {
-    if (master) {
-      this.form.reset(toMasterProfileFormValue(master));
-    }
+  private resetTo(master: Master): void {
+    this.form.reset(toMasterProfileFormValue(master));
   }
 }

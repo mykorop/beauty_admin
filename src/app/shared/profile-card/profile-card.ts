@@ -1,59 +1,69 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  Injector,
+  input,
+  untracked,
+} from '@angular/core';
 import { TranslatePipe } from '../../i18n/translate.pipe';
-import type { TranslationKey } from '../../i18n/translations';
-
-/** One tab of a profile card; `path` is the child route it lives under, so it can be linked to. */
-export type ProfileCardTab = { path: string; labelKey: TranslationKey };
+import { CardLifetime } from './card-lifetime';
+import { CardStore } from './card-store';
+import { LoadedProfileCard } from './loaded-profile-card';
+import type { ProfileCardKind, Versioned } from './profile-card.model';
 
 /**
- * The frame of a profile card: a way back, the title, the tab strip and the outlet the chosen tab
- * renders into. It knows nothing about whose profile it is — the Салон and the Незалежний майстер
- * pages hand it their own tabs and project their state (`cardStatus`), the actions that act on the
- * profile as a whole (`cardActions`), the card they sit inside (`cardContext`) and warnings
- * (`cardBanner`).
+ * A profile card, of whichever kind: opens on the profile its ids name, and opens anew on every
+ * other id the router hands it. While the profile is read it shows nothing; then either the loaded
+ * card (`LoadedProfileCard`) or why there is none — a profile that is not there, or a read that
+ * failed, which the interceptor has already worded as a toast.
+ *
+ * A Видалений profile opens like any other, under a banner that says it is read-only.
  */
 @Component({
   selector: 'app-profile-card',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslatePipe],
+  imports: [LoadedProfileCard, TranslatePipe],
+  providers: [CardLifetime, CardStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'profile-card' },
+  host: { class: 'contents' },
   template: `
-    <a class="profile-back" data-testid="card-back" [routerLink]="backLink()">
-      <i class="pi pi-arrow-left" aria-hidden="true"></i>
-      {{ backLabelKey() | t }}
-    </a>
-    <div class="mb-4 flex flex-wrap items-center gap-3">
-      <h1 class="min-w-0 text-2xl font-semibold [overflow-wrap:anywhere]" data-testid="card-title">
-        {{ title() || '—' }}
-      </h1>
-      <ng-content select="[cardStatus]" />
-      <div class="ml-auto flex flex-wrap items-center gap-2">
-        <ng-content select="[cardActions]" />
-      </div>
-    </div>
-    <ng-content select="[cardContext]" />
-    <ng-content select="[cardBanner]" />
-    <nav class="profile-tabs">
-      @for (tab of tabs(); track tab.path) {
-        <a
-          class="profile-tab"
-          data-testid="card-tab"
-          [routerLink]="[tab.path]"
-          routerLinkActive="is-active"
-          ariaCurrentWhenActive="page"
-          >{{ tab.labelKey | t }}</a
-        >
+    <!-- Keyed by the opening: the card and every tab in it are built anew for each one, however
+    soon its profile lands. -->
+    @for (shown of shown(); track shown.opening) {
+      <app-loaded-profile-card [kind]="kind()" [adapter]="adapter()" [loaded]="shown.loaded" />
+    } @empty {
+      @if (store.failure() === 'notFound') {
+        <p class="text-muted" data-testid="card-not-found">{{ kind().copy.notFound | t }}</p>
+      } @else if (store.failure() === 'failed') {
+        <p class="text-muted" data-testid="card-failed">{{ 'card.failed' | t }}</p>
       }
-    </nav>
-    <section class="profile-content">
-      <router-outlet />
-    </section>
+    }
   `,
 })
-export class ProfileCard {
-  readonly title = input.required<string>();
-  readonly tabs = input.required<readonly ProfileCardTab[]>();
-  readonly backLink = input.required<string>();
-  readonly backLabelKey = input.required<TranslationKey>();
+export class ProfileCard<I, P extends Versioned, C> {
+  private readonly injector = inject(Injector);
+  protected readonly store = inject(CardStore);
+
+  readonly kind = input.required<ProfileCardKind<I, P, C>>();
+  /** Whose card: one id, or a pair — as the kind's adapter reads them. */
+  readonly ids = input.required<I>();
+
+  protected readonly adapter = computed(() => this.injector.get(this.kind().adapter));
+
+  protected readonly shown = computed(() => {
+    const loaded = this.store.loaded();
+    return loaded ? [{ opening: this.store.opening(), loaded }] : [];
+  });
+
+  constructor() {
+    // The router reuses a card between two profiles, and between two visits to one: every id it is
+    // handed opens the card anew.
+    effect(() => {
+      const adapter = this.adapter();
+      const ids = this.ids();
+      untracked(() => this.store.open(adapter, ids));
+    });
+  }
 }

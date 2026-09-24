@@ -1,16 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
-import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Textarea } from 'primeng/textarea';
-import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
 import type { Salon } from '../../core/api/salons.client';
-import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
-import { SalonCardStore } from './salon-card.store';
+import { concurrentEdit } from '../../shared/concurrent-edit';
+import { loadedCard } from '../../shared/profile-card/loaded-card';
+import { SALON_CARD } from './salon-card';
 import { buildSalonProfilePatch, toSalonProfileFormValue } from './salon-profile-patch';
 
 /** The backend strips these before matching, so the form lets the administrator type them. */
@@ -38,16 +36,12 @@ const text = (validators: ValidatorFn[]) => new FormControl('', { nonNullable: t
   templateUrl: './salon-profile.form.html',
 })
 export class SalonProfileForm {
-  private readonly store = inject(SalonCardStore);
-  private readonly i18n = inject(I18nService);
-  private readonly messages = inject(MessageService);
+  private readonly card = loadedCard(SALON_CARD);
 
   /** Saved or cancelled — either way the tab goes back to reading. */
   readonly closed = output<void>();
 
-  protected readonly salon = this.store.salon;
-  protected readonly busy = signal(false);
-  protected readonly conflict = signal(false);
+  protected readonly profile = this.card.profile;
 
   protected readonly form = new FormGroup({
     name: text([Validators.required, Validators.maxLength(200)]),
@@ -61,22 +55,20 @@ export class SalonProfileForm {
     bookingForwardDays: new FormControl<number | null>(null, wholeNumber(365)),
     brandColor: text([Validators.pattern(/^\s*(#[0-9a-fA-F]{6})?\s*$/)]),
   });
-  protected readonly reason = text([Validators.maxLength(500)]);
 
-  private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
-  private readonly patch = computed(() => {
-    this.value();
-    const salon = this.salon();
-    return salon ? buildSalonProfilePatch(salon, this.form.getRawValue()) : {};
+  /** The saved Салон is the card's — header and every tab included — before the form closes. */
+  protected readonly edit = concurrentEdit({
+    form: this.form,
+    current: this.profile,
+    changes: buildSalonProfilePatch,
+    save: (patch, reason) => this.card.update({ patch: patch ?? {}, reason }),
+    reload: () => this.card.reload(),
+    fill: (salon) => this.resetTo(salon),
+    saved: () => this.closed.emit(),
   });
-  private readonly status = toSignal(this.form.statusChanges, { initialValue: this.form.status });
-
-  protected readonly canSave = computed(
-    () => !this.busy() && !this.conflict() && this.status() === 'VALID' && Object.keys(this.patch()).length > 0,
-  );
 
   constructor() {
-    this.resetTo(this.salon());
+    this.resetTo(this.profile());
   }
 
   protected invalid(control: keyof typeof this.form.controls): boolean {
@@ -84,41 +76,7 @@ export class SalonProfileForm {
     return field.invalid && field.dirty;
   }
 
-  /** The saved Салон is the card's — header and every tab included — before the form closes. */
-  protected save(): void {
-    if (!this.canSave() || this.reason.invalid) {
-      return;
-    }
-    this.busy.set(true);
-    this.store.updateProfile(
-      { patch: this.patch(), reason: this.reason.value.trim() || undefined },
-      {
-        next: () => {
-          this.messages.add({ severity: 'success', summary: this.i18n.t('salon.edit.saved'), life: 4000 });
-          this.closed.emit();
-        },
-        // Every refusal but this one has already been worded as a toast; the form stays as typed.
-        error: (error) => this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
-        done: () => this.busy.set(false),
-      },
-    );
-  }
-
-  /** Drops what was typed and reopens the form on what the Власник салону saved meanwhile. */
-  protected reload(): void {
-    this.busy.set(true);
-    this.store.reload({
-      next: (fresh) => {
-        this.resetTo(fresh);
-        this.conflict.set(false);
-      },
-      done: () => this.busy.set(false),
-    });
-  }
-
-  private resetTo(salon: Salon | null): void {
-    if (salon) {
-      this.form.reset(toSalonProfileFormValue(salon));
-    }
+  private resetTo(salon: Salon): void {
+    this.form.reset(toSalonProfileFormValue(salon));
   }
 }

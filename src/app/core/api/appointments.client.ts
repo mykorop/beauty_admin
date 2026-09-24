@@ -1,7 +1,8 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { adminApiUrl } from './admin-api-url';
+import type { CardScope } from '../../shared/profile-card/card-scope';
+import { adminApiUrl, salonPath } from './admin-api-url';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import type { TableRun } from './table-run.model';
 
@@ -188,19 +189,18 @@ const params = (query: AppointmentQuery): Record<string, string> => ({
 export class AppointmentsClient {
   private readonly http = inject(HttpClient);
 
-  /** Записи of one Салон, every Майстер of the Ростер included; `masterId` narrows it to one. */
-  salon(salonId: string, query: AppointmentQuery): Observable<AppointmentsPage> {
+  /**
+   * Записи of the profile a card is open on, in the window asked. A Салон's are every Майстер of the
+   * Ростер — the ones who left included — and `masterId` narrows them to one; a Незалежний майстер's
+   * are the ones he took on his own. A Майстер салону's are his Салон's, narrowed to him: it is the
+   * Салон that answers for them, on its clock, and `/admin/masters/{masterId}/appointments` is a
+   * Незалежний майстер's address, which refuses him.
+   */
+  list(scope: CardScope, query: AppointmentQuery): Observable<AppointmentsPage> {
+    const through = scope.capabilities.appointmentsThroughSalon;
     return this.http.get<AppointmentsPage>(
-      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/appointments`),
-      { params: params(query) },
-    );
-  }
-
-  /** Записи a Незалежний майстер took on his own; the ones he took in a Салон belong to its card. */
-  master(masterId: string, query: AppointmentQuery): Observable<AppointmentsPage> {
-    return this.http.get<AppointmentsPage>(
-      adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/appointments`),
-      { params: params(query) },
+      adminApiUrl(`${through ? salonPath(through.salonId) : scope.base}/appointments`),
+      { params: params(through ? { ...query, masterId: through.masterId } : query) },
     );
   }
 
@@ -263,35 +263,20 @@ export class AppointmentsClient {
     );
   }
 
-  /** How many Записи the Салон still has ahead of it — the card warning and the block dialog. */
-  salonUpcomingCount(salonId: string): Observable<UpcomingAppointments> {
+  /** How many Записи the profile still has ahead of it — the card warning and the block dialog. */
+  upcomingCount(scope: CardScope): Observable<UpcomingAppointments> {
     return this.http.get<UpcomingAppointments>(
-      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/appointments/upcoming-count`),
+      adminApiUrl(`${scope.base}/appointments/upcoming-count`),
     );
   }
 
   /**
-   * Every future Запис of the Салон called off with one reason. Allowed over a Видалений Салон —
-   * that is the profile the exception exists for.
+   * Every future Запис of the profile called off with one reason. Allowed over a Видалений profile
+   * — that is the profile the exception exists for.
    */
-  cancelSalonUpcoming(salonId: string, reason: string): Observable<BulkCancelResult> {
+  cancelUpcoming(scope: CardScope, reason: string): Observable<BulkCancelResult> {
     return this.http.post<BulkCancelResult>(
-      adminApiUrl(`/admin/salons/${encodeURIComponent(salonId)}/appointments/cancel-upcoming`),
-      { reason },
-    );
-  }
-
-  /** The twin of `salonUpcomingCount`, over the Записи a Незалежний майстер took on his own. */
-  masterUpcomingCount(masterId: string): Observable<UpcomingAppointments> {
-    return this.http.get<UpcomingAppointments>(
-      adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/appointments/upcoming-count`),
-    );
-  }
-
-  /** The twin of `cancelSalonUpcoming`. */
-  cancelMasterUpcoming(masterId: string, reason: string): Observable<BulkCancelResult> {
-    return this.http.post<BulkCancelResult>(
-      adminApiUrl(`/admin/masters/${encodeURIComponent(masterId)}/appointments/cancel-upcoming`),
+      adminApiUrl(`${scope.base}/appointments/cancel-upcoming`),
       { reason },
     );
   }

@@ -1,7 +1,8 @@
 @if (editing()) {
   <app-salon-profile-form (closed)="editing.set(false)" />
-} @else if (salon(); as salon) {
-  @if (salon.status !== 'deleted') {
+} @else {
+  @let salon = profile();
+  @if (scope().writable) {
     <div class="mb-3 flex flex-wrap max-w-4xl justify-end">
       <button
         pButton

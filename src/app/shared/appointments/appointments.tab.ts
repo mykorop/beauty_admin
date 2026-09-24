@@ -4,7 +4,6 @@ import {
   computed,
   DestroyRef,
   inject,
-  input,
   type OnInit,
   signal,
 } from '@angular/core';
@@ -19,9 +18,12 @@ import {
   type Appointment,
   APPOINTMENT_STATUS_SEVERITY,
   APPOINTMENT_STATUSES,
+  AppointmentsClient,
 } from '../../core/api/appointments.client';
+import { SalonMastersClient } from '../../core/api/salon-masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { cardScope } from '../profile-card/loaded-card';
 import { formatVenueDateTime, venueToday } from '../venue-date';
 import { appointmentStatusLabel, formatPrice } from './appointment-wording';
 import { AppointmentDetailsPanel } from './appointment-details';
@@ -34,19 +36,21 @@ import {
   toApiQuery,
   toQueryParams,
 } from './appointment-filters';
-import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.model';
+
+/** One Майстер as the tab's filter names him. */
+type AppointmentsFilterMaster = { masterId: string; masterName: string };
 
 /**
- * Записи of a Салон or of a Майстер: the window the reader asked for, soonest first, each row
- * opening into the whole Запис.
+ * Записи of the profile a card is open on — a Салон, a Майстер салону or a Незалежний майстер: the
+ * window the reader asked for, soonest first, each row opening into the whole Запис.
  *
  * A Запис is never **made** here — there is no «new» button and no endpoint behind one: a Запис is
  * made by a Клієнт or by the business, never by the platform. Acting on one that exists is the
  * open card's own business (`app-appointment-details`); which Запис is open, its read and where an
  * action's answer lands belong to `AppointmentInteraction`, and every new window is a new list.
  *
- * Whose Записи these are lives entirely in the `port`; the filters live in the address, so a view
- * can be linked to.
+ * Whose Записи these are, and on whose clock, is the card's scope; the filters live in the
+ * address, so a view can be linked to.
  */
 @Component({
   selector: 'app-appointments',
@@ -201,8 +205,9 @@ import type { AppointmentsFilterMaster, AppointmentsPort } from './appointments.
   `,
 })
 export class AppointmentsTab implements OnInit {
-  /** Whose Записи these are — the list and its Ростер are read through it. */
-  readonly port = input.required<AppointmentsPort>();
+  private readonly client = inject(AppointmentsClient);
+  private readonly rosters = inject(SalonMastersClient);
+  private readonly scope = cardScope();
 
   protected readonly interaction: AppointmentInteraction<Appointment> = inject(AppointmentInteraction);
 
@@ -222,11 +227,11 @@ export class AppointmentsTab implements OnInit {
   );
 
   /**
-   * The Майстер column stands on a Салон's tab and nowhere else. It follows the `port`, not the
-   * Ростер it is filtered by: a column that appeared only once that read answered would shift the
-   * table under the reader.
+   * The Майстер column stands on a Салон's tab and nowhere else — a Майстер's own list would repeat
+   * his name on every row. It follows the scope, not the Ростер it is filtered by: a column that
+   * appeared only once that read answered would shift the table under the reader.
    */
-  protected readonly showMaster = computed(() => this.port().masters !== null);
+  protected readonly showMaster = computed(() => this.scope().capabilities.roster !== null);
 
   /** The columns beside the chevron. */
   protected readonly columns = computed(() => (this.showMaster() ? 6 : 5));
@@ -250,14 +255,22 @@ export class AppointmentsTab implements OnInit {
     );
   });
 
-  // `port` is an input, so the first read waits for the bindings — not the constructor.
+  // Not the constructor: an address the tab rewrites belongs to a navigation that has to finish.
   ngOnInit(): void {
-    const today = venueToday(this.port().timezone);
+    const scope = this.scope();
+    const today = venueToday(scope.timezone);
 
-    this.port()
-      .masters?.pipe(takeUntilDestroyed(this.destroyRef))
-      // The filter is a convenience; a Ростер that failed to load leaves the list itself standing.
-      .subscribe({ next: (masters) => this.masters.set(masters), error: () => this.masters.set([]) });
+    const roster = scope.capabilities.roster;
+    if (roster) {
+      this.rosters
+        .roster(roster.salonId)
+        .pipe(
+          map(({ items }) => items.map(({ masterId, masterName }) => ({ masterId, masterName }))),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        // The filter is a convenience; a Ростер that failed to load leaves the list itself standing.
+        .subscribe({ next: (masters) => this.masters.set(masters), error: () => this.masters.set([]) });
+    }
 
     this.route.queryParamMap
       .pipe(
@@ -282,15 +295,15 @@ export class AppointmentsTab implements OnInit {
         }),
         // A new window starts the list over; the answer to the old one is dropped.
         switchMap(({ asked }) =>
-          this.port()
-            .list(toApiQuery(asked))
+          this.client
+            .list(scope, toApiQuery(asked))
             // The interceptor has already worded the refusal as a toast.
             .pipe(catchError(() => (this.failed.set(true), EMPTY))),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((page) => {
-        this.timezone.set(page.timezone || this.port().timezone);
+        this.timezone.set(page.timezone || scope.timezone);
         this.interaction.show(page.items);
       });
   }

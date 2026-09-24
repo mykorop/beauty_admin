@@ -8,7 +8,6 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import {
   FormControl,
   FormGroup,
@@ -16,18 +15,18 @@ import {
   type ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
-import { finalize } from 'rxjs';
-import { ApiError, EDIT_CONFLICT_CODE } from '../../core/api/api-error';
 import type { Dictionaries } from '../../core/api/dictionaries.client';
+import { ServiceCatalogClient } from '../../core/api/service-catalog.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { concurrentEdit } from '../concurrent-edit';
+import { cardScope } from '../profile-card/loaded-card';
 import { serviceCategoryLabel } from '../service-category';
 import {
   buildCatalogServicePatch,
@@ -36,7 +35,7 @@ import {
   toCatalogServiceFormValue,
   touchesMasterOwnedFields,
 } from './service-catalog-patch';
-import type { CatalogService, ServiceCatalogPort } from './service-catalog.model';
+import type { CatalogService } from './service-catalog.model';
 
 const numberValidators = (min: number, max: number): ValidatorFn[] => [
   Validators.required,
@@ -53,8 +52,8 @@ const withStored = (values: readonly string[], stored: string | undefined): read
  * One послуга of a Каталог: a new one (MDL only) or an existing one, of which only the changed
  * fields are sent, under the `updatedAt` the form was opened with.
  *
- * It knows neither whose Каталог this is nor where it lives — the `port` it is handed writes it.
- * The one thing that differs between the two is `copies`: in a Салон, ціна and тривалість are the
+ * Whose Каталог it writes is the card's scope. The one thing that differs between a Салон's and a
+ * Незалежний майстер's is `copies`: in a Салон, ціна and тривалість are the
  * starting point for Копії майстрів that never follow, and the form says so the moment either is
  * touched; a Незалежний майстер has no Копії, so the warning would name nothing.
  */
@@ -76,7 +75,7 @@ const withStored = (values: readonly string[], stored: string | undefined): read
       class="profile-fields profile-form"
       data-testid="service-form"
       [formGroup]="form"
-      (ngSubmit)="save()"
+      (ngSubmit)="edit.save()"
     >
       <h2 class="field-wide text-base font-medium" data-testid="service-form-title">
         {{ (current() ? 'services.form.editTitle' : 'services.form.newTitle') | t }}
@@ -182,7 +181,7 @@ const withStored = (values: readonly string[], stored: string | undefined): read
         id="service-reason"
         data-testid="service-reason"
         maxlength="500"
-        [formControl]="reason"
+        [formControl]="edit.reason"
       />
 
       @if (warnsAboutCopies()) {
@@ -196,7 +195,7 @@ const withStored = (values: readonly string[], stored: string | undefined): read
         </p-message>
       }
 
-      @if (conflict()) {
+      @if (edit.conflict()) {
         <p-message
           class="field-wide"
           severity="warn"
@@ -212,8 +211,8 @@ const withStored = (values: readonly string[], stored: string | undefined): read
               severity="warn"
               data-testid="edit-reload"
               [label]="'salon.edit.reload' | t"
-              [loading]="busy()"
-              (click)="reload()"
+              [loading]="edit.busy()"
+              (click)="edit.reload()"
             ></button>
           </div>
         </p-message>
@@ -225,8 +224,8 @@ const withStored = (values: readonly string[], stored: string | undefined): read
           type="submit"
           data-testid="service-save"
           [label]="'salon.edit.save' | t"
-          [disabled]="!canSave()"
-          [loading]="busy() && !conflict()"
+          [disabled]="!edit.canSave()"
+          [loading]="edit.busy() && !edit.conflict()"
         ></button>
         <button
           pButton
@@ -235,7 +234,7 @@ const withStored = (values: readonly string[], stored: string | undefined): read
           data-testid="service-cancel"
           [text]="true"
           [label]="'salon.edit.cancel' | t"
-          [disabled]="busy()"
+          [disabled]="edit.busy()"
           (click)="closed.emit(null)"
         ></button>
       </div>
@@ -244,10 +243,9 @@ const withStored = (values: readonly string[], stored: string | undefined): read
 })
 export class ServiceCatalogForm implements OnInit {
   private readonly i18n = inject(I18nService);
-  private readonly messages = inject(MessageService);
-
-  /** Whose Каталог this is — the four calls that write it. */
-  readonly port = input.required<ServiceCatalogPort>();
+  private readonly catalog = inject(ServiceCatalogClient);
+  /** Whose Каталог this is. */
+  private readonly scope = cardScope();
   /** The service to edit; `null` opens the form on a new one. */
   readonly service = input.required<CatalogService | null>();
   readonly dictionaries = input.required<Dictionaries>();
@@ -259,8 +257,6 @@ export class ServiceCatalogForm implements OnInit {
 
   /** What the form is open on: the input, until a conflict reload brings a fresher one. */
   protected readonly current = signal<CatalogService | null>(null);
-  protected readonly busy = signal(false);
-  protected readonly conflict = signal(false);
 
   protected readonly form = new FormGroup({
     name: new FormControl('', {
@@ -277,10 +273,6 @@ export class ServiceCatalogForm implements OnInit {
     currency: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     isActive: new FormControl(true, { nonNullable: true }),
   });
-  protected readonly reason = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.maxLength(500)],
-  });
 
   protected readonly categoryOptions = computed(() =>
     withStored(this.dictionaries().serviceCategories, this.current()?.category)
@@ -291,29 +283,31 @@ export class ServiceCatalogForm implements OnInit {
     ...withStored(this.dictionaries().serviceCurrencies, this.current()?.currency),
   ]);
 
-  private readonly value = toSignal(this.form.valueChanges, {
-    initialValue: this.form.getRawValue(),
-  });
-  private readonly status = toSignal(this.form.statusChanges, { initialValue: this.form.status });
-  private readonly patch = computed(() => {
-    this.value();
-    const service = this.current();
-    return service ? buildCatalogServicePatch(service, this.form.getRawValue()) : null;
+  /** Updated in place, or created — in the Каталог of the card's profile. */
+  protected readonly edit = concurrentEdit({
+    form: this.form,
+    current: this.current,
+    changes: buildCatalogServicePatch,
+    save: (patch, reason) => {
+      const service = this.current();
+      if (service) {
+        return this.catalog.update(this.scope(), service.serviceId, {
+          updatedAt: service.updatedAt,
+          patch: patch ?? {},
+          reason,
+        });
+      }
+      const fields = toCatalogServiceFields(this.form.getRawValue());
+      return fields && this.catalog.create(this.scope(), { fields, reason });
+    },
+    reload: (service) => this.catalog.get(this.scope(), service.serviceId),
+    fill: (service) => this.resetTo(service),
+    saved: (service) => this.closed.emit(service),
   });
 
   protected readonly warnsAboutCopies = computed(() => {
-    const patch = this.patch();
+    const patch = this.edit.changes();
     return this.copies() && !!patch && touchesMasterOwnedFields(patch);
-  });
-
-  protected readonly canSave = computed(() => {
-    const patch = this.patch();
-    return (
-      !this.busy() &&
-      !this.conflict() &&
-      this.status() === 'VALID' &&
-      (patch === null || Object.keys(patch).length > 0)
-    );
   });
 
   ngOnInit(): void {
@@ -323,58 +317,6 @@ export class ServiceCatalogForm implements OnInit {
   protected invalid(control: keyof typeof this.form.controls): boolean {
     const field = this.form.controls[control];
     return field.invalid && field.dirty;
-  }
-
-  protected save(): void {
-    if (!this.canSave() || this.reason.invalid) {
-      return;
-    }
-    const service = this.current();
-    const reason = this.reason.value.trim() || undefined;
-    const fields = toCatalogServiceFields(this.form.getRawValue());
-    const request = service
-      ? this.port().update(service.serviceId, {
-          updatedAt: service.updatedAt,
-          patch: this.patch() ?? {},
-          reason,
-        })
-      : fields && this.port().create({ fields, reason });
-    if (!request) {
-      return;
-    }
-    this.busy.set(true);
-    request.pipe(finalize(() => this.busy.set(false))).subscribe({
-      next: (saved) => {
-        this.messages.add({
-          severity: 'success',
-          summary: this.i18n.t('salon.edit.saved'),
-          life: 4000,
-        });
-        this.closed.emit(saved);
-      },
-      // Every refusal but this one has already been worded as a toast; the form stays as typed.
-      error: (error: unknown) =>
-        this.conflict.set(error instanceof ApiError && error.code === EDIT_CONFLICT_CODE),
-    });
-  }
-
-  /** Drops what was typed and reopens the form on what the Власник салону saved meanwhile. */
-  protected reload(): void {
-    const service = this.current();
-    if (!service) {
-      return;
-    }
-    this.busy.set(true);
-    this.port()
-      .get(service.serviceId)
-      .pipe(finalize(() => this.busy.set(false)))
-      .subscribe({
-        next: (fresh) => {
-          this.resetTo(fresh);
-          this.conflict.set(false);
-        },
-        error: () => undefined,
-      });
   }
 
   private resetTo(service: CatalogService | null): void {

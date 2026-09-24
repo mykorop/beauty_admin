@@ -48,6 +48,11 @@ export type Feed<T> = {
   reload(): void;
   /** State that is one list's own — `initial` again whenever the feed shows a new list. */
   listState<S>(initial: S): WritableSignal<S>;
+  /**
+   * The level of the list shown. What else is one list's own and asks the backend — an action over
+   * its rows — is bound here, so a new list drops its answer along with the list's own pages.
+   */
+  readonly scope: RequestScope;
 };
 
 /**
@@ -111,6 +116,7 @@ export function feed<Q, T>(source: FeedSource<Q, T>): Feed<T> {
     },
     reload: () => start(asked()),
     listState: (initial) => level.state(initial),
+    scope: level,
   };
 }
 
