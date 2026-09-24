@@ -30,6 +30,13 @@ import { AppointmentRescheduleDialog } from './appointment-reschedule-dialog';
  * closed Запис shows the line that says so instead, because "why can I not cancel this" is the
  * question a disabled row raises.
  *
+ * Over a profile that is only read (`writable`) — a Видалений one, or a Майстер салону whose Салон
+ * is Видалений — скасування alone stands: it is the one exception the backend makes there, so that
+ * the Клієнт is not left before a closed door, and it refuses everything else. Whether the profile
+ * may be changed is the list's to say: a card's tab knows it from the card's scope, while a list
+ * that spans venues knows nothing of the venue and offers every action, the backend's refusal
+ * standing guard.
+ *
  * Nothing here decides *whose* Запис it is: the three actions are addressed by the Запис's own id,
  * so one component serves every Записи list alike — a card's tab, a Клієнт's history, the
  * platform's list. Where the answer lands is the list's business: this component sends the action
@@ -84,7 +91,7 @@ const OFFERS: StatusOffer[] = [
   template: `
     @if (actionable()) {
       <div class="mt-4 flex flex-wrap gap-2 border-t border-divider pt-4" data-testid="appointment-actions">
-        @for (offer of offers; track offer.status) {
+        @for (offer of offers(); track offer.status) {
           <button
             pButton
             type="button"
@@ -97,17 +104,19 @@ const OFFERS: StatusOffer[] = [
             (click)="statusChange.ask(offer)"
           ></button>
         }
-        <button
-          pButton
-          type="button"
-          size="small"
-          icon="pi pi-calendar"
-          data-testid="appointment-action-reschedule"
-          [outlined]="true"
-          [label]="'appointments.action.reschedule' | t"
-          [disabled]="busy()"
-          (click)="rescheduling.set(true)"
-        ></button>
+        @if (writable()) {
+          <button
+            pButton
+            type="button"
+            size="small"
+            icon="pi pi-calendar"
+            data-testid="appointment-action-reschedule"
+            [outlined]="true"
+            [label]="'appointments.action.reschedule' | t"
+            [disabled]="busy()"
+            (click)="rescheduling.set(true)"
+          ></button>
+        }
       </div>
 
       @if (statusChange.asked(); as offer) {
@@ -140,12 +149,16 @@ const OFFERS: StatusOffer[] = [
 })
 export class AppointmentActions {
   readonly details = input.required<AppointmentDetails>();
+  /** The Запис's profile may be changed — see above. */
+  readonly writable = input(true);
 
   private readonly client = inject(AppointmentsClient);
   private readonly interaction = inject(AppointmentInteraction);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly offers = OFFERS;
+  protected readonly offers = computed(() =>
+    this.writable() ? OFFERS : OFFERS.filter((offer) => offer.status === 'CANCELLED'),
+  );
   protected readonly rescheduling = signal(false);
   /** A move is on its way. */
   protected readonly moving = signal(false);

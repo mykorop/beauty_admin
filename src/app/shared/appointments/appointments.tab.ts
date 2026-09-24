@@ -177,7 +177,7 @@ type AppointmentsFilterMaster = { masterId: string; masterName: string };
                   <td></td>
                   <td class="px-4 py-4" [attr.colspan]="columns()">
                     @if (interaction.opened()?.details; as details) {
-                      <app-appointment-details [details]="details" />
+                      <app-appointment-details [details]="details" [writable]="writable()" />
                     } @else if (interaction.opened()?.failed) {
                       <p class="text-muted" data-testid="appointment-details-failed">{{ 'card.failed' | t }}</p>
                     } @else {
@@ -232,6 +232,9 @@ export class AppointmentsTab implements OnInit {
    * appeared only once that read answered would shift the table under the reader.
    */
   protected readonly showMaster = computed(() => this.scope().capabilities.roster !== null);
+
+  /** These Записи are the profile's, so the actions over them follow its state. */
+  protected readonly writable = computed(() => this.scope().writable);
 
   /** The columns beside the chevron. */
   protected readonly columns = computed(() => (this.showMaster() ? 6 : 5));

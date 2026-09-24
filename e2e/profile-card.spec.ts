@@ -6,7 +6,9 @@ import { ADMIN, expect, goBackTo, signIn, test } from './fixtures/app.fixture';
  * What every profile card does whatever its kind: it opens on the profile its address names, opens
  * anew on the next one the router hands it, and never lets the read of an earlier opening land on
  * the one shown now. And one rule every tab of it keeps: a Видалений profile — or a Майстер салону
- * whose Салон is Видалений — is only read, on every tab that could otherwise change something.
+ * whose Салон is Видалений — is only read, on every tab that could otherwise change something, but
+ * for the exceptions the backend makes there, such as cancelling a Запис or taking a Майстер off the
+ * Ростер.
  *
  * The late read is held by the mock and let go once the next profile is shown. The card then makes
  * a request of its own and waits for it to be drawn: by then the late read has had its chance.
@@ -188,8 +190,61 @@ const schedule = (url: URL): MockResponse => {
   });
 };
 
+/** Two days ahead: a Запис still «заброньовано» that nobody has had the chance to close. */
+const DAY = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
+
+const booked = (overrides: Record<string, unknown> = {}) => ({
+  appointmentId: 'a1',
+  startTime: `${DAY}T06:00:00Z`,
+  endTime: `${DAY}T06:45:00Z`,
+  status: 'BOOKED',
+  clientName: 'Maria Client',
+  masterId: 'm1',
+  masterName: 'Ion Popa',
+  salonId: 's1',
+  serviceNames: ['Haircut'],
+  totalPrice: 500,
+  currency: 'MDL',
+  isManual: false,
+  ...overrides,
+});
+
+const bookedList = (overrides: Record<string, unknown> = {}) =>
+  apiOk({ timezone: 'Europe/Chisinau', items: [booked(overrides)] });
+
+const bookedDetails = (overrides: Record<string, unknown> = {}) =>
+  apiOk({
+    ...booked(),
+    updatedAt: '2026-09-20T10:00:00.000Z',
+    timezone: 'Europe/Chisinau',
+    clientId: 'c1',
+    clientPhone: '+37360000001',
+    salonName: 'Beauty Lab',
+    services: [{ serviceId: 'svc1', name: 'Haircut', durationMinutes: 45, price: 500 }],
+    totalDurationMinutes: 45,
+    notes: null,
+    ...overrides,
+  });
+
 const tab = (page: Page, path: string) =>
   page.locator(`a[data-testid="card-tab"][href$="/${path}"]`);
+
+/** Opens the card's Записи tab and expands the one Запис on it. */
+async function openTheAppointment(page: Page): Promise<void> {
+  await tab(page, 'appointments').click();
+  await page.getByTestId('appointment-row').click();
+}
+
+/**
+ * Over a Видалений profile a Запис can still be cancelled — the one action over it the backend
+ * allows there, so that no Клієнт is left before a closed door — and nothing else.
+ */
+async function expectOnlyCancellation(page: Page): Promise<void> {
+  await expect(page.getByTestId('appointment-action-CANCELLED')).toBeVisible();
+  await expect(page.getByTestId('appointment-action-COMPLETED')).toHaveCount(0);
+  await expect(page.getByTestId('appointment-action-NO_SHOW')).toHaveCount(0);
+  await expect(page.getByTestId('appointment-action-reschedule')).toHaveCount(0);
+}
 
 type Kind = {
   name: string;
@@ -348,6 +403,21 @@ test.describe('Видалений — лише на перегляд', () => {
     await expect(page.getByTestId('media-certificate-delete')).toHaveCount(0);
   });
 
+  test('a Запис of a Видалений Салон can only be cancelled', async ({ page, mockBackend }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon(DELETED)),
+      'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 1 }),
+      'GET /admin/salons/s1/masters': apiOk({ items: [salonMaster()] }),
+      'GET /admin/salons/s1/appointments': bookedList(),
+      'GET /admin/appointments/a1': bookedDetails(),
+    });
+    await signIn(page, ADMIN, '/salons/s1/profile');
+
+    await openTheAppointment(page);
+    await expectOnlyCancellation(page);
+  });
+
   test('every tab of a Видалений Незалежний майстер that could change something only reads', async ({
     page,
     mockBackend,
@@ -389,6 +459,24 @@ test.describe('Видалений — лише на перегляд', () => {
     await expect(page.getByTestId('media-certificate-delete')).toHaveCount(0);
   });
 
+  test('a Запис of a Видалений Незалежний майстер can only be cancelled', async ({
+    page,
+    mockBackend,
+  }) => {
+    const independent = { salonId: null, salonName: null };
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/masters/m1': apiOk(master(DELETED)),
+      'GET /admin/masters/m1/appointments/upcoming-count': apiOk({ count: 1 }),
+      'GET /admin/masters/m1/appointments': bookedList(independent),
+      'GET /admin/appointments/a1': bookedDetails(independent),
+    });
+    await signIn(page, ADMIN, '/independent-masters/m1/profile');
+
+    await openTheAppointment(page);
+    await expectOnlyCancellation(page);
+  });
+
   test('every tab of a Майстер салону in a Видалений Салон only reads — removal from the Ростер aside', async ({
     page,
     mockBackend,
@@ -421,5 +509,22 @@ test.describe('Видалений — лише на перегляд', () => {
     await expect(page.getByTestId('copy-new')).toHaveCount(0);
     await expect(page.getByTestId('copy-edit')).toHaveCount(0);
     await expect(page.getByTestId('copy-remove')).toHaveCount(0);
+  });
+
+  test('a Запис of a Майстер салону in a Видалений Салон can only be cancelled', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon(DELETED)),
+      'GET /admin/salons/s1/masters/m1': apiOk(salonMaster()),
+      'GET /admin/salons/s1/appointments': bookedList(),
+      'GET /admin/appointments/a1': bookedDetails(),
+    });
+    await signIn(page, ADMIN, '/salons/s1/masters/m1/profile');
+
+    await openTheAppointment(page);
+    await expectOnlyCancellation(page);
   });
 });
