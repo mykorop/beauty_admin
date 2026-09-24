@@ -313,6 +313,10 @@ export const UK_TRANSLATIONS = {
   'audit.action.salon.master.time-off.create': 'Створення Відсутності Майстра',
   'audit.action.salon.master.time-off.remove': 'Видалення Відсутності Майстра',
   'error.TIME_OFF_HAS_APPOINTMENTS': 'У цьому періоді вже є активні Записи.',
+  'scheduleChange.conflict':
+    'Заброньовані Записи опиняться поза робочим часом: {{count}} ({{dates}}). Зміна нічого не скасовує — Записи лишаться, Клієнтів не буде повідомлено.',
+  'scheduleChange.conflict.confirm': 'Все одно зберегти',
+  'error.SCHEDULE_CHANGE_HAS_APPOINTMENTS': 'Після зміни заброньовані Записи опиняться поза робочим часом.',
   'history.empty': 'Дій над цим Салоном ще не було.',
   'history.more': 'Показати давніші',
   'history.reason': 'Причина: {{reason}}',

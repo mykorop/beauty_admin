@@ -14,6 +14,7 @@ import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { finalize, type Observable } from 'rxjs';
+import { withAllowedAppointments } from '../../core/api/allow-existing-appointments';
 import { ApiError, MASTER_HOURS_OUTSIDE_SALON_HOURS_CODE } from '../../core/api/api-error';
 import type {
   TimeOffGroup,
@@ -22,6 +23,8 @@ import type {
 } from '../../core/api/master-schedule.model';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { appointmentsConflict } from './appointments-conflict';
+import { AppointmentsConflictView } from './appointments-conflict.view';
 import { wordHoursRefusals } from './hours-refusal-wording';
 import {
   buildTimeOff,
@@ -29,7 +32,6 @@ import {
   formatPeriod,
   TIME_OFF_TYPE_KEYS,
   TIME_OFF_TYPES,
-  timeOffConflict,
   timeOffIssue,
 } from './time-off';
 import { formatSlots } from './week-hours';
@@ -45,7 +47,14 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
  */
 @Component({
   selector: 'app-time-off-section',
-  imports: [ReactiveFormsModule, ButtonDirective, InputText, Message, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    AppointmentsConflictView,
+    ButtonDirective,
+    InputText,
+    Message,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (adding()) {
@@ -135,27 +144,15 @@ export type TimeOffCreateRequest = { timeOff: TimeOffRequest; reason?: string };
           <p class="mt-3 text-xs text-warning" data-testid="time-off-issue">{{ issue | t }}</p>
         }
         @if (conflict(); as conflict) {
-          <p-message class="mt-4 block" severity="warn" icon="pi pi-exclamation-triangle">
-            <div data-testid="time-off-conflict">
-              <p>
-                {{
-                  'timeOff.conflict'
-                    | t: { count: conflict.appointmentCount, dates: conflict.dates }
-                }}
-              </p>
-              <button
-                pButton
-                type="button"
-                class="mt-2"
-                size="small"
-                severity="warn"
-                data-testid="time-off-confirm"
-                [label]="'timeOff.conflict.confirm' | t"
-                [loading]="busy()"
-                (click)="submit(true)"
-              ></button>
-            </div>
-          </p-message>
+          <app-appointments-conflict
+            class="mt-4"
+            testId="time-off"
+            message="timeOff.conflict"
+            confirmLabel="timeOff.conflict.confirm"
+            [conflict]="conflict"
+            [busy]="busy()"
+            (confirm)="submit(true)"
+          />
         }
         @if (refusals().length > 0) {
           <p-message class="mt-4 block" severity="error" icon="pi pi-times-circle">
@@ -374,16 +371,7 @@ export class TimeOffSection {
     );
   });
 
-  protected readonly conflict = computed(() => {
-    const conflict = timeOffConflict(this.refused());
-    const locale = this.i18n.locale();
-    return (
-      conflict && {
-        ...conflict,
-        dates: conflict.dates.map((date) => formatCalendarDate(date, locale)).join(', '),
-      }
-    );
-  });
+  protected readonly conflict = computed(() => appointmentsConflict(this.refused()));
 
   protected readonly refusals = computed(() => {
     const error = this.refused();
@@ -413,10 +401,7 @@ export class TimeOffSection {
     this.busy.set(true);
     this.refused.set(null);
     this.create()({
-      timeOff: {
-        ...buildTimeOff(value),
-        ...(confirmed ? { allowExistingAppointments: true } : {}),
-      },
+      timeOff: { ...buildTimeOff(value), ...withAllowedAppointments(confirmed) },
       reason: auditReason.trim() || undefined,
     })
       .pipe(finalize(() => this.busy.set(false)))

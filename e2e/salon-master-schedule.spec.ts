@@ -257,6 +257,59 @@ test.describe('salon master working schedule', () => {
     await expect(page.getByTestId('hours-refusal')).toHaveText('Неділя: Салон цього дня зачинений.');
   });
 
+  test('names the Записи the new week leaves standing and saves it over them only once confirmed', async ({
+    page,
+    mockBackend,
+  }) => {
+    const saved = [
+      closed(0),
+      open(1, '10:00', '14:00'),
+      open(2),
+      open(3),
+      open(4),
+      open(5),
+      open(6, '10:00', '16:00'),
+    ];
+    const mock = await mockBackend(
+      ADMIN,
+      routes({
+        [PUT]: (_url: URL, body: unknown) =>
+          (body as { allowExistingAppointments?: boolean }).allowExistingAppointments
+            ? apiOk({ days: saved })
+            : apiError(409, 'SCHEDULE_CHANGE_HAS_APPOINTMENTS', 'Booked appointments no longer fit', {
+                dates: ['2026-10-12', '2026-10-19'],
+                appointmentCount: 2,
+                appointments: [],
+              }),
+      }),
+    );
+    await signIn(page, ADMIN, TAB);
+
+    await page.getByTestId('hours-edit').click();
+    await editRow(page, 0).getByTestId('hours-end').fill('14:00');
+    await page.getByTestId('hours-reason').fill('Master asked by phone');
+    await page.getByTestId('hours-save').click();
+
+    // Nothing is saved and nothing is cancelled: the week stays as typed, and the Записи are named.
+    const conflict = page.getByTestId('hours-conflict');
+    await expect(conflict).toContainText('поза робочим часом: 2');
+    await expect(conflict).toContainText('12 жовт. 2026');
+    await expect(conflict).toContainText('19 жовт. 2026');
+    await expect(page.getByTestId('hours-refusal')).toHaveCount(0);
+    await expect(page.locator('.p-toast-message')).toHaveCount(0);
+    await expect(editRow(page, 0).getByTestId('hours-end')).toHaveValue('14:00');
+
+    await page.getByTestId('hours-confirm').click();
+
+    await expect(page.getByTestId('hours-form')).toHaveCount(0);
+    await expect(weekRow(page, 0).getByTestId('schedule-day-master')).toContainText('10:00 – 14:00');
+    await expect(page.locator('.p-toast-message')).toContainText('Тижневі години збережено.');
+    expect(mock.bodies[PUT]).toEqual([
+      { masterHours: saved, reason: 'Master asked by phone' },
+      { masterHours: saved, reason: 'Master asked by phone', allowExistingAppointments: true },
+    ]);
+  });
+
   test('draws the month a client would meet: working days, Відсутності and Записи', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, routes());
     await signIn(page, ADMIN, TAB);

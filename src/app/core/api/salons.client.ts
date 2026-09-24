@@ -5,6 +5,7 @@ import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { HOURS_REFUSAL_CODES } from './api-error';
 import type { DayHours } from './master-schedule.model';
 import { adminApiUrl, salonPath } from './admin-api-url';
+import { withAllowedAppointments } from './allow-existing-appointments';
 import { withReason } from './reason-body';
 
 export type SalonStatus = 'active' | 'blocked' | 'deleted';
@@ -117,13 +118,21 @@ export class SalonsClient {
 
   /**
    * The whole resulting week, all seven days. A week the domain refuses is worded by the form
-   * itself — rule by rule, master by master — so those codes are left to the caller.
+   * itself — rule by rule, master by master, and the Записи of the whole Ростер it would leave
+   * standing — so those codes are left to the caller.
    */
-  updateHours(salonId: string, request: { days: SalonDayHours[]; reason?: string }): Observable<SalonHours> {
-    const { days, reason } = request;
+  updateHours(
+    salonId: string,
+    request: { days: SalonDayHours[]; reason?: string; allowExistingAppointments?: boolean },
+  ): Observable<SalonHours> {
+    const { days, reason, allowExistingAppointments } = request;
     return this.http.put<SalonHours>(
       salonUrl(salonId, 'hours'),
-      { salonHours: days, ...withReason(reason) },
+      {
+        salonHours: days,
+        ...withReason(reason),
+        ...withAllowedAppointments(allowExistingAppointments),
+      },
       { context: new HttpContext().set(SILENT_ERROR_CODES, HOURS_REFUSAL_CODES) },
     );
   }

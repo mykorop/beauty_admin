@@ -4,8 +4,9 @@ import { map, type Observable, of } from 'rxjs';
 import type { CardScope } from '../../shared/profile-card/card-scope';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { adminApiUrl } from './admin-api-url';
+import { withAllowedAppointments } from './allow-existing-appointments';
 import { withReason } from './reason-body';
-import { HOURS_REFUSAL_CODES, TIME_OFF_REFUSAL_CODES } from './api-error';
+import { HOURS_REFUSAL_CODES, ROTATION_REFUSAL_CODES, TIME_OFF_REFUSAL_CODES } from './api-error';
 import type {
   DayHours,
   MasterSchedule,
@@ -44,29 +45,46 @@ export class WorkingScheduleClient {
 
   /**
    * The whole resulting week, all seven days. A week the domain refuses — outside the Години роботи
-   * of the Салон above all — is worded by the editor itself, so those codes are left to the caller.
+   * of the Салон above all, or over the Записи it would leave standing — is worded by the editor
+   * itself, so those codes are left to the caller.
    */
   updateHours(
     scope: CardScope,
-    request: { days: DayHours[]; reason?: string },
+    request: { days: DayHours[]; reason?: string; allowExistingAppointments?: boolean },
   ): Observable<{ days: DayHours[] }> {
-    const { days, reason } = request;
+    const { days, reason, allowExistingAppointments } = request;
     return this.http.put<{ days: DayHours[] }>(
       adminApiUrl(`${scope.base}/hours`),
-      { masterHours: days, ...withReason(reason) },
+      {
+        masterHours: days,
+        ...withReason(reason),
+        ...withAllowedAppointments(allowExistingAppointments),
+      },
       { context: new HttpContext().set(SILENT_ERROR_CODES, HOURS_REFUSAL_CODES) },
     );
   }
 
-  /** Sets the Ротація, or clears it with `pattern: null` — one call for both. Answers with it as stored. */
+  /**
+   * Sets the Ротація, or clears it with `pattern: null` — one call for both. Answers with it as
+   * stored. A cycle refused over the Записи it would leave standing is worded by the form itself.
+   */
   updateSchedulePattern(
     scope: CardScope,
-    request: { pattern: SchedulePattern | null; reason?: string },
+    request: {
+      pattern: SchedulePattern | null;
+      reason?: string;
+      allowExistingAppointments?: boolean;
+    },
   ): Observable<{ schedulePattern: SchedulePattern | null }> {
-    const { pattern, reason } = request;
+    const { pattern, reason, allowExistingAppointments } = request;
     return this.http.put<{ schedulePattern: SchedulePattern | null }>(
       adminApiUrl(`${scope.base}/schedule-pattern`),
-      { pattern: pattern && { patternType: 'CYCLE', ...pattern }, ...withReason(reason) },
+      {
+        pattern: pattern && { patternType: 'CYCLE', ...pattern },
+        ...withReason(reason),
+        ...withAllowedAppointments(allowExistingAppointments),
+      },
+      { context: new HttpContext().set(SILENT_ERROR_CODES, ROTATION_REFUSAL_CODES) },
     );
   }
 

@@ -202,6 +202,55 @@ test.describe('salon master Ротація', () => {
     await expect(page.getByTestId('rotation-summary')).toContainText('Ротації немає');
     await expect(cell(page, 9)).toHaveAttribute('data-status', 'OPEN');
   });
+
+  test('names the Записи a new Ротація leaves standing and stores it over them only once confirmed', async ({
+    page,
+    mockBackend,
+  }) => {
+    const { day, routes } = backend();
+    const mock = await mockBackend(
+      ADMIN,
+      routes({
+        [PATTERN]: (_url, body) => {
+          const { pattern, allowExistingAppointments } = body as {
+            pattern: Pattern & { patternType: string };
+            allowExistingAppointments?: boolean;
+          };
+          const { patternType: _patternType, ...stored } = pattern;
+          return allowExistingAppointments
+            ? apiOk({ schedulePattern: stored })
+            : apiError(409, 'SCHEDULE_CHANGE_HAS_APPOINTMENTS', 'Booked appointments no longer fit', {
+                dates: [day(9), day(10)],
+                appointmentCount: 3,
+                appointments: [],
+              });
+        },
+      }),
+    );
+    await signIn(page, ADMIN, TAB);
+
+    await page.getByTestId('rotation-edit').click();
+    await page.getByTestId('rotation-reason').fill('Master asked by phone');
+    await page.getByTestId('rotation-save').click();
+
+    // Nothing is stored and nothing is cancelled: the form stays, and says what is in the way.
+    await expect(page.getByTestId('rotation-conflict')).toContainText('поза робочим часом: 3');
+    await expect(page.getByTestId('rotation-confirm')).toHaveText('Все одно зберегти');
+    await expect(page.getByTestId('rotation-form')).toBeVisible();
+    // Worded in the form, not also as a toast.
+    await expect(page.locator('.p-toast-message')).toHaveCount(0);
+
+    await page.getByTestId('rotation-confirm').click();
+
+    await expect(page.getByTestId('rotation-form')).toHaveCount(0);
+    await expect(page.getByTestId('rotation-summary')).toContainText('Цикл 4 дн., робочі дні циклу: 1, 2');
+    await expect(page.locator('.p-toast-message')).toContainText('Ротацію збережено.');
+    const pattern = { patternType: 'CYCLE', anchorDate: day(7), cycleLength: 4, workingOffsets: [0, 1] };
+    expect(mock.bodies[PATTERN]).toEqual([
+      { pattern, reason: 'Master asked by phone' },
+      { pattern, reason: 'Master asked by phone', allowExistingAppointments: true },
+    ]);
+  });
 });
 
 test.describe('salon master Відсутності', () => {

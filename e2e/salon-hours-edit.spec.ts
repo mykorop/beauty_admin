@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { apiError, apiOk, type MockResponse } from './fixtures/api-mock';
+import { apiError, apiOk, type MockRoutes } from './fixtures/api-mock';
 import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
@@ -52,7 +52,7 @@ const LUNCH_BREAK = [
 /** Monday one window, Tuesday with a lunch break, Sunday closed, the rest never set. */
 const STORED = { days: [closed(0), open(1), { dayOfWeek: 2, isOpen: true, slots: LUNCH_BREAK }] };
 
-const routes = (put: MockResponse) => ({
+const routes = (put: MockRoutes[string]) => ({
   'GET /admin/me': ME,
   'GET /admin/salons/s1': apiOk(salon()),
   'GET /admin/salons/s1/hours': apiOk(STORED),
@@ -161,6 +161,75 @@ test.describe('salon hours editing', () => {
 
     await expect(page.getByTestId('hours-refusal')).toHaveText([
       'Робочий графік Майстра Ion Ceban виходить за нові Години роботи (четвер). Спершу змініть його графік.',
+    ]);
+  });
+
+  test('names the Записи of the whole Ростер the new week leaves standing, and saves it over them once confirmed', async ({
+    page,
+    mockBackend,
+  }) => {
+    const week = [
+      closed(0),
+      open(1, '09:00', '14:00'),
+      STORED.days[2],
+      closed(3),
+      closed(4),
+      closed(5),
+      closed(6),
+    ];
+    const booked = (appointmentId: string, masterId: string, startAtUtc: string) => ({
+      appointmentId,
+      masterId,
+      startAtUtc,
+      durationMinutes: 60,
+      clientName: 'Irina',
+      serviceNames: ['Manicure'],
+      serviceIds: ['svc1'],
+    });
+    const mock = await mockBackend(
+      ADMIN,
+      routes((_url, body) =>
+        (body as { allowExistingAppointments?: boolean }).allowExistingAppointments
+          ? apiOk({ days: week })
+          : apiError(409, 'SCHEDULE_CHANGE_HAS_APPOINTMENTS', 'Booked appointments no longer fit', {
+              dates: ['2026-10-12', '2026-10-19'],
+              appointmentCount: 3,
+              // Two masters of the Ростер: the panel names how many and when, not whose.
+              appointments: [
+                booked('a1', 'm1', '2026-10-12T13:00:00.000Z'),
+                booked('a2', 'm2', '2026-10-12T14:00:00.000Z'),
+                booked('a3', 'm1', '2026-10-19T13:00:00.000Z'),
+              ],
+            }),
+      ),
+    );
+    await signIn(page, ADMIN, '/salons/s1/hours');
+
+    await page.getByTestId('hours-edit').click();
+    await row(page, 0).getByTestId('hours-end').fill('14:00');
+    await page.getByTestId('hours-save').click();
+
+    // Nothing is saved and nothing is cancelled: the week stays as typed, and the Записи are named.
+    const conflict = page.getByTestId('hours-conflict');
+    await expect(conflict).toContainText('поза робочим часом: 3 (12 жовт. 2026');
+    await expect(conflict).toContainText('19 жовт. 2026');
+    await expect(page.getByTestId('hours-confirm')).toHaveText('Все одно зберегти');
+    await expect(page.getByTestId('hours-refusal')).toHaveCount(0);
+    await expect(page.locator('.p-toast-message')).toHaveCount(0);
+    await expect(row(page, 0).getByTestId('hours-end')).toHaveValue('14:00');
+
+    // The same conflict in another language.
+    await page.getByTestId('language-switcher').click();
+    await page.getByRole('option', { name: 'Română' }).click();
+    await expect(conflict).toContainText('în afara orelor de lucru: 3');
+    await page.getByTestId('hours-confirm').click();
+
+    await expect(page.getByTestId('hours-form')).toHaveCount(0);
+    await expect(page.getByTestId('hours-day').nth(0)).toContainText('09:00 – 14:00');
+    await expect(page.locator('.p-toast-message')).toContainText('Programul de lucru a fost salvat.');
+    expect(mock.bodies[PUT]).toEqual([
+      { salonHours: week },
+      { salonHours: week, allowExistingAppointments: true },
     ]);
   });
 

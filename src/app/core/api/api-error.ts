@@ -26,18 +26,33 @@ export const ROSTER_HOURS_OUTSIDE_SALON_HOURS_CODE = 'ROSTER_HOURS_OUTSIDE_SALON
 /** A Майстер салону's week would stick out of the Години роботи of his Салон; `details` names the day. */
 export const MASTER_HOURS_OUTSIDE_SALON_HOURS_CODE = 'MASTER_HOURS_OUTSIDE_SALON_HOURS';
 
+/** Live Записи stand inside a Відсутність; `details` names the days, and the same request confirms it. */
+export const TIME_OFF_HAS_APPOINTMENTS_CODE = 'TIME_OFF_HAS_APPOINTMENTS';
+
 /**
- * Refusals of a weekly-hours save that carry the broken rule in their `details`. The editor words
- * them itself, rule by rule, so the clients leave them to the caller instead of a toast.
+ * Live Записи would no longer fit a new week or Години роботи — for Години роботи, those of any
+ * Майстер on the Ростер. `details` is shaped as for a Відсутність, and the same request confirms it.
+ * The backend does not yet check a Ротація against Записи; its section already answers the refusal
+ * so it needs nothing the day the backend starts sending it there.
+ */
+export const SCHEDULE_CHANGE_HAS_APPOINTMENTS_CODE = 'SCHEDULE_CHANGE_HAS_APPOINTMENTS';
+
+/**
+ * Refusals of a weekly-hours save the editor words itself: the broken rule their `details` carry,
+ * rule by rule, or the Записи in the way. The clients leave them to the caller instead of a toast.
  */
 export const HOURS_REFUSAL_CODES: readonly string[] = [
   VALIDATION_ERROR_CODE,
   ROSTER_HOURS_OUTSIDE_SALON_HOURS_CODE,
   MASTER_HOURS_OUTSIDE_SALON_HOURS_CODE,
+  SCHEDULE_CHANGE_HAS_APPOINTMENTS_CODE,
 ];
 
-/** Live Записи stand inside a Відсутність; `details` names the days, and the same request confirms it. */
-export const TIME_OFF_HAS_APPOINTMENTS_CODE = 'TIME_OFF_HAS_APPOINTMENTS';
+/**
+ * Refusals of a Ротація its form words itself: the Записи the new cycle would leave standing — once
+ * the backend checks a Ротація against them, which it does not yet.
+ */
+export const ROTATION_REFUSAL_CODES: readonly string[] = [SCHEDULE_CHANGE_HAS_APPOINTMENTS_CODE];
 
 /** Refusals of a Відсутність its form words itself: what is in the way, or the window that sticks out. */
 export const TIME_OFF_REFUSAL_CODES: readonly string[] = [

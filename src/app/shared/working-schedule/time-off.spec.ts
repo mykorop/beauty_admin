@@ -1,11 +1,4 @@
-import { ApiError } from '../../core/api/api-error';
-import {
-  buildTimeOff,
-  formatPeriod,
-  timeOffConflict,
-  timeOffIssue,
-  type TimeOffFormValue,
-} from './time-off';
+import { buildTimeOff, formatPeriod, timeOffIssue, type TimeOffFormValue } from './time-off';
 
 const form = (overrides: Partial<TimeOffFormValue> = {}): TimeOffFormValue => ({
   type: 'DAY_OFF',
@@ -68,23 +61,6 @@ describe('Відсутність form', () => {
 
   it('ignores the window of a whole-day Відсутність', () => {
     expect(timeOffIssue(form({ end: '09:00' }), '2026-10-01')).toBeNull();
-  });
-});
-
-describe('timeOffConflict', () => {
-  it('reads the days and the number of Записи in the way', () => {
-    const error = new ApiError('TIME_OFF_HAS_APPOINTMENTS', 'x', 409, {
-      dates: ['2026-10-13'],
-      appointmentCount: 2,
-      appointments: [],
-    });
-
-    expect(timeOffConflict(error)).toEqual({ dates: ['2026-10-13'], appointmentCount: 2 });
-  });
-
-  it('is nothing for any other refusal', () => {
-    expect(timeOffConflict(new ApiError('SALON_DELETED', 'x', 409))).toBeNull();
-    expect(timeOffConflict(new Error('x'))).toBeNull();
   });
 });
 

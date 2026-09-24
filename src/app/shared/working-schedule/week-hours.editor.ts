@@ -21,6 +21,8 @@ import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
 import { WEEK_ORDER, weekdayName } from '../weekday';
+import { appointmentsConflict } from './appointments-conflict';
+import { AppointmentsConflictView } from './appointments-conflict.view';
 import { wordHoursRefusals } from './hours-refusal-wording';
 import {
   buildHoursWeek,
@@ -30,8 +32,15 @@ import {
   toWeekFormValue,
 } from './week-hours';
 
-/** The whole resulting week, all seven days, and the optional Журнал reason. */
-export type WeekHoursSaveRequest = { days: DayHours[]; reason?: string };
+/**
+ * The whole resulting week, all seven days, and the optional Журнал reason. With
+ * `allowExistingAppointments` it is saved over the Записи it leaves standing, once they were seen.
+ */
+export type WeekHoursSaveRequest = {
+  days: DayHours[];
+  reason?: string;
+  allowExistingAppointments?: boolean;
+};
 
 const dayGroup = (day: DayFormValue) =>
   new FormGroup({
@@ -45,11 +54,21 @@ const dayGroup = (day: DayFormValue) =>
  * open or closed, with one window. Always sends the whole week, through the `save` it was handed:
  * it knows neither whose week this is nor whether the Майстер works in a Салон. Given `bounds`, it
  * shows them next to each day. The domain stays the judge — a refused week is worded here rule by
- * rule, and the form stays as typed so the administrator can fix exactly that.
+ * rule, and the form stays as typed so the administrator can fix exactly that. A week that live
+ * Записи would no longer fit — the Майстер's, or for Години роботи anyone's on the Ростер — is
+ * refused over them: they are named here, and the same week is saved over them once the
+ * administrator confirms. Nothing is cancelled.
  */
 @Component({
   selector: 'app-week-hours-editor',
-  imports: [ReactiveFormsModule, ButtonDirective, InputText, Message, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    AppointmentsConflictView,
+    ButtonDirective,
+    InputText,
+    Message,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './week-hours.editor.html',
 })
@@ -113,10 +132,23 @@ export class WeekHoursEditor implements OnInit {
 
   protected readonly canSave = computed(() => !this.busy() && this.days() !== null);
 
+  protected readonly conflict = computed(() => appointmentsConflict(this.refused()));
+
+  /** The rules a refused week broke — not the Записи in its way, which the conflict names. */
   protected readonly refusals = computed(() => {
     const error = this.refused();
-    return error instanceof ApiError ? wordHoursRefusals(this.i18n, error) : [];
+    return error instanceof ApiError && !this.conflict() ? wordHoursRefusals(this.i18n, error) : [];
   });
+
+  constructor() {
+    // The Записи were named for the week that was sent: once it changes, they no longer fit it. A
+    // broken rule stays in sight while it is being fixed.
+    this.week.valueChanges.subscribe(() => {
+      if (this.conflict()) {
+        this.refused.set(null);
+      }
+    });
+  }
 
   ngOnInit(): void {
     for (const day of toWeekFormValue(this.stored())) {
@@ -140,14 +172,19 @@ export class WeekHoursEditor implements OnInit {
     return day?.isOpen && day.slots.length > 0 ? formatSlots(day.slots) : this.i18n.t('hours.closed');
   }
 
-  protected submit(): void {
+  /** `confirmed` — the administrator has seen the Записи the week leaves standing. */
+  protected submit(confirmed = false): void {
     const days = this.days();
     if (!days || !this.canSave() || this.reason.invalid) {
       return;
     }
     this.busy.set(true);
     this.refused.set(null);
-    this.save()({ days, reason: this.reason.value.trim() || undefined })
+    this.save()({
+      days,
+      reason: this.reason.value.trim() || undefined,
+      allowExistingAppointments: confirmed,
+    })
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
         next: (stored) => {

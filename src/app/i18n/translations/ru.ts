@@ -316,6 +316,10 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'audit.action.salon.master.time-off.create': 'Создание Отсутствия Мастера',
   'audit.action.salon.master.time-off.remove': 'Удаление Отсутствия Мастера',
   'error.TIME_OFF_HAS_APPOINTMENTS': 'В этом периоде уже есть активные Записи.',
+  'scheduleChange.conflict':
+    'Забронированные Записи окажутся вне рабочего времени: {{count}} ({{dates}}). Изменение ничего не отменяет — Записи останутся, Клиенты не получат уведомлений.',
+  'scheduleChange.conflict.confirm': 'Всё равно сохранить',
+  'error.SCHEDULE_CHANGE_HAS_APPOINTMENTS': 'После изменения забронированные Записи окажутся вне рабочего времени.',
   'history.empty': 'Действий над этим Салоном ещё не было.',
   'history.more': 'Показать более ранние',
   'history.reason': 'Причина: {{reason}}',

@@ -16,20 +16,37 @@ import { finalize, type Observable } from 'rxjs';
 import type { SchedulePattern } from '../../core/api/master-schedule.model';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { appointmentsConflict } from './appointments-conflict';
+import { AppointmentsConflictView } from './appointments-conflict.view';
 import { buildRotation, MAX_CYCLE_LENGTH, MIN_CYCLE_LENGTH, toRotationForm } from './rotation';
 import { formatCalendarDate } from './time-off';
 
-/** The Ротація to store — `null` clears it — and the optional Журнал reason. */
-export type RotationSaveRequest = { pattern: SchedulePattern | null; reason?: string };
+/**
+ * The Ротація to store — `null` clears it — and the optional Журнал reason. With
+ * `allowExistingAppointments` it is stored over the Записи it leaves standing, once they were seen.
+ */
+export type RotationSaveRequest = {
+  pattern: SchedulePattern | null;
+  reason?: string;
+  allowExistingAppointments?: boolean;
+};
 
 /**
  * The Ротація of a Майстер: a cycle laid over his week from a date — «2 через 2». Shown, set,
  * changed and removed here, through the `save` it was handed: it does not know whether the Майстер
- * works in a Салон. The cycle only takes days off the week; it carries no hours of its own.
+ * works in a Салон. The cycle only takes days off the week; it carries no hours of its own. A cycle
+ * that takes a day holding live Записи is refused over them: they are named here, and the same
+ * cycle is stored over them once the administrator confirms — nothing is cancelled.
  */
 @Component({
   selector: 'app-rotation-section',
-  imports: [ReactiveFormsModule, ButtonDirective, InputText, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    AppointmentsConflictView,
+    ButtonDirective,
+    InputText,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (editing()) {
@@ -97,6 +114,18 @@ export type RotationSaveRequest = { pattern: SchedulePattern | null; reason?: st
           maxlength="500"
           formControlName="reason"
         />
+
+        @if (conflict(); as conflict) {
+          <app-appointments-conflict
+            class="mt-4"
+            testId="rotation"
+            message="scheduleChange.conflict"
+            confirmLabel="scheduleChange.conflict.confirm"
+            [conflict]="conflict"
+            [busy]="busy()"
+            (confirm)="submit(true)"
+          />
+        }
 
         <div class="flex flex-wrap gap-2 pt-4">
           <button
@@ -182,6 +211,7 @@ export class RotationSection {
 
   protected readonly editing = signal(false);
   protected readonly busy = signal(false);
+  private readonly refused = signal<unknown>(null);
 
   protected readonly cycleDays = computed(() => {
     this.value();
@@ -201,6 +231,8 @@ export class RotationSection {
 
   protected readonly canSave = computed(() => !this.busy() && this.built() !== null);
 
+  protected readonly conflict = computed(() => appointmentsConflict(this.refused()));
+
   protected readonly summary = computed(() => {
     const pattern = this.pattern();
     return pattern
@@ -212,14 +244,21 @@ export class RotationSection {
       : this.i18n.t('rotation.none');
   });
 
+  constructor() {
+    // What was refused was another cycle: once the form changes, the refusal no longer fits it.
+    this.form.valueChanges.subscribe(() => this.refused.set(null));
+  }
+
   protected open(): void {
     const { anchorDate, cycleLength, working } = toRotationForm(this.pattern(), this.todayDate());
     this.form.reset({ anchorDate, cycleLength, reason: '' });
     this.working.set(working);
+    this.refused.set(null);
     this.editing.set(true);
   }
 
   protected toggle(offset: number): void {
+    this.refused.set(null);
     this.working.update((working) => {
       const next = [...working];
       next[offset] = !next[offset];
@@ -227,19 +266,28 @@ export class RotationSection {
     });
   }
 
-  protected submit(): void {
+  /**
+   * `confirmed` — the administrator has seen the Записи the cycle leaves standing. Only a cycle is
+   * ever refused over them: removing one gives days back to the week and takes none.
+   */
+  protected submit(confirmed = false): void {
     const pattern = this.built();
     if (pattern && this.canSave()) {
-      this.store(pattern);
+      this.store(pattern, confirmed);
     }
   }
 
-  protected store(pattern: SchedulePattern | null): void {
+  protected store(pattern: SchedulePattern | null, confirmed = false): void {
     if (this.busy() || this.form.controls.reason.invalid) {
       return;
     }
     this.busy.set(true);
-    this.save()({ pattern, reason: this.form.controls.reason.value.trim() || undefined })
+    this.refused.set(null);
+    this.save()({
+      pattern,
+      reason: this.form.controls.reason.value.trim() || undefined,
+      allowExistingAppointments: confirmed,
+    })
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
         next: (stored) => {
@@ -251,8 +299,9 @@ export class RotationSection {
           this.saved.emit(stored);
           this.editing.set(false);
         },
-        // The refusal has already been worded as a toast; the form stays as typed.
-        error: () => undefined,
+        // Записи in the way are named here; any other refusal has already been worded as a toast.
+        // Either way the form stays as typed.
+        error: (error: unknown) => this.refused.set(error),
       });
   }
 }

@@ -328,6 +328,59 @@ test.describe('independent master working schedule', () => {
     expect(mock.bodies[PUT_HOURS]).toEqual([{ masterHours: saved, reason: 'Master asked by phone' }]);
   });
 
+  test('saves over the Записи his new week leaves standing only the week they were named for', async ({
+    page,
+    mockBackend,
+  }) => {
+    const mock = await mockBackend(
+      ADMIN,
+      scheduleRoutes({
+        [PUT_HOURS]: (_url: URL, body: unknown) => {
+          const { masterHours, allowExistingAppointments } = body as {
+            masterHours: unknown[];
+            allowExistingAppointments?: boolean;
+          };
+          return allowExistingAppointments
+            ? apiOk({ days: masterHours })
+            : apiError(409, 'SCHEDULE_CHANGE_HAS_APPOINTMENTS', 'Booked appointments no longer fit', {
+                dates: ['2026-10-12'],
+                appointmentCount: 1,
+                appointments: [],
+              });
+        },
+      }),
+    );
+    await signIn(page, ADMIN, '/independent-masters/m1/schedule');
+
+    await page.getByTestId('hours-edit').click();
+    await editRow(page, 0).getByTestId('hours-end').fill('14:00');
+    await page.getByTestId('hours-save').click();
+    await expect(page.getByTestId('hours-conflict')).toContainText('поза робочим часом: 1');
+
+    // The Записи were named for the week sent: another week has to be sent, and refused, first.
+    await editRow(page, 0).getByTestId('hours-end').fill('15:00');
+    await expect(page.getByTestId('hours-conflict')).toHaveCount(0);
+    await page.getByTestId('hours-save').click();
+    await page.getByTestId('hours-confirm').click();
+
+    await expect(page.getByTestId('hours-form')).toHaveCount(0);
+    await expect(weekRow(page, 0).getByTestId('schedule-day-master')).toContainText('07:00 – 15:00');
+    const week = (end: string) => [
+      closed(0),
+      open(1, '07:00', end),
+      open(2),
+      open(3),
+      open(4),
+      open(5),
+      open(6, '10:00', '16:00'),
+    ];
+    expect(mock.bodies[PUT_HOURS]).toEqual([
+      { masterHours: week('14:00') },
+      { masterHours: week('15:00') },
+      { masterHours: week('15:00'), allowExistingAppointments: true },
+    ]);
+  });
+
   test('draws the month a Клієнт would meet: working days, Відсутності and Записи', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, scheduleRoutes());
     await signIn(page, ADMIN, '/independent-masters/m1/schedule');

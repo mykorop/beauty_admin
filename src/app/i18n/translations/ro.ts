@@ -316,6 +316,10 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'audit.action.salon.master.time-off.create': 'Crearea unei Absențe a Maestrului',
   'audit.action.salon.master.time-off.remove': 'Ștergerea unei Absențe a Maestrului',
   'error.TIME_OFF_HAS_APPOINTMENTS': 'În această perioadă există deja Programări active.',
+  'scheduleChange.conflict':
+    'Programările rezervate vor ajunge în afara orelor de lucru: {{count}} ({{dates}}). Modificarea nu anulează nimic — Programările rămân, iar Clienții nu vor fi anunțați.',
+  'scheduleChange.conflict.confirm': 'Salvează oricum',
+  'error.SCHEDULE_CHANGE_HAS_APPOINTMENTS': 'După modificare, Programările rezervate ar ajunge în afara orelor de lucru.',
   'history.empty': 'Nu există încă acțiuni asupra acestui Salon.',
   'history.more': 'Arată mai vechi',
   'history.reason': 'Motiv: {{reason}}',

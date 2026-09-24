@@ -1,4 +1,3 @@
-import { ApiError, TIME_OFF_HAS_APPOINTMENTS_CODE } from '../../core/api/api-error';
 import type { TimeOffRequest, TimeOffType } from '../../core/api/master-schedule.model';
 import type { TranslationKey } from '../../i18n/translations';
 
@@ -58,17 +57,6 @@ export function buildTimeOff(value: TimeOffFormValue): TimeOffRequest {
     ...(value.type === 'CUSTOM_HOURS' ? { slots: [{ start: value.start, end: value.end }] } : {}),
     ...(reason ? { reason } : {}),
   };
-}
-
-export type TimeOffConflict = { dates: string[]; appointmentCount: number };
-
-/** What stands in the way of a Відсутність, when that is why it was refused. */
-export function timeOffConflict(error: unknown): TimeOffConflict | null {
-  if (!(error instanceof ApiError) || error.code !== TIME_OFF_HAS_APPOINTMENTS_CODE) {
-    return null;
-  }
-  const details = error.details as Partial<TimeOffConflict> | undefined;
-  return { dates: details?.dates ?? [], appointmentCount: details?.appointmentCount ?? 0 };
 }
 
 /** A calendar date (`YYYY-MM-DD`) in words; it has no zone, so it is read and written in UTC. */

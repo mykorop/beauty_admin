@@ -77,6 +77,18 @@
     formControlName="reason"
   />
 
+  @if (conflict(); as conflict) {
+    <app-appointments-conflict
+      class="mt-4"
+      testId="hours"
+      message="scheduleChange.conflict"
+      confirmLabel="scheduleChange.conflict.confirm"
+      [conflict]="conflict"
+      [busy]="busy()"
+      (confirm)="submit(true)"
+    />
+  }
+
   @if (refusals().length > 0) {
     <p-message class="mt-4 block" severity="error" icon="pi pi-times-circle">
       <ul>
