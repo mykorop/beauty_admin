@@ -18,6 +18,17 @@ npm run test:ci          # Karma, headless
 npm run e2e              # Playwright; starts `ng serve --configuration e2e` on :4300 itself
 ```
 
+## Hosting
+
+Upload the contents of `dist/beauty-admin/browser/` to the subdomain's document root,
+including the hidden `.htaccess` file. Angular's existing `public/` asset configuration
+copies `public/.htaccess` into every build. It serves `index.html` for client-side routes
+such as `/login` and `/dashboard`, so direct links and browser reloads work.
+
+Apache must enable `mod_rewrite` and allow these rules through `AllowOverride FileInfo`
+(or `AllowOverride All`). If nginx serves the app without Apache, configure the equivalent
+`try_files $uri $uri/ /index.html;` fallback in nginx instead.
+
 ## Environments
 
 `src/environments/environment*.ts`, swapped by `fileReplacements` per build configuration
