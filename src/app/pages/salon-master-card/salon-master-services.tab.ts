@@ -10,6 +10,7 @@ import {
   SalonMasterServicesClient,
 } from '../../core/api/salon-master-services.client';
 import type { SalonService } from '../../core/api/salon-services.client';
+import type { ServiceBookingCounts } from '../../shared/service-catalog/service-catalog.model';
 import { ServiceCatalogClient } from '../../core/api/service-catalog.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
@@ -22,8 +23,9 @@ import { SALON_MASTER_CARD } from './salon-master-card';
 
 /**
  * Копії послуг of a Майстер салону: what he performs and for how much — his own ціна and тривалість
- * next to the Каталог's. Edited, added from the Каталог and removed here, never inside a Видалений
- * salon. Every Копія he is assigned is listed, whether a Клієнт can book it or not.
+ * next to the Каталог's, and how many Записи of each he has taken here. Edited, added from the
+ * Каталог and removed here, never inside a Видалений salon. Every Копія he is assigned is listed,
+ * whether a Клієнт can book it or not.
  */
 @Component({
   selector: 'app-salon-master-services-tab',
@@ -75,6 +77,9 @@ import { SALON_MASTER_CARD } from './salon-master-card';
               <th class="px-4 py-3 font-normal">{{ 'services.field.price' | t }}</th>
               <th class="px-4 py-3 font-normal">{{ 'copies.column.catalogPrice' | t }}</th>
               <th class="px-4 py-3 font-normal">{{ 'services.field.isActive' | t }}</th>
+              <th class="px-4 py-3 font-normal" [attr.title]="'services.column.bookingsHint' | t">
+                {{ 'services.column.bookings' | t }}
+              </th>
               <th class="table-actions px-4 py-3"></th>
             </tr>
           </thead>
@@ -124,6 +129,7 @@ import { SALON_MASTER_CARD } from './salon-master-card';
                     </p>
                   }
                 </td>
+                <td class="px-4 py-3" data-testid="copy-row-bookings">{{ row.bookings }}</td>
                 <td class="table-actions px-4 py-3 text-right">
                   @if (writable()) {
                     @if (removing() === row.copy.serviceId) {
@@ -181,7 +187,7 @@ import { SALON_MASTER_CARD } from './salon-master-card';
               </tr>
             } @empty {
               <tr>
-                <td colspan="8" class="py-8 text-center text-muted" data-testid="copies-empty">
+                <td colspan="9" class="py-8 text-center text-muted" data-testid="copies-empty">
                   {{ 'copies.empty' | t }}
                 </td>
               </tr>
@@ -206,6 +212,7 @@ export class SalonMasterServicesTab {
   protected readonly salonId = this.card.context().salonId;
   protected readonly masterId = this.card.profile().masterId;
   private readonly copies = signal<MasterService[] | null>(null);
+  private readonly bookingCounts = signal<ServiceBookingCounts>({});
   private readonly catalog = signal<SalonService[]>([]);
   protected readonly failed = signal(false);
   protected readonly busy = signal(false);
@@ -222,6 +229,7 @@ export class SalonMasterServicesTab {
 
   protected readonly rows = computed(() => {
     const format = new Intl.NumberFormat(this.i18n.locale());
+    const bookingCounts = this.bookingCounts();
     return (
       this.copies()?.map((copy) => ({
         copy,
@@ -237,6 +245,8 @@ export class SalonMasterServicesTab {
             : copy.catalog
               ? ('copies.notOffered.catalogInactive' as const)
               : ('copies.notOffered.catalogMissing' as const),
+        // A Копія added since the list was read has had no Запис yet.
+        bookings: bookingCounts[copy.serviceId] ?? 0,
       })) ?? null
     );
   });
@@ -251,6 +261,7 @@ export class SalonMasterServicesTab {
       .subscribe({
         next: ({ copies, catalog }) => {
           this.copies.set(copies.items);
+          this.bookingCounts.set(copies.bookingCounts ?? {});
           this.catalog.set(catalog.items);
         },
         // The interceptor has already worded the refusal as a toast.

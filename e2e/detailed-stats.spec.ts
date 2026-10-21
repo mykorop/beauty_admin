@@ -400,7 +400,7 @@ test.describe('Детальна статистика: топи, якість, «
     );
 
     const stuck = rows.filter({ hasText: 'Ion Rusu' });
-    await expect(stuck).toContainText('Майстер салону · Ростер Салону «Salon Ex»');
+    await expect(stuck).toContainText('Майстер салону · Список майстрів Салону «Salon Ex»');
     await expect(stuck.getByTestId('attention-link')).toHaveAttribute(
       'href',
       '/salons/dead/masters/m9',

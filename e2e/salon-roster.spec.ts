@@ -87,7 +87,11 @@ test.describe('salon roster', () => {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),
       'GET /admin/salons/s1/masters': apiOk({
-        items: [OWNER, master(), master({ masterId: 'm3', masterName: 'Old Hand', status: 'INACTIVE' })],
+        items: [
+          OWNER,
+          master(),
+          master({ masterId: 'm3', masterName: 'Old Hand', status: 'INACTIVE' }),
+        ],
       }),
     });
     await signIn(page, ADMIN, '/salons/s1/roster');
@@ -107,6 +111,44 @@ test.describe('salon roster', () => {
     await expect(rows.nth(0).getByTestId('roster-rating')).toHaveText('—');
   });
 
+  test('counts the Копії of each master and names them on hover, each opening his Копії tab', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/salons/s1': apiOk(salon()),
+      'GET /admin/salons/s1/masters': apiOk({
+        items: [
+          { ...OWNER, services: [] },
+          {
+            ...master(),
+            services: [
+              { serviceId: 'svc2', name: 'Beard trim' },
+              { serviceId: 'svc1', name: 'Haircut' },
+            ],
+          },
+        ],
+      }),
+      [`GET ${MASTER_PATH}`]: apiOk(master()),
+      'GET /admin/salons/s1/services': apiOk({ items: [], bookingCounts: {} }),
+      [`GET ${MASTER_PATH}/services`]: apiOk({ items: [], bookingCounts: {} }),
+    });
+    await signIn(page, ADMIN, '/salons/s1/roster');
+
+    const rows = page.getByTestId('roster-row');
+    await expect(rows.nth(0).getByTestId('roster-services')).toHaveText('0');
+    await expect(rows.nth(1).getByTestId('roster-services')).toHaveText('2');
+
+    await rows.nth(1).getByTestId('roster-services-trigger').hover();
+    const list = page.getByTestId('roster-services-list');
+    await expect(list.getByRole('link')).toHaveText(['Beard trim', 'Haircut']);
+
+    await list.getByRole('link', { name: 'Haircut' }).click();
+    await expect(page).toHaveURL(/\/salons\/s1\/masters\/m2\/services$/);
+    await expect(page.getByTestId('copies-empty')).toBeVisible();
+  });
+
   test('offers no way to add a master past an Інвайт', async ({ page, mockBackend }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
@@ -120,7 +162,10 @@ test.describe('salon roster', () => {
     await expect(page.getByRole('button', { name: /Додати|Запросити/ })).toHaveCount(0);
   });
 
-  test('opens the Майстер салону from the Ростер, tabs under their own addresses', async ({ page, mockBackend }) => {
+  test('opens the Майстер салону from the Ростер, tabs under their own addresses', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),
@@ -219,13 +264,20 @@ test.describe('salon master editing', () => {
     ]);
   });
 
-  test('offers to reload when the Власник салону changed the link meanwhile', async ({ page, mockBackend }) => {
+  test('offers to reload when the Власник салону changed the link meanwhile', async ({
+    page,
+    mockBackend,
+  }) => {
     let reads = 0;
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),
       [`GET ${MASTER_PATH}`]: () =>
-        apiOk(reads++ === 0 ? master() : master({ commissionPercent: 45, updatedAt: '2026-09-21T09:00:00.000Z' })),
+        apiOk(
+          reads++ === 0
+            ? master()
+            : master({ commissionPercent: 45, updatedAt: '2026-09-21T09:00:00.000Z' }),
+        ),
       [`PATCH ${MASTER_PATH}`]: apiError(409, 'EDIT_CONFLICT'),
     });
     await signIn(page, ADMIN, '/salons/s1/masters/m2/profile');
@@ -241,10 +293,15 @@ test.describe('salon master editing', () => {
     await expect(page.getByTestId('edit-commissionPercent')).toHaveValue('45');
   });
 
-  test('has no status control, and no editing at all in a Видалений salon', async ({ page, mockBackend }) => {
+  test('has no status control, and no editing at all in a Видалений salon', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
-      'GET /admin/salons/s1': apiOk(salon({ status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' })),
+      'GET /admin/salons/s1': apiOk(
+        salon({ status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }),
+      ),
       [`GET ${MASTER_PATH}`]: apiOk(master()),
     });
     await signIn(page, ADMIN, '/salons/s1/masters/m2/profile');
@@ -305,10 +362,15 @@ test.describe('removal from the Ростер', () => {
     expect(mock.bodies[`DELETE ${MASTER_PATH}`]).toBeUndefined();
   });
 
-  test('stays available in a Видалений salon, where editing is not', async ({ page, mockBackend }) => {
+  test('stays available in a Видалений salon, where editing is not', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
-      'GET /admin/salons/s1': apiOk(salon({ status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' })),
+      'GET /admin/salons/s1': apiOk(
+        salon({ status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }),
+      ),
       [`GET ${MASTER_PATH}`]: apiOk(master()),
       [`DELETE ${MASTER_PATH}`]: apiOk({ removed: true, masterId: 'm2', status: 'INACTIVE' }),
     });
@@ -322,7 +384,10 @@ test.describe('removal from the Ростер', () => {
     await expect(page.getByTestId('card-status')).toHaveText('Співпрацю завершено');
   });
 
-  test('keeps the dialog and the reason when the backend refuses', async ({ page, mockBackend }) => {
+  test('keeps the dialog and the reason when the backend refuses', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),
@@ -359,7 +424,10 @@ test.describe('removal from the Ростер', () => {
 });
 
 test.describe('salon invites', () => {
-  test('shows status, email and expiry on the salon’s clock — read-only', async ({ page, mockBackend }) => {
+  test('shows status, email and expiry on the salon’s clock — read-only', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),

@@ -9,24 +9,26 @@ import { type Dictionaries, DictionariesClient } from '../../core/api/dictionari
 import { ServiceCatalogClient } from '../../core/api/service-catalog.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { type NameListItem, NameList } from '../name-list/name-list';
 import { cardScope } from '../profile-card/loaded-card';
 import { serviceCategoryLabel } from '../service-category';
 import { ServiceCatalogForm } from './service-catalog.form';
-import type { CatalogService } from './service-catalog.model';
+import type { CatalogService, ServiceBookingCounts } from './service-catalog.model';
 
 /**
  * A Каталог послуг: every service, deactivated ones included. Created, edited and deactivated here
  * — never deleted.
  *
  * Whose Каталог it is is the card's scope. A Салон's services are the starting point for Копії
- * майстрів — a Ростер stands under its Каталог — so the table counts them and repeats the rule that
- * a new ціна never reaches one; a Незалежний майстер has no Ростер under his Каталог, so neither
- * the column nor the note would say anything true, and both are absent. A Видалений profile is
+ * майстрів — a Ростер stands under its Каталог — so the table counts them, names the Майстри behind
+ * the count, and repeats the rule that a new ціна never reaches one; a Незалежний майстер has no
+ * Ростер under his Каталог, so neither the column nor the note would say anything true, and both
+ * are absent. Either way each service says how many Записи it has had. A Видалений profile is
  * read-only: the backend refuses every write here as well.
  */
 @Component({
   selector: 'app-service-catalog',
-  imports: [ButtonDirective, ServiceCatalogForm, Tag, TranslatePipe],
+  imports: [ButtonDirective, NameList, ServiceCatalogForm, Tag, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (editing(); as editing) {
@@ -70,6 +72,9 @@ import type { CatalogService } from './service-catalog.model';
               @if (copies()) {
                 <th class="px-4 py-3 font-normal">{{ 'services.column.masterCopies' | t }}</th>
               }
+              <th class="px-4 py-3 font-normal" [attr.title]="'services.column.bookingsHint' | t">
+                {{ 'services.column.bookings' | t }}
+              </th>
               <th class="table-actions px-4 py-3"></th>
             </tr>
           </thead>
@@ -103,9 +108,15 @@ import type { CatalogService } from './service-catalog.model';
                 </td>
                 @if (copies()) {
                   <td class="px-4 py-3" data-testid="service-row-copies">
-                    {{ row.service.masterCopyCount }}
+                    <app-name-list
+                      testId="service-row-copies"
+                      [count]="row.service.masterCopyCount ?? 0"
+                      [items]="row.copies"
+                      [label]="'services.column.masterCopies' | t"
+                    />
                   </td>
                 }
+                <td class="px-4 py-3" data-testid="service-row-bookings">{{ row.bookings }}</td>
                 <td class="table-actions px-4 py-3 text-right">
                   @if (writable()) {
                     <button
@@ -181,24 +192,34 @@ export class ServiceCatalogTab {
   protected readonly copies = computed(() => this.scope().capabilities.roster !== null);
 
   private readonly services = signal<CatalogService[] | null>(null);
+  private readonly bookingCounts = signal<ServiceBookingCounts>({});
   protected readonly dictionaries = signal<Dictionaries | null>(null);
   protected readonly failed = signal(false);
   protected readonly busy = signal(false);
   /** The open form: on a service, or on a new one (`service: null`). */
   protected readonly editing = signal<{ service: CatalogService | null } | null>(null);
 
-  protected readonly columns = computed(() => (this.copies() ? 8 : 7));
+  protected readonly columns = computed(() => (this.copies() ? 9 : 8));
   protected readonly noteTestId = computed(() =>
     this.copies() ? 'services-copies-note' : 'services-own-catalog-note',
   );
 
   protected readonly rows = computed(() => {
     const format = new Intl.NumberFormat(this.i18n.locale());
+    const salonId = this.scope().capabilities.roster?.salonId;
+    const bookingCounts = this.bookingCounts();
     return (
       this.services()?.map((service) => ({
         service,
         category: serviceCategoryLabel(this.i18n, service.category),
         price: format.format(service.price),
+        copies: (service.masterCopies ?? []).map((holder): NameListItem => ({
+          id: holder.masterId,
+          label: holder.masterName || '—',
+          link: ['/salons', salonId, 'masters', holder.masterId],
+        })),
+        // A service written since the list was read has had no Запис yet.
+        bookings: bookingCounts[service.serviceId] ?? 0,
       })) ?? null
     );
   });
@@ -212,6 +233,7 @@ export class ServiceCatalogTab {
       .subscribe({
         next: ({ catalog, dictionaries }) => {
           this.services.set(catalog.items);
+          this.bookingCounts.set(catalog.bookingCounts ?? {});
           this.dictionaries.set(dictionaries);
         },
         // The interceptor has already worded the refusal as a toast.

@@ -355,7 +355,7 @@ const CASES: ReasonActionCase[] = [
     landed: (page) => expect(page.getByTestId('media-photo')).toHaveCount(1),
   },
   {
-    name: 'вилучення з Ростеру',
+    name: 'вилучення зі Списку майстрів',
     path: '/salons/s1/masters/m2/profile',
     routes: {
       'GET /admin/me': ME,
@@ -366,7 +366,7 @@ const CASES: ReasonActionCase[] = [
     answer: apiOk({ removed: true, masterId: 'm2', status: 'INACTIVE' }),
     open: (page) => page.getByTestId('master-remove').click(),
     reason: 'Salon closed',
-    toast: 'Майстра вилучено з Ростеру.',
+    toast: 'Майстра вилучено зі Списку майстрів.',
     landed: status('Співпрацю завершено'),
   },
 ];

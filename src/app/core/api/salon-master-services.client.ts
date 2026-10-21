@@ -5,6 +5,7 @@ import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { EDIT_CONFLICT_CODE } from './api-error';
 import { adminApiUrl } from './admin-api-url';
 import { withReason } from './reason-body';
+import type { ServiceBookingCounts } from '../../shared/service-catalog/service-catalog.model';
 
 /** One Копія майстра as the table and the form read it. */
 export type MasterService = {
@@ -45,8 +46,14 @@ const copiesUrl = (salonId: string, masterId: string, serviceId?: string): strin
 export class SalonMasterServicesClient {
   private readonly http = inject(HttpClient);
 
-  list(salonId: string, masterId: string): Observable<{ items: MasterService[] }> {
-    return this.http.get<{ items: MasterService[] }>(copiesUrl(salonId, masterId));
+  /** `bookingCounts`: the Записи of each Копія he has taken in this Салон. */
+  list(
+    salonId: string,
+    masterId: string,
+  ): Observable<{ items: MasterService[]; bookingCounts: ServiceBookingCounts }> {
+    return this.http.get<{ items: MasterService[]; bookingCounts: ServiceBookingCounts }>(
+      copiesUrl(salonId, masterId),
+    );
   }
 
   /** A Копія the master already holds comes back as stored — the backend never overwrites one. */

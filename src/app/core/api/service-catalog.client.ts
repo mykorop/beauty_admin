@@ -6,6 +6,7 @@ import type {
   CatalogService,
   CatalogServiceFields,
   CatalogServicePatch,
+  ServiceBookingCounts,
 } from '../../shared/service-catalog/service-catalog.model';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { adminApiUrl } from './admin-api-url';
@@ -18,15 +19,17 @@ const servicesUrl = (scope: CardScope, serviceId?: string): string =>
 /**
  * The Каталог послуг of a Салон or of a Незалежний майстер — the same calls at the profile's own
  * path. Nothing here reaches a Копія майстра, by design of the domain: a Салон's service answers
- * how many Майстри hold one of it, and that is all.
+ * which Майстри hold one of it, and that is all.
  */
 @Injectable({ providedIn: 'root' })
 export class ServiceCatalogClient {
   private readonly http = inject(HttpClient);
 
   /** A caller that knows whose Каталог it reads may name its services' shape: a Салон's `SalonService`. */
-  list<S extends CatalogService = CatalogService>(scope: CardScope): Observable<{ items: S[] }> {
-    return this.http.get<{ items: S[] }>(servicesUrl(scope));
+  list<S extends CatalogService = CatalogService>(
+    scope: CardScope,
+  ): Observable<{ items: S[]; bookingCounts: ServiceBookingCounts }> {
+    return this.http.get<{ items: S[]; bookingCounts: ServiceBookingCounts }>(servicesUrl(scope));
   }
 
   get(scope: CardScope, serviceId: string): Observable<CatalogService> {

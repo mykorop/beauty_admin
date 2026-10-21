@@ -318,6 +318,14 @@ body {
   .dashboard .p-tag {
     white-space: normal;
   }
+  /* The list pads itself, so the pointer is over it the moment it is inside the panel. */
+  .name-list-popover .p-popover-content {
+    padding: 0;
+  }
+  /* Appended to the page, outside the table whose links are already accent-coloured. */
+  .name-list-popover a {
+    color: var(--bm-accent);
+  }
   .chart-tooltip {
     max-width: 100%;
     overflow-wrap: anywhere;

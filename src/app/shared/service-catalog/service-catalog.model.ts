@@ -17,10 +17,18 @@ export type CatalogService = {
   isActive: boolean;
   /** Майстри on the Ростер holding a Копія майстра of this service; absent for a Незалежний майстер. */
   masterCopyCount?: number;
+  /** The same Майстри by name, A–Z; absent for a Незалежний майстер. */
+  masterCopies?: { masterId: string; masterName: string }[];
   createdAt: string;
   /** Goes back as-is with a PATCH. */
   updatedAt: string;
 };
+
+/**
+ * How many Записи each service has had, ever, by `serviceId` — every state but Скасований and
+ * Неявка; a service nobody booked is absent. Only a list carries it: a write changes no Запис.
+ */
+export type ServiceBookingCounts = Record<string, number>;
 
 /** What the administrator may change on a service of a Каталог. */
 export type CatalogServiceFields = {

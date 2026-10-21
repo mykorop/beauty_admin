@@ -143,7 +143,7 @@ test.describe('dashboard', () => {
 
     await expect(page.getByTestId('tile-salonMasters-total')).toContainText('7');
     await expect(page.getByTestId('tile-salonMasters-total')).not.toHaveRole('link');
-    await expect(page.getByTestId('dashboard-hint-salonMasters')).toContainText('Ростері');
+    await expect(page.getByTestId('dashboard-hint-salonMasters')).toContainText('Списку майстрів');
     await expect(page.getByTestId('dashboard-hint-salons')).toHaveCount(0);
   });
 

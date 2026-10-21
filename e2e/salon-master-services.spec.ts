@@ -96,12 +96,17 @@ const BEARD = catalogService({
   masterCopyCount: 0,
 });
 
-const base = (copies: unknown[], catalog: unknown[] = [catalogService()], salonOverrides = {}) => ({
+const base = (
+  copies: unknown[],
+  catalog: unknown[] = [catalogService()],
+  salonOverrides = {},
+  bookingCounts: Record<string, number> = {},
+) => ({
   'GET /admin/me': ME,
   'GET /admin/salons/s1': apiOk(salon(salonOverrides)),
   'GET /admin/salons/s1/masters/m2': apiOk(MASTER),
-  'GET /admin/salons/s1/services': apiOk({ items: catalog }),
-  [`GET ${COPIES_PATH}`]: apiOk({ items: copies }),
+  'GET /admin/salons/s1/services': apiOk({ items: catalog, bookingCounts: {} }),
+  [`GET ${COPIES_PATH}`]: apiOk({ items: copies, bookingCounts }),
 });
 
 test.describe('salon master service copies', () => {
@@ -111,23 +116,36 @@ test.describe('salon master service copies', () => {
   }) => {
     await mockBackend(
       ADMIN,
-      base([
-        copy(),
-        copy({
-          serviceId: 'svc2',
-          name: 'Beard trim',
-          category: 'beard_and_mustache',
-          durationMinutes: 20,
-          price: 250,
-          catalog: { durationMinutes: 20, price: 250, isActive: false },
-        }),
-        copy({ serviceId: 'svc3', name: 'Styling', category: 'styling', isActive: false, catalog: null }),
-      ]),
+      base(
+        [
+          copy(),
+          copy({
+            serviceId: 'svc2',
+            name: 'Beard trim',
+            category: 'beard_and_mustache',
+            durationMinutes: 20,
+            price: 250,
+            catalog: { durationMinutes: 20, price: 250, isActive: false },
+          }),
+          copy({
+            serviceId: 'svc3',
+            name: 'Styling',
+            category: 'styling',
+            isActive: false,
+            catalog: null,
+          }),
+        ],
+        undefined,
+        undefined,
+        { svc1: 14, svc3: 2 },
+      ),
     );
     await signIn(page, ADMIN, TAB);
 
     const rows = page.getByTestId('copy-row');
     await expect(rows).toHaveCount(3);
+    // How many Записи of each he has taken here; nobody booked the beard trim.
+    await expect(page.getByTestId('copy-row-bookings')).toHaveText(['14', '0', '2']);
     await expect(rows.nth(0).getByTestId('copy-row-name')).toHaveText('Haircut');
     await expect(rows.nth(0).getByTestId('copy-row-category')).toHaveText('Стрижки');
     await expect(rows.nth(0).getByTestId('copy-row-duration')).toHaveText('45 хв');
@@ -138,7 +156,9 @@ test.describe('salon master service copies', () => {
     await expect(rows.nth(0).getByTestId('copy-row-not-offered')).toHaveCount(0);
 
     // Switched on, yet nobody can book it: the Каталог service is deactivated.
-    await expect(rows.nth(1).getByTestId('copy-row-not-offered')).toContainText('деактивовано в Каталозі');
+    await expect(rows.nth(1).getByTestId('copy-row-not-offered')).toContainText(
+      'деактивовано в Каталозі',
+    );
     // A switched-off Копія says so itself; the Каталог no longer holds its service.
     await expect(rows.nth(2).getByTestId('copy-row-active')).toHaveText('Деактивована');
     await expect(rows.nth(2).getByTestId('copy-row-catalog-price')).toHaveText('—');
@@ -146,7 +166,10 @@ test.describe('salon master service copies', () => {
     await expect(page.getByTestId('copies-note')).toBeVisible();
   });
 
-  test('edits price, duration and activity of a Копія — only what changed', async ({ page, mockBackend }) => {
+  test('edits price, duration and activity of a Копія — only what changed', async ({
+    page,
+    mockBackend,
+  }) => {
     const mock = await mockBackend(ADMIN, {
       ...base([copy()]),
       [`PATCH ${COPIES_PATH}/svc1`]: apiOk(
@@ -174,11 +197,19 @@ test.describe('salon master service copies', () => {
     await expect(page.getByTestId('copy-row-price')).toContainText('800 MDL');
     await expect(page.getByTestId('copy-row-active')).toHaveText('Деактивована');
     expect(mock.bodies[`PATCH ${COPIES_PATH}/svc1`]).toEqual([
-      { updatedAt: '2026-06-01T00:00:00.000Z', price: 800, isActive: false, reason: 'Owner asked by phone' },
+      {
+        updatedAt: '2026-06-01T00:00:00.000Z',
+        price: 800,
+        isActive: false,
+        reason: 'Owner asked by phone',
+      },
     ]);
   });
 
-  test('adds a Копія from the Каталог, starting from its price and duration', async ({ page, mockBackend }) => {
+  test('adds a Копія from the Каталог, starting from its price and duration', async ({
+    page,
+    mockBackend,
+  }) => {
     const mock = await mockBackend(ADMIN, {
       ...base([copy()], [catalogService(), BEARD]),
       [`POST ${COPIES_PATH}`]: {
@@ -211,8 +242,12 @@ test.describe('salon master service copies', () => {
     await page.getByTestId('copy-save').click();
 
     await expect(page.getByTestId('copy-row')).toHaveCount(2);
-    await expect(page.getByTestId('copy-row').nth(1).getByTestId('copy-row-price')).toContainText('300 MDL');
-    expect(mock.bodies[`POST ${COPIES_PATH}`]).toEqual([{ serviceId: 'svc2', price: 300, durationMinutes: 20 }]);
+    await expect(page.getByTestId('copy-row').nth(1).getByTestId('copy-row-price')).toContainText(
+      '300 MDL',
+    );
+    expect(mock.bodies[`POST ${COPIES_PATH}`]).toEqual([
+      { serviceId: 'svc2', price: 300, durationMinutes: 20 },
+    ]);
     // Every Каталог service is now held.
     await expect(page.getByTestId('copy-new')).toBeDisabled();
     await expect(page.getByTestId('copy-new-none')).toBeVisible();
@@ -243,7 +278,11 @@ test.describe('salon master service copies', () => {
     await mockBackend(ADMIN, {
       ...base([]),
       [`GET ${COPIES_PATH}`]: () =>
-        apiOk({ items: [reads++ === 0 ? copy() : copy({ price: 750, updatedAt: '2026-09-21T10:00:00.000Z' })] }),
+        apiOk({
+          items: [
+            reads++ === 0 ? copy() : copy({ price: 750, updatedAt: '2026-09-21T10:00:00.000Z' }),
+          ],
+        }),
       [`PATCH ${COPIES_PATH}/svc1`]: apiError(409, 'EDIT_CONFLICT'),
     });
     await signIn(page, ADMIN, TAB);
@@ -285,7 +324,14 @@ test.describe('salon master service copies', () => {
       reason: null,
       affected: [],
     });
-    const held = { name: 'Haircut', durationMinutes: 45, price: 700, currency: 'MDL', priceUnit: '', isActive: true };
+    const held = {
+      name: 'Haircut',
+      durationMinutes: 45,
+      price: 700,
+      currency: 'MDL',
+      priceUnit: '',
+      isActive: true,
+    };
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/audit': apiOk({
@@ -322,13 +368,18 @@ test.describe('salon master service copies', () => {
     await expect(page.getByTestId('copies-empty')).toBeVisible();
   });
 
-  test('says so when the Копія already existed and the typed price was not written', async ({ page, mockBackend }) => {
+  test('says so when the Копія already existed and the typed price was not written', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       ...base([], [BEARD]),
       // The idempotent POST answers with what the Власник салону stored a moment ago.
       [`POST ${COPIES_PATH}`]: {
         status: 201,
-        body: apiOk(copy({ serviceId: 'svc2', name: 'Beard trim', price: 400, durationMinutes: 20 })).body,
+        body: apiOk(
+          copy({ serviceId: 'svc2', name: 'Beard trim', price: 400, durationMinutes: 20 }),
+        ).body,
       },
     });
     await signIn(page, ADMIN, TAB);

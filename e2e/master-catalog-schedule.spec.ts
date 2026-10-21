@@ -126,17 +126,26 @@ const schedule = (url: URL, weeklyHours: unknown[] = MASTER_WEEK): MockResponse 
 
 const upcomingCountRoute = (overrides: Record<string, unknown>): MockRoutes =>
   // A card that is not active warns about the Записи still ahead of it (§12), and reads the count.
-  overrides['status'] ? { 'GET /admin/masters/m1/appointments/upcoming-count': apiOk({ count: 0 }) } : {};
+  overrides['status']
+    ? { 'GET /admin/masters/m1/appointments/upcoming-count': apiOk({ count: 0 }) }
+    : {};
 
-const catalogRoutes = (items: unknown[], masterOverrides: Record<string, unknown> = {}): MockRoutes => ({
+const catalogRoutes = (
+  items: unknown[],
+  masterOverrides: Record<string, unknown> = {},
+  bookingCounts: Record<string, number> = {},
+): MockRoutes => ({
   'GET /admin/me': ME,
   'GET /admin/masters/m1': apiOk(master(masterOverrides)),
   ...upcomingCountRoute(masterOverrides),
   'GET /admin/dictionaries': DICTIONARIES,
-  [`GET ${SERVICES_PATH}`]: apiOk({ items }),
+  [`GET ${SERVICES_PATH}`]: apiOk({ items, bookingCounts }),
 });
 
-const scheduleRoutes = (extra: MockRoutes = {}, masterOverrides: Record<string, unknown> = {}): MockRoutes => ({
+const scheduleRoutes = (
+  extra: MockRoutes = {},
+  masterOverrides: Record<string, unknown> = {},
+): MockRoutes => ({
   'GET /admin/me': ME,
   'GET /admin/masters/m1': apiOk(master(masterOverrides)),
   ...upcomingCountRoute(masterOverrides),
@@ -150,18 +159,32 @@ const editRow = (page: Page, index: number) => page.getByTestId('hours-edit-day'
 const rotationDay = (page: Page, index: number) => page.getByTestId('rotation-day').nth(index);
 
 test.describe('independent master service catalog', () => {
-  test('lists his own Каталог, with no Копії column and no cascade warning', async ({ page, mockBackend }) => {
+  test('lists his own Каталог, with no Копії column and no cascade warning', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(
       ADMIN,
-      catalogRoutes([
-        service(),
-        service({ serviceId: 'svc2', name: 'Beard trim', category: 'beard_and_mustache', isActive: false }),
-      ]),
+      catalogRoutes(
+        [
+          service(),
+          service({
+            serviceId: 'svc2',
+            name: 'Beard trim',
+            category: 'beard_and_mustache',
+            isActive: false,
+          }),
+        ],
+        {},
+        { svc2: 5 },
+      ),
     );
     await signIn(page, ADMIN, '/independent-masters/m1/services');
 
     const rows = page.getByTestId('service-row');
     await expect(rows).toHaveCount(2);
+    // How many Записи each has had — a deactivated service keeps its history.
+    await expect(page.getByTestId('service-row-bookings')).toHaveText(['0', '5']);
     await expect(rows.nth(0).getByTestId('service-row-name')).toHaveText('Haircut');
     await expect(rows.nth(0).getByTestId('service-row-category')).toHaveText('Стрижки');
     await expect(rows.nth(0).getByTestId('service-row-duration')).toHaveText('30 хв');
@@ -175,7 +198,10 @@ test.describe('independent master service catalog', () => {
     await expect(page.getByTestId('services-own-catalog-note')).toBeVisible();
   });
 
-  test('creates a service in MDL only, priced as the Клієнт will book it', async ({ page, mockBackend }) => {
+  test('creates a service in MDL only, priced as the Клієнт will book it', async ({
+    page,
+    mockBackend,
+  }) => {
     const mock = await mockBackend(ADMIN, {
       ...catalogRoutes([]),
       [`POST ${SERVICES_PATH}`]: {
@@ -218,10 +244,15 @@ test.describe('independent master service catalog', () => {
     ]);
   });
 
-  test('never warns about Копії — a new price is the one Клієнти book at', async ({ page, mockBackend }) => {
+  test('never warns about Копії — a new price is the one Клієнти book at', async ({
+    page,
+    mockBackend,
+  }) => {
     const mock = await mockBackend(ADMIN, {
       ...catalogRoutes([service()]),
-      [`PATCH ${SERVICES_PATH}/svc1`]: apiOk(service({ price: 600, updatedAt: '2026-09-21T10:00:00.000Z' })),
+      [`PATCH ${SERVICES_PATH}/svc1`]: apiOk(
+        service({ price: 600, updatedAt: '2026-09-21T10:00:00.000Z' }),
+      ),
     });
     await signIn(page, ADMIN, '/independent-masters/m1/services');
 
@@ -244,10 +275,15 @@ test.describe('independent master service catalog', () => {
     ]);
   });
 
-  test('deactivates a service and brings it back — it is never deleted', async ({ page, mockBackend }) => {
+  test('deactivates a service and brings it back — it is never deleted', async ({
+    page,
+    mockBackend,
+  }) => {
     const mock = await mockBackend(ADMIN, {
       ...catalogRoutes([service()]),
-      [`DELETE ${SERVICES_PATH}/svc1`]: apiOk(service({ isActive: false, updatedAt: '2026-09-21T10:00:00.000Z' })),
+      [`DELETE ${SERVICES_PATH}/svc1`]: apiOk(
+        service({ isActive: false, updatedAt: '2026-09-21T10:00:00.000Z' }),
+      ),
       [`PATCH ${SERVICES_PATH}/svc1`]: apiOk(service({ updatedAt: '2026-09-21T10:05:00.000Z' })),
     });
     await signIn(page, ADMIN, '/independent-masters/m1/services');
@@ -262,11 +298,16 @@ test.describe('independent master service catalog', () => {
     ]);
   });
 
-  test('offers to reload when the Майстер edited the service meanwhile', async ({ page, mockBackend }) => {
+  test('offers to reload when the Майстер edited the service meanwhile', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       ...catalogRoutes([service()]),
       [`PATCH ${SERVICES_PATH}/svc1`]: apiError(409, 'EDIT_CONFLICT'),
-      [`GET ${SERVICES_PATH}/svc1`]: apiOk(service({ name: 'Haircut deluxe', updatedAt: '2026-09-21T10:00:00.000Z' })),
+      [`GET ${SERVICES_PATH}/svc1`]: apiOk(
+        service({ name: 'Haircut deluxe', updatedAt: '2026-09-21T10:00:00.000Z' }),
+      ),
     });
     await signIn(page, ADMIN, '/independent-masters/m1/services');
 
@@ -280,7 +321,10 @@ test.describe('independent master service catalog', () => {
   });
 
   test('is read-only for a Видалений майстер', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, catalogRoutes([service()], { status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }));
+    await mockBackend(
+      ADMIN,
+      catalogRoutes([service()], { status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }),
+    );
     await signIn(page, ADMIN, '/independent-masters/m1/services');
 
     await expect(page.getByTestId('service-row')).toHaveCount(1);
@@ -296,9 +340,13 @@ test.describe('independent master working schedule', () => {
     await signIn(page, ADMIN, '/independent-masters/m1/schedule');
 
     await expect(page.getByTestId('schedule-day')).toHaveCount(7);
-    await expect(weekRow(page, 0).getByTestId('schedule-day-master')).toContainText('07:00 – 20:00');
+    await expect(weekRow(page, 0).getByTestId('schedule-day-master')).toContainText(
+      '07:00 – 20:00',
+    );
     // Saturday: a day no Салон week would have allowed him.
-    await expect(weekRow(page, 5).getByTestId('schedule-day-master')).toContainText('10:00 – 16:00');
+    await expect(weekRow(page, 5).getByTestId('schedule-day-master')).toContainText(
+      '10:00 – 16:00',
+    );
     await expect(weekRow(page, 6).getByTestId('schedule-day-master')).toContainText('Не працює');
 
     // The Салон column, the «sticks out» flag and the read that would fetch the bounds are absent.
@@ -310,7 +358,15 @@ test.describe('independent master working schedule', () => {
     page,
     mockBackend,
   }) => {
-    const saved = [closed(0), open(1, '08:00', '19:00'), open(2), open(3), open(4), open(5), open(6, '10:00', '16:00')];
+    const saved = [
+      closed(0),
+      open(1, '08:00', '19:00'),
+      open(2),
+      open(3),
+      open(4),
+      open(5),
+      open(6, '10:00', '16:00'),
+    ];
     const mock = await mockBackend(ADMIN, scheduleRoutes({ [PUT_HOURS]: apiOk({ days: saved }) }));
     await signIn(page, ADMIN, '/independent-masters/m1/schedule');
 
@@ -324,8 +380,12 @@ test.describe('independent master working schedule', () => {
     await page.getByTestId('hours-reason').fill('Master asked by phone');
     await page.getByTestId('hours-save').click();
 
-    await expect(weekRow(page, 0).getByTestId('schedule-day-master')).toContainText('08:00 – 19:00');
-    expect(mock.bodies[PUT_HOURS]).toEqual([{ masterHours: saved, reason: 'Master asked by phone' }]);
+    await expect(weekRow(page, 0).getByTestId('schedule-day-master')).toContainText(
+      '08:00 – 19:00',
+    );
+    expect(mock.bodies[PUT_HOURS]).toEqual([
+      { masterHours: saved, reason: 'Master asked by phone' },
+    ]);
   });
 
   test('saves over the Записи his new week leaves standing only the week they were named for', async ({
@@ -342,11 +402,16 @@ test.describe('independent master working schedule', () => {
           };
           return allowExistingAppointments
             ? apiOk({ days: masterHours })
-            : apiError(409, 'SCHEDULE_CHANGE_HAS_APPOINTMENTS', 'Booked appointments no longer fit', {
-                dates: ['2026-10-12'],
-                appointmentCount: 1,
-                appointments: [],
-              });
+            : apiError(
+                409,
+                'SCHEDULE_CHANGE_HAS_APPOINTMENTS',
+                'Booked appointments no longer fit',
+                {
+                  dates: ['2026-10-12'],
+                  appointmentCount: 1,
+                  appointments: [],
+                },
+              );
         },
       }),
     );
@@ -364,7 +429,9 @@ test.describe('independent master working schedule', () => {
     await page.getByTestId('hours-confirm').click();
 
     await expect(page.getByTestId('hours-form')).toHaveCount(0);
-    await expect(weekRow(page, 0).getByTestId('schedule-day-master')).toContainText('07:00 – 15:00');
+    await expect(weekRow(page, 0).getByTestId('schedule-day-master')).toContainText(
+      '07:00 – 15:00',
+    );
     const week = (end: string) => [
       closed(0),
       open(1, '07:00', end),
@@ -381,13 +448,18 @@ test.describe('independent master working schedule', () => {
     ]);
   });
 
-  test('draws the month a Клієнт would meet: working days, Відсутності and Записи', async ({ page, mockBackend }) => {
+  test('draws the month a Клієнт would meet: working days, Відсутності and Записи', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, scheduleRoutes());
     await signIn(page, ADMIN, '/independent-masters/m1/schedule');
 
     await expect(page.getByTestId('calendar-day').first()).toBeVisible();
     await expect(page.getByTestId('time-off-row')).toHaveCount(1);
-    await expect(page.getByTestId('time-off-row').getByTestId('time-off-type')).toHaveText('Вихідний');
+    await expect(page.getByTestId('time-off-row').getByTestId('time-off-type')).toHaveText(
+      'Вихідний',
+    );
   });
 
   test('sets and clears the Ротація on his own calendar', async ({ page, mockBackend }) => {
@@ -395,7 +467,8 @@ test.describe('independent master working schedule', () => {
     const mock = await mockBackend(
       ADMIN,
       scheduleRoutes({
-        [PATTERN]: (_url: URL, body: unknown) => apiOk({ schedulePattern: (body as { pattern: unknown }).pattern }),
+        [PATTERN]: (_url: URL, body: unknown) =>
+          apiOk({ schedulePattern: (body as { pattern: unknown }).pattern }),
       }),
     );
     await signIn(page, ADMIN, '/independent-masters/m1/schedule');
@@ -464,7 +537,10 @@ test.describe('independent master working schedule', () => {
   });
 
   test('offers no editing for a Видалений майстер', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, scheduleRoutes({}, { status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }));
+    await mockBackend(
+      ADMIN,
+      scheduleRoutes({}, { status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }),
+    );
     await signIn(page, ADMIN, '/independent-masters/m1/schedule');
 
     await expect(page.getByTestId('schedule-day')).toHaveCount(7);

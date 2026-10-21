@@ -38,6 +38,9 @@ export type SalonMaster = {
   updatedAt: string | null;
 };
 
+/** A row of the Ростер: the master, and the Копії he holds in this Салон, A–Z. */
+export type RosterMaster = SalonMaster & { services: { serviceId: string; name: string }[] };
+
 /** What the administrator may change on a roster link. Its status is not here — on purpose. */
 export type SalonMasterFields = {
   specialization: string;
@@ -86,8 +89,8 @@ const salonUrl = (salonId: string, rest: string): string =>
 export class SalonMastersClient {
   private readonly http = inject(HttpClient);
 
-  roster(salonId: string): Observable<{ items: SalonMaster[] }> {
-    return this.http.get<{ items: SalonMaster[] }>(salonUrl(salonId, 'masters'));
+  roster(salonId: string): Observable<{ items: RosterMaster[] }> {
+    return this.http.get<{ items: RosterMaster[] }>(salonUrl(salonId, 'masters'));
   }
 
   /** A master outside this Ростер is the card's own screen, not a toast: `NOT_FOUND` is left to the caller. */

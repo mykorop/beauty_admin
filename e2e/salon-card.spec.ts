@@ -104,7 +104,7 @@ test.describe('salon card', () => {
     await expect(page.getByTestId('card-tab')).toHaveText([
       'Профіль',
       'Години роботи',
-      'Ростер',
+      'Список майстрів',
       'Каталог послуг',
       'Записи',
       'Відгуки',

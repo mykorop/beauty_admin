@@ -48,6 +48,10 @@ const service = (overrides: Record<string, unknown> = {}) => ({
   priceUnit: '',
   isActive: true,
   masterCopyCount: 2,
+  masterCopies: [
+    { masterId: 's1', masterName: 'Ana Rusu' },
+    { masterId: 'm2', masterName: 'Ion Popa' },
+  ],
   createdAt: '2026-03-01T09:00:00.000Z',
   updatedAt: '2026-06-01T00:00:00.000Z',
   ...overrides,
@@ -59,37 +63,101 @@ const DICTIONARIES = apiOk({
   serviceCurrencies: ['MDL'],
 });
 
-const base = (items: unknown[], salonOverrides: Record<string, unknown> = {}) => ({
+const base = (
+  items: unknown[],
+  salonOverrides: Record<string, unknown> = {},
+  bookingCounts: Record<string, number> = {},
+) => ({
   'GET /admin/me': ME,
   'GET /admin/salons/s1': apiOk(salon(salonOverrides)),
   // A card that is not active warns about the Записи still ahead of it (§12), and reads the count.
-  ...(salonOverrides['status'] ? { 'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }) } : {}),
+  ...(salonOverrides['status']
+    ? { 'GET /admin/salons/s1/appointments/upcoming-count': apiOk({ count: 0 }) }
+    : {}),
   'GET /admin/dictionaries': DICTIONARIES,
-  [`GET ${SERVICES_PATH}`]: apiOk({ items }),
+  [`GET ${SERVICES_PATH}`]: apiOk({ items, bookingCounts }),
 });
 
 test.describe('salon service catalog', () => {
+  test('names the Майстри behind the Копії count on hover, each opening his card', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      ...base([service(), service({ serviceId: 'svc2', masterCopyCount: 0, masterCopies: [] })]),
+      'GET /admin/salons/s1/masters/m2': apiOk({
+        masterId: 'm2',
+        isOwner: false,
+        masterName: 'Ion Popa',
+        masterAvatar: '',
+        email: 'ion@bookme.md',
+        specialization: 'barber',
+        status: 'ACTIVE',
+        commissionPercent: 40,
+        bookingForwardDays: 30,
+        rating: 0,
+        reviewCount: 0,
+        joinedAt: '2026-02-01T09:00:00.000Z',
+        updatedAt: null,
+      }),
+      'GET /admin/reviews': apiOk({ items: [], nextCursor: null }),
+    });
+    await signIn(page, ADMIN, '/salons/s1/services');
+
+    const rows = page.getByTestId('service-row');
+    // Nothing to name: the count is plain text.
+    await expect(rows.nth(1).getByTestId('service-row-copies-trigger')).toHaveCount(0);
+    await expect(rows.nth(1).getByTestId('service-row-copies')).toHaveText('0');
+
+    await rows.nth(0).getByTestId('service-row-copies-trigger').hover();
+    const list = page.getByTestId('service-row-copies-list');
+    await expect(list.getByRole('link')).toHaveText(['Ana Rusu', 'Ion Popa']);
+
+    await list.getByRole('link', { name: 'Ion Popa' }).click();
+    await expect(page).toHaveURL(/\/salons\/s1\/masters\/m2\/profile$/);
+    await expect(page.getByTestId('card-title')).toHaveText('Ion Popa');
+  });
+
+  test('opens the same list from the keyboard', async ({ page, mockBackend }) => {
+    await mockBackend(ADMIN, base([service()]));
+    await signIn(page, ADMIN, '/salons/s1/services');
+
+    await page.getByTestId('service-row-copies-trigger').focus();
+    await page.keyboard.press('Enter');
+    const list = page.getByTestId('service-row-copies-list');
+    await expect(list.getByRole('link').first()).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(list).toHaveCount(0);
+  });
+
   test('lists the Каталог with category, duration, price, currency, activity and Копії count', async ({
     page,
     mockBackend,
   }) => {
     await mockBackend(
       ADMIN,
-      base([
-        service(),
-        service({
-          serviceId: 'svc2',
-          name: 'Beard trim',
-          category: 'beard_and_mustache',
-          isActive: false,
-          masterCopyCount: 0,
-        }),
-      ]),
+      base(
+        [
+          service(),
+          service({
+            serviceId: 'svc2',
+            name: 'Beard trim',
+            category: 'beard_and_mustache',
+            isActive: false,
+            masterCopyCount: 0,
+            masterCopies: [],
+          }),
+        ],
+        {},
+        { svc1: 37 },
+      ),
     );
     await signIn(page, ADMIN, '/salons/s1/services');
 
     const rows = page.getByTestId('service-row');
     await expect(rows).toHaveCount(2);
+    await expect(page.getByTestId('service-row-bookings')).toHaveText(['37', '0']);
     await expect(rows.nth(0).getByTestId('service-row-name')).toHaveText('Haircut');
     await expect(rows.nth(0).getByTestId('service-row-category')).toHaveText('Стрижки');
     await expect(rows.nth(0).getByTestId('service-row-duration')).toHaveText('30 хв');
@@ -155,10 +223,15 @@ test.describe('salon service catalog', () => {
     ]);
   });
 
-  test('warns that Копії майстрів do not change once price or duration is touched', async ({ page, mockBackend }) => {
+  test('warns that Копії майстрів do not change once price or duration is touched', async ({
+    page,
+    mockBackend,
+  }) => {
     const mock = await mockBackend(ADMIN, {
       ...base([service()]),
-      [`PATCH ${SERVICES_PATH}/svc1`]: apiOk(service({ price: 600, updatedAt: '2026-09-21T10:00:00.000Z' })),
+      [`PATCH ${SERVICES_PATH}/svc1`]: apiOk(
+        service({ price: 600, updatedAt: '2026-09-21T10:00:00.000Z' }),
+      ),
     });
     await signIn(page, ADMIN, '/salons/s1/services');
 
@@ -172,7 +245,9 @@ test.describe('salon service catalog', () => {
     await page.getByTestId('service-name').fill('Haircut');
 
     await page.getByTestId('service-duration').fill('40');
-    await expect(page.getByTestId('service-copies-warning')).toContainText('Копії майстрів не змінюються');
+    await expect(page.getByTestId('service-copies-warning')).toContainText(
+      'Копії майстрів не змінюються',
+    );
     await page.getByTestId('service-duration').fill('30');
     await expect(page.getByTestId('service-copies-warning')).toHaveCount(0);
 
@@ -188,11 +263,16 @@ test.describe('salon service catalog', () => {
     ]);
   });
 
-  test('offers to reload when the Власник салону edited the service meanwhile', async ({ page, mockBackend }) => {
+  test('offers to reload when the Власник салону edited the service meanwhile', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       ...base([service()]),
       [`PATCH ${SERVICES_PATH}/svc1`]: apiError(409, 'EDIT_CONFLICT'),
-      [`GET ${SERVICES_PATH}/svc1`]: apiOk(service({ name: 'Haircut deluxe', updatedAt: '2026-09-21T10:00:00.000Z' })),
+      [`GET ${SERVICES_PATH}/svc1`]: apiOk(
+        service({ name: 'Haircut deluxe', updatedAt: '2026-09-21T10:00:00.000Z' }),
+      ),
     });
     await signIn(page, ADMIN, '/salons/s1/services');
 
@@ -207,10 +287,15 @@ test.describe('salon service catalog', () => {
     await expect(page.getByTestId('service-price')).toHaveValue('500');
   });
 
-  test('deactivates a service and brings it back — it is never deleted', async ({ page, mockBackend }) => {
+  test('deactivates a service and brings it back — it is never deleted', async ({
+    page,
+    mockBackend,
+  }) => {
     const mock = await mockBackend(ADMIN, {
       ...base([service()]),
-      [`DELETE ${SERVICES_PATH}/svc1`]: apiOk(service({ isActive: false, updatedAt: '2026-09-21T10:00:00.000Z' })),
+      [`DELETE ${SERVICES_PATH}/svc1`]: apiOk(
+        service({ isActive: false, updatedAt: '2026-09-21T10:00:00.000Z' }),
+      ),
       [`PATCH ${SERVICES_PATH}/svc1`]: apiOk(service({ updatedAt: '2026-09-21T10:05:00.000Z' })),
     });
     await signIn(page, ADMIN, '/salons/s1/services');
@@ -244,10 +329,15 @@ test.describe('salon service catalog', () => {
     await page.getByTestId('service-save').click();
 
     await expect(page.getByTestId('service-row-currency')).toHaveText('EUR');
-    expect(mock.bodies[`PATCH ${SERVICES_PATH}/svc1`]).toEqual([{ updatedAt: '2026-06-01T00:00:00.000Z', price: 45 }]);
+    expect(mock.bodies[`PATCH ${SERVICES_PATH}/svc1`]).toEqual([
+      { updatedAt: '2026-06-01T00:00:00.000Z', price: 45 },
+    ]);
   });
 
-  test('words a created service in the «Історія» as a line, not as raw data', async ({ page, mockBackend }) => {
+  test('words a created service in the «Історія» as a line, not as raw data', async ({
+    page,
+    mockBackend,
+  }) => {
     await mockBackend(ADMIN, {
       'GET /admin/me': ME,
       'GET /admin/salons/s1': apiOk(salon()),
@@ -295,7 +385,10 @@ test.describe('salon service catalog', () => {
   });
 
   test('is read-only in a Видалений salon', async ({ page, mockBackend }) => {
-    await mockBackend(ADMIN, base([service()], { status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }));
+    await mockBackend(
+      ADMIN,
+      base([service()], { status: 'deleted', deletedAt: '2026-08-01T12:00:00.000Z' }),
+    );
     await signIn(page, ADMIN, '/salons/s1/services');
 
     await expect(page.getByTestId('service-row')).toHaveCount(1);
