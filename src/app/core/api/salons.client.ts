@@ -62,6 +62,11 @@ export type Salon = {
   deletedAt: string | null;
   blockedAt: string | null;
   blockedReason: string | null;
+  /**
+   * «SMS-сповіщення клієнтам»: the Салон's Клієнти get a paid SMS about their Записи. Only the
+   * Адміністратор платформи changes it (`setSmsNotifications`); the Салон itself cannot.
+   */
+  smsNotificationsEnabled: boolean;
   shortLinks: { random: ShortLink | null; handle: ShortLink | null };
   createdAt: string;
   updatedAt: string;
@@ -114,6 +119,22 @@ export class SalonsClient {
 
   hours(salonId: string): Observable<SalonHours> {
     return this.http.get<SalonHours>(salonUrl(salonId, 'hours'));
+  }
+
+  /**
+   * «SMS-сповіщення клієнтам» set to `enabled` — the whole state, not a toggle — with the optional
+   * reason the Журнал records. Answers with the whole Салон, which the card then shows. Its refusal
+   * (a Видалений Салон) is an ordinary toast.
+   */
+  setSmsNotifications(
+    salonId: string,
+    request: { enabled: boolean; reason?: string },
+  ): Observable<Salon> {
+    const { enabled, reason } = request;
+    return this.http.put<Salon>(salonUrl(salonId, 'sms-notifications'), {
+      enabled,
+      ...withReason(reason),
+    });
   }
 
   /**

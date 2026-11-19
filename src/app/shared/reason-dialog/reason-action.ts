@@ -39,9 +39,10 @@ export type ReasonAction<S> = {
 };
 
 /**
- * A heavy action taken with a reason — Блокування, Масове скасування, closing a Запис, hiding a
- * Відгук, Видалення вмісту, removal from the Ростер. The dialog (`ReasonDialog`) only draws and
- * asks; this is what acts.
+ * An action taken with a reason — the heavy ones (Блокування, Масове скасування, closing a Запис,
+ * hiding a Відгук, Видалення вмісту, removal from the Ростер) and the few whose reason is optional
+ * (`reasonRequired`), such as a Салон's «SMS-сповіщення клієнтам». The dialog (`ReasonDialog`) only
+ * draws and asks; this is what acts.
  *
  * While the action is on its way nothing can be confirmed again and nothing closes the dialog. The
  * backend agreeing closes it: the answer is taken in first (`accept`), then the success is told. A

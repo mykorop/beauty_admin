@@ -428,6 +428,20 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'audit.action.master.unblock': 'Deblocarea Maestrului',
   'salon.field.blockedAt': 'Blocat la',
   'salon.field.blockedReason': 'Motivul Blocării',
+  'salon.field.smsNotificationsEnabled': 'Notificări SMS pentru clienți',
+  'salon.sms.hint':
+    'SMS-urile sunt plătite și ajung la Clienții Salonului despre Programările lor.',
+  'salon.sms.enable.title': 'Activarea notificărilor SMS',
+  'salon.sms.enable.message':
+    'Clienții Salonului „{{name}}” vor primi SMS despre Programările lor. SMS-urile sunt plătite.',
+  'salon.sms.enable.confirm': 'Activează',
+  'salon.sms.enable.done': 'Notificările SMS au fost activate.',
+  'salon.sms.disable.title': 'Dezactivarea notificărilor SMS',
+  'salon.sms.disable.message':
+    'Clienții Salonului „{{name}}” nu vor mai primi SMS despre Programările lor.',
+  'salon.sms.disable.confirm': 'Dezactivează',
+  'salon.sms.disable.done': 'Notificările SMS au fost dezactivate.',
+  'audit.action.salon.sms_notifications.update': 'Modificarea notificărilor SMS pentru clienți',
   'master.field.blockedAt': 'Blocat la',
   'master.field.blockedReason': 'Motivul Blocării',
   'reasonDialog.reason': 'Motiv (obligatoriu)',

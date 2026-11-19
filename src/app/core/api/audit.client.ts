@@ -12,6 +12,8 @@ export const AUDIT_ACTIONS = [
   'salon.hours.update',
   'salon.block',
   'salon.unblock',
+  // «SMS-сповіщення клієнтам»: the one setting of a Салон only the platform turns on or off.
+  'salon.sms_notifications.update',
   'salon.master.update',
   'salon.master.remove',
   'salon.master.hours.update',
