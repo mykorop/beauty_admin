@@ -11,7 +11,17 @@ import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
  * far from the venue, so every hour on screen has to be the venue's.
  */
 
+/**
+ * A day of Chișinău's summer time, which every hour below is written for (UTC+3); the browser's
+ * clock is pinned to it. Dated from the real clock, the Запис would fall in winter (UTC+2) half the
+ * year and show 08:00 for 09:00.
+ */
+const NOW = '2026-09-23T09:00:00Z';
+
 test.use({ timezoneId: 'America/Los_Angeles' });
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date(NOW));
+});
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
 const SALON_LIST = 'GET /admin/salons/s1/appointments';
@@ -20,8 +30,8 @@ const STATUS = 'PATCH /admin/appointments/a1';
 const RESCHEDULE = 'PATCH /admin/appointments/a1/reschedule';
 const SLOTS = 'GET /admin/appointments/a1/available-slots';
 
-/** Two days ahead, so «у минулому» never decides a spec and the day is stable while it runs. */
-const DAY = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
+/** Two days after `NOW`, so «у минулому» never decides a spec. */
+const DAY = '2026-09-25';
 /** 09:00 in Chișinău (UTC+3) — and the previous evening where the browser sits. */
 const START = `${DAY}T06:00:00Z`;
 const END = `${DAY}T06:45:00Z`;
@@ -292,7 +302,7 @@ test.describe('moving a Запис', () => {
     page,
     mockBackend,
   }) => {
-    const nextDay = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+    const nextDay = '2026-09-26';
     const asked: string[] = [];
     const mock = await mockBackend(
       ADMIN,

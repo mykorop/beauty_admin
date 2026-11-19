@@ -67,11 +67,7 @@ test('native 200% browser zoom keeps sign-in, navigation and statistics usable',
       timezoneId: 'Europe/Chisinau',
       reducedMotion: 'reduce',
       colorScheme: 'light',
-      args: [
-        '--window-size=1440,1000',
-        `--disable-extensions-except=${extension}`,
-        `--load-extension=${extension}`,
-      ],
+      args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
     },
   );
   try {
@@ -82,6 +78,11 @@ test('native 200% browser zoom keeps sign-in, navigation and statistics usable',
       'GET /admin/stats/detailed': apiOk({ run: null, result: detailedStatsResult() }),
     });
     const page = context.pages()[0];
+    const session = await context.newCDPSession(page);
+    // A 1440 × 1000 page area, sized as such: `--window-size` sizes the whole window, frame
+    // included, and Chromium draws a frame around a headless window too.
+    const { windowId } = await session.send('Browser.getWindowForTarget');
+    await session.send('Browser.setContentsSize', { windowId, width: 1440, height: 1000 });
     await page.clock.setFixedTime(new Date('2026-09-23T09:00:00Z'));
     await page.goto('/');
     const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
@@ -107,7 +108,6 @@ test('native 200% browser zoom keeps sign-in, navigation and statistics usable',
     await expect(page.getByRole('button', { name: 'Навігація', exact: true })).toBeFocused();
     await page.evaluate(() => document.fonts.ready);
     // Capture the browser viewport directly: Playwright's CSS-pixel clip would crop it at tab zoom.
-    const session = await context.newCDPSession(page);
     const screenshot = await session.send('Page.captureScreenshot', {
       captureBeyondViewport: false,
     });
