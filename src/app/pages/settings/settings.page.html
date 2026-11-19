@@ -1,0 +1,56 @@
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.settings' | t }}</h1>
+</div>
+
+@if (settings(); as settings) {
+  <section
+    class="max-w-3xl rounded-lg border border-divider bg-panel p-4 text-sm"
+    data-testid="setting-ukrainianPhones"
+  >
+    <div class="flex items-start gap-3">
+      <!-- Never changed in place: the dialog asks first, and the page takes the backend's answer. -->
+      <p-checkbox
+        inputId="ukrainian-phones"
+        data-testid="ukrainian-phones"
+        [binary]="true"
+        [ngModel]="ukrainianPhonesShown()"
+        (ngModelChange)="askUkrainianPhonesChange($event)"
+      />
+      <div class="min-w-0">
+        <label class="font-medium text-ink" for="ukrainian-phones">
+          {{ 'settings.ukrainianPhones.label' | t }}
+        </label>
+        <ul
+          class="mt-2 flex list-disc flex-col gap-1 pl-4 text-muted"
+          data-testid="ukrainian-phones-hint"
+        >
+          <li>{{ 'settings.ukrainianPhones.hint.enabled' | t }}</li>
+          <li>{{ 'settings.ukrainianPhones.hint.cost' | t }}</li>
+          <li>{{ 'settings.ukrainianPhones.hint.disabled' | t }}</li>
+          <li>{{ 'settings.ukrainianPhones.hint.stages' | t }}</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+} @else if (failed()) {
+  <p class="content-state text-danger" role="alert" data-testid="settings-failed">
+    {{ 'card.failed' | t }}
+  </p>
+} @else {
+  <p class="content-state text-muted" role="status" data-testid="settings-loading">
+    {{ 'common.loading' | t }}
+  </p>
+}
+
+<app-reason-dialog
+  [titleKey]="ukrainianPhonesCopy().title"
+  [confirmLabelKey]="ukrainianPhonesCopy().confirm"
+  [confirmSeverity]="ukrainianPhonesCopy().severity"
+  [reasonRequired]="ukrainianPhonesChange.reasonRequired()"
+  [busy]="ukrainianPhonesChange.busy()"
+  [visible]="ukrainianPhonesChange.open()"
+  (visibleChange)="$event || ukrainianPhonesChange.dismiss()"
+  (confirmed)="ukrainianPhonesChange.confirm($event)"
+>
+  {{ ukrainianPhonesCopy().message | t }}
+</app-reason-dialog>

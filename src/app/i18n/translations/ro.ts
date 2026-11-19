@@ -11,6 +11,7 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'nav.appointments': 'Programări',
   'nav.reviews': 'Recenzii',
   'nav.auditLog': 'Jurnal de acțiuni',
+  'nav.settings': 'Setări',
 
   'header.signOut': 'Ieșire',
   'header.language': 'Limba interfeței',
@@ -820,4 +821,27 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
     'Nu s-a putut afla cum decurge adunarea. Apăsați butonul din nou pentru a o urmări.',
   'platformAppointments.day.loadFailed': 'Programările acestei zile nu au putut fi încărcate.',
   'platformAppointments.day.empty': 'În această zi nu sunt programări.',
+  // ── Setările platformei ────────────────────────────────────────────────────────────────────
+  'settings.ukrainianPhones.label': 'Numere ucrainene (+380)',
+  'settings.ukrainianPhones.hint.enabled':
+    'Când este activat, în aplicații se poate alege +380, iar codurile de confirmare și SMS-urile despre Programări ajung la numerele mobile ucrainene.',
+  'settings.ukrainianPhones.hint.cost':
+    'Un SMS în Ucraina costă de aproximativ 14 ori mai mult decât unul în Moldova.',
+  'settings.ukrainianPhones.hint.disabled':
+    'Dezactivarea ascunde +380 pentru numerele noi, iar numerele deja salvate rămân.',
+  'settings.ukrainianPhones.hint.stages':
+    'Un comutator se aplică împreună pe dev și staging, iar altul este comun pentru toate stack-urile prod.',
+  'settings.ukrainianPhones.enable.title': 'Activarea numerelor ucrainene',
+  'settings.ukrainianPhones.enable.message':
+    'Aplicațiile vor oferi +380, iar codurile și SMS-urile despre Programări vor ajunge la numerele mobile ucrainene. Un SMS în Ucraina costă de aproximativ 14 ori mai mult.',
+  'settings.ukrainianPhones.enable.confirm': 'Activează',
+  'settings.ukrainianPhones.enable.done': 'Numerele ucrainene au fost activate.',
+  'settings.ukrainianPhones.disable.title': 'Dezactivarea numerelor ucrainene',
+  'settings.ukrainianPhones.disable.message':
+    'Aplicațiile nu vor mai oferi +380 pentru numerele noi, iar codurile și SMS-urile despre Programări nu vor mai fi trimise la numerele ucrainene. Numerele deja salvate rămân.',
+  'settings.ukrainianPhones.disable.confirm': 'Dezactivează',
+  'settings.ukrainianPhones.disable.done': 'Numerele ucrainene au fost dezactivate.',
+  'platform.field.ukrainianPhonesEnabled': 'Numere ucrainene (+380)',
+  'audit.targetType.platform': 'Platformă',
+  'audit.action.platform.ukrainian_phones.update': 'Modificarea setării „Numere ucrainene”',
 };

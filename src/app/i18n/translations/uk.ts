@@ -9,6 +9,7 @@ export const UK_TRANSLATIONS = {
   'nav.appointments': 'Записи',
   'nav.reviews': 'Відгуки',
   'nav.auditLog': 'Журнал дій',
+  'nav.settings': 'Налаштування',
 
   'header.signOut': 'Вийти',
   'header.language': 'Мова інтерфейсу',
@@ -811,6 +812,28 @@ export const UK_TRANSLATIONS = {
     'Не вдалося дізнатися, як іде збирання. Натисніть кнопку ще раз, щоб стежити за ним знову.',
   'platformAppointments.day.loadFailed': 'Не вдалося завантажити Записи за цей день.',
   'platformAppointments.day.empty': 'Цього дня Записів немає.',
+  // ── Налаштування платформи ─────────────────────────────────────────────────────────────────
+  'settings.ukrainianPhones.label': 'Українські номери (+380)',
+  'settings.ukrainianPhones.hint.enabled':
+    'Коли ввімкнено, у застосунках можна вибрати +380, а коди підтвердження й SMS про Записи йдуть на українські мобільні номери.',
+  'settings.ukrainianPhones.hint.cost': 'SMS в Україну приблизно в 14 разів дорожчі, ніж у Молдові.',
+  'settings.ukrainianPhones.hint.disabled':
+    'Вимкнення ховає +380 для нових номерів, а вже збережені номери лишаються.',
+  'settings.ukrainianPhones.hint.stages':
+    'Один перемикач діє на dev і staging разом, а другий — спільний для всіх prod-стеків.',
+  'settings.ukrainianPhones.enable.title': 'Увімкнення українських номерів',
+  'settings.ukrainianPhones.enable.message':
+    'Застосунки пропонуватимуть +380, а коди й SMS про Записи йтимуть на українські мобільні. SMS в Україну приблизно в 14 разів дорожчі.',
+  'settings.ukrainianPhones.enable.confirm': 'Увімкнути',
+  'settings.ukrainianPhones.enable.done': 'Українські номери увімкнено.',
+  'settings.ukrainianPhones.disable.title': 'Вимкнення українських номерів',
+  'settings.ukrainianPhones.disable.message':
+    'Застосунки більше не пропонуватимуть +380 для нових номерів, а коди й SMS про Записи на українські номери не надсилатимуться. Уже збережені номери лишаються.',
+  'settings.ukrainianPhones.disable.confirm': 'Вимкнути',
+  'settings.ukrainianPhones.disable.done': 'Українські номери вимкнено.',
+  'platform.field.ukrainianPhonesEnabled': 'Українські номери (+380)',
+  'audit.targetType.platform': 'Платформа',
+  'audit.action.platform.ukrainian_phones.update': 'Зміна налаштування «Українські номери»',
 } as const;
 
 export type TranslationKey = keyof typeof UK_TRANSLATIONS;

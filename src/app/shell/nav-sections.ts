@@ -19,4 +19,5 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   { path: 'appointments', labelKey: 'nav.appointments', icon: 'pi pi-calendar' },
   { path: 'reviews', labelKey: 'nav.reviews', icon: 'pi pi-star' },
   { path: 'audit-log', labelKey: 'nav.auditLog', icon: 'pi pi-history' },
+  { path: 'settings', labelKey: 'nav.settings', icon: 'pi pi-cog' },
 ];

@@ -31,6 +31,8 @@ const TARGET_CARD_ROUTE: Partial<Record<string, (entry: AuditEntry) => string[] 
   salon: (entry) => ['/salons', entry.targetId],
   // A Майстер салону lives inside his Салон; the card of a Незалежний майстер is not built yet.
   master: (entry) => (entry.salonId ? ['/salons', entry.salonId, 'masters', entry.targetId] : null),
+  // The platform's own settings have no card: they live on the «Налаштування» page.
+  platform: () => ['/settings'],
 };
 
 /**

@@ -11,6 +11,7 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'nav.appointments': 'Записи',
   'nav.reviews': 'Отзывы',
   'nav.auditLog': 'Журнал действий',
+  'nav.settings': 'Настройки',
 
   'header.signOut': 'Выйти',
   'header.language': 'Язык интерфейса',
@@ -816,4 +817,26 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
     'Не удалось узнать, как идёт сбор. Нажмите кнопку ещё раз, чтобы снова следить за ним.',
   'platformAppointments.day.loadFailed': 'Не удалось загрузить Записи за этот день.',
   'platformAppointments.day.empty': 'В этот день Записей нет.',
+  // ── Настройки платформы ────────────────────────────────────────────────────────────────────
+  'settings.ukrainianPhones.label': 'Украинские номера (+380)',
+  'settings.ukrainianPhones.hint.enabled':
+    'Когда включено, в приложениях можно выбрать +380, а коды подтверждения и SMS о Записях приходят на украинские мобильные номера.',
+  'settings.ukrainianPhones.hint.cost': 'SMS в Украину примерно в 14 раз дороже, чем в Молдове.',
+  'settings.ukrainianPhones.hint.disabled':
+    'Отключение скрывает +380 для новых номеров, а уже сохранённые номера остаются.',
+  'settings.ukrainianPhones.hint.stages':
+    'Один переключатель действует на dev и staging вместе, а другой — общий для всех prod-стеков.',
+  'settings.ukrainianPhones.enable.title': 'Включение украинских номеров',
+  'settings.ukrainianPhones.enable.message':
+    'Приложения будут предлагать +380, а коды и SMS о Записях будут приходить на украинские мобильные. SMS в Украину примерно в 14 раз дороже.',
+  'settings.ukrainianPhones.enable.confirm': 'Включить',
+  'settings.ukrainianPhones.enable.done': 'Украинские номера включены.',
+  'settings.ukrainianPhones.disable.title': 'Отключение украинских номеров',
+  'settings.ukrainianPhones.disable.message':
+    'Приложения больше не будут предлагать +380 для новых номеров, а коды и SMS о Записях на украинские номера отправляться не будут. Уже сохранённые номера остаются.',
+  'settings.ukrainianPhones.disable.confirm': 'Отключить',
+  'settings.ukrainianPhones.disable.done': 'Украинские номера отключены.',
+  'platform.field.ukrainianPhonesEnabled': 'Украинские номера (+380)',
+  'audit.targetType.platform': 'Платформа',
+  'audit.action.platform.ukrainian_phones.update': 'Изменение настройки «Украинские номера»',
 };
