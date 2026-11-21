@@ -20,6 +20,8 @@ const entry = (overrides: Record<string, unknown> = {}) => ({
   status: 200,
   error: null,
   durationMs: 87,
+  requestBody: null,
+  requestBodyTruncated: false,
   requestId: 'req-1',
   traceId: null,
   sentryEventId: null,
@@ -631,6 +633,96 @@ test.describe('activity log screen', () => {
     await page.getByTestId('activity-row-toggle').nth(2).click();
     await expect(details.getByTestId('activity-error-code')).toHaveCount(0);
     await expect(details.getByTestId('activity-request-id')).toHaveText('req-ok');
+  });
+
+  test('expands a row into the body the app sent and the ids of its address, each leading to its screen where the panel has one', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: pageOf([
+        entry({
+          service: 'salon-api',
+          route: 'PATCH /salon/masters/{masterId}/services/{serviceId}',
+          pathParams: { masterId: 'iryna', serviceId: 'svc-cut' },
+          actor: { id: 'owner-1', role: 'salon', name: 'Ion Popa' },
+          salonId: 'salon-2',
+          masterId: 'iryna',
+          place: { type: 'salon', id: 'salon-2', name: 'Studio Botanica' },
+          requestBody: { price: 450, durationMinutes: 60, phone: '[REDACTED]', note: 'Нова ціна' },
+        }),
+        entry({
+          activityId: 'act-2',
+          outcome: 'rejected',
+          status: 409,
+          error: { code: 'CONFLICT', message: 'Appointment is already cancelled' },
+          requestBody: '{"reason":"Не зможу прийти, перенесіть, будь ласка, на',
+          requestBodyTruncated: true,
+        }),
+        entry({
+          activityId: 'act-3',
+          route: 'PATCH /client/notifications/{notificationId}/read',
+          pathParams: { notificationId: 'n-1' },
+        }),
+        entry({ activityId: 'act-4', route: 'POST /client/appointments', pathParams: {} }),
+      ]),
+    });
+    await signIn(page, ADMIN, '/activity-log');
+    const details = page.getByTestId('activity-details');
+    const toggle = (row: number) => page.getByTestId('activity-row-toggle').nth(row);
+
+    await toggle(0).click();
+
+    // The ids of the address, worded: a Майстер to his card, a service to the Копії it is one of.
+    const ids = details.getByTestId('activity-path-id');
+    await expect(ids).toHaveCount(2);
+    await expect(ids.nth(0)).toContainText('Майстер');
+    await expect(ids.nth(0).getByRole('link')).toHaveText('iryna');
+    await expect(ids.nth(0).getByRole('link')).toHaveAttribute(
+      'href',
+      '/independent-masters/iryna',
+    );
+    await expect(ids.nth(1)).toContainText('Послуга');
+    await expect(ids.nth(1).getByRole('link')).toHaveText('svc-cut');
+    await expect(ids.nth(1).getByRole('link')).toHaveAttribute(
+      'href',
+      '/salons/salon-2/masters/iryna/services',
+    );
+    // The body, readable — one field a line — with what the backend redacted shown as redacted.
+    const body = details.getByTestId('activity-request-body');
+    await expect(body).toContainText('"price": 450');
+    await expect(body).toContainText('"phone": "[REDACTED]"');
+    await expect(body).toContainText('"note": "Нова ціна"');
+    expect((await body.textContent())?.split('\n').length).toBeGreaterThan(4);
+    await expect(details.getByTestId('activity-request-body-truncated')).toHaveCount(0);
+
+    // A body cut at 4 KB: the text it was cut to, marked so; a Запис has no screen to lead to.
+    await toggle(0).click();
+    await toggle(1).click();
+    await expect(details.getByTestId('activity-request-body')).toHaveText(
+      '{"reason":"Не зможу прийти, перенесіть, будь ласка, на',
+    );
+    await expect(details.getByTestId('activity-request-body-truncated')).toHaveText('обрізано');
+    await expect(ids).toHaveCount(1);
+    await expect(ids.nth(0)).toContainText('Запис');
+    await expect(ids.nth(0)).toContainText('appt-1');
+    await expect(ids.nth(0).getByRole('link')).toHaveCount(0);
+
+    // An id the panel does not word is shown by the name the address gave it; no body, no body shown.
+    await toggle(1).click();
+    await toggle(2).click();
+    await expect(ids).toHaveCount(1);
+    await expect(ids.nth(0)).toContainText('notificationId');
+    await expect(ids.nth(0)).toContainText('n-1');
+    await expect(ids.nth(0).getByRole('link')).toHaveCount(0);
+    await expect(details.getByTestId('activity-request-body')).toHaveCount(0);
+
+    // An address without ids names none.
+    await toggle(2).click();
+    await toggle(3).click();
+    await expect(details.getByTestId('activity-request-id')).toHaveText('req-1');
+    await expect(details.getByTestId('activity-path-ids')).toHaveCount(0);
   });
 
   test('says when it is loading, when it could not load, and when there is nothing', async ({

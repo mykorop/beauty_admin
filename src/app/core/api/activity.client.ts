@@ -46,6 +46,13 @@ export type ActivityEntry = {
   status: number;
   error: ActivityError | null;
   durationMs: number;
+  /**
+   * The body the app sent, without passwords, tokens, phones, emails or names (the backend redacts
+   * them to `[REDACTED]`): the JSON itself — or, when `requestBodyTruncated`, the text of its first
+   * 4 KB, which is no JSON any more. `null` for a request without a JSON body.
+   */
+  requestBody: unknown;
+  requestBodyTruncated: boolean;
   /** `requestContext.requestId` — what the request's CloudWatch lines carry. */
   requestId: string;
   traceId: string | null;
