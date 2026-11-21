@@ -6,6 +6,8 @@ import { type Salon, SalonsClient } from '../../core/api/salons.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { ownClientVisibility } from '../../shared/client-visibility/client-visibility';
+import { ClientVisibilityFields } from '../../shared/client-visibility/client-visibility.fields';
 import { cardDates, loadedCard } from '../../shared/profile-card/loaded-card';
 import { formatRating } from '../../shared/rating';
 import { reasonAction } from '../../shared/reason-dialog/reason-action';
@@ -55,7 +57,15 @@ const smsCopyOf = (enabled: boolean): SmsCopy => (enabled ? SMS_ENABLE_COPY : SM
  */
 @Component({
   selector: 'app-salon-profile-tab',
-  imports: [ButtonDirective, Checkbox, FormsModule, ReasonDialog, SalonProfileForm, TranslatePipe],
+  imports: [
+    ButtonDirective,
+    Checkbox,
+    ClientVisibilityFields,
+    FormsModule,
+    ReasonDialog,
+    SalonProfileForm,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './salon-profile.tab.html',
 })
@@ -101,6 +111,9 @@ export class SalonProfileTab {
     this.smsCopy.set(smsCopyOf(enabled));
     this.smsChange.ask(enabled);
   }
+
+  /** Видимість: the Салон's own choice, shown and never changed here. */
+  protected readonly clientVisibility = computed(() => ownClientVisibility(this.profile()));
 
   protected readonly addressLines = computed(() => {
     const salon = this.profile();

@@ -834,6 +834,22 @@ export const UK_TRANSLATIONS = {
   'platform.field.ukrainianPhonesEnabled': 'Українські номери (+380)',
   'audit.targetType.platform': 'Платформа',
   'audit.action.platform.ukrainian_phones.update': 'Зміна налаштування «Українські номери»',
+  // ── Видимість — вибір бізнесу, лише для перегляду ──────────────────────────────────────────
+  'clientVisibility.field.visibility': 'Видимість',
+  'clientVisibility.field.pricesHidden': 'Приховані ціни',
+  'clientVisibility.field.lastChange': 'Видимість змінено',
+  'clientVisibility.value.public': 'Публічний',
+  'clientVisibility.value.link': 'За посиланням',
+  'clientVisibility.value.hidden': 'Прихований',
+  'clientVisibility.hint.public': 'Є в пошуку, «Поруч» і топі; Клієнти записуються онлайн.',
+  'clientVisibility.hint.link':
+    'Немає в пошуку, «Поруч» і топі. Сторінка за посиланням чи @handle та онлайн-запис працюють.',
+  'clientVisibility.hint.hidden':
+    'Клієнти не бачать профілю й не записуються онлайн. Наявні Записи лишаються.',
+  'clientVisibility.pricesHidden.yes': 'Так',
+  'clientVisibility.pricesHidden.no': 'Ні',
+  'clientVisibility.decidedBySalon':
+    'Визначає Салон: Майстер салону живе за Видимістю й Прихованими цінами свого Салону.',
 } as const;
 
 export type TranslationKey = keyof typeof UK_TRANSLATIONS;

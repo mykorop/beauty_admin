@@ -4,6 +4,8 @@ import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
 import { SalonMastersClient } from '../../core/api/salon-masters.client';
+import { salonMasterClientVisibility } from '../../shared/client-visibility/client-visibility';
+import { ClientVisibilityFields } from '../../shared/client-visibility/client-visibility.fields';
 import { cardDates, loadedCard } from '../../shared/profile-card/loaded-card';
 import { formatRating } from '../../shared/rating';
 import { reasonAction } from '../../shared/reason-dialog/reason-action';
@@ -20,7 +22,7 @@ import { SalonMasterForm } from './salon-master.form';
  */
 @Component({
   selector: 'app-salon-master-profile-tab',
-  imports: [ButtonDirective, ReasonDialog, SalonMasterForm, TranslatePipe],
+  imports: [ButtonDirective, ClientVisibilityFields, ReasonDialog, SalonMasterForm, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (editing()) {
@@ -89,6 +91,10 @@ import { SalonMasterForm } from './salon-master.form';
           {{ 'salon.value.days' | t: { count: master.bookingForwardDays } }}
         </dd>
 
+        @if (clientVisibility(); as visibility) {
+          <app-client-visibility-fields [view]="visibility" />
+        }
+
         <dt class="text-muted">{{ 'salon.field.rating' | t }}</dt>
         <dd data-testid="field-rating">
           {{ rating() }} · {{ 'salon.value.reviews' | t: { count: master.reviewCount } }}
@@ -135,6 +141,14 @@ export class SalonMasterProfileTab {
     const master = this.profile();
     return !master.isOwner && master.status !== 'INACTIVE';
   });
+
+  /**
+   * Видимість: his Салон's while he is on its Ростер — read from the Салон's card, shown and never
+   * changed here; nothing once the collaboration has ended.
+   */
+  protected readonly clientVisibility = computed(() =>
+    salonMasterClientVisibility(this.profile(), this.salon()),
+  );
 
   protected readonly specialization = computed(() =>
     specializationLabel(this.i18n, this.profile().specialization),

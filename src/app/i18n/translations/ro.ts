@@ -844,4 +844,21 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'platform.field.ukrainianPhonesEnabled': 'Numere ucrainene (+380)',
   'audit.targetType.platform': 'Platformă',
   'audit.action.platform.ukrainian_phones.update': 'Modificarea setării „Numere ucrainene”',
+  // ── Vizibilitate — alegerea afacerii, doar pentru vizualizare ───────────────────────────────
+  'clientVisibility.field.visibility': 'Vizibilitate',
+  'clientVisibility.field.pricesHidden': 'Prețuri ascunse',
+  'clientVisibility.field.lastChange': 'Vizibilitate modificată',
+  'clientVisibility.value.public': 'Public',
+  'clientVisibility.value.link': 'Doar prin link',
+  'clientVisibility.value.hidden': 'Ascuns',
+  'clientVisibility.hint.public':
+    'Apare în căutare, în „În apropiere” și în top; Clienții se programează online.',
+  'clientVisibility.hint.link':
+    'Nu apare în căutare, în „În apropiere” și în top. Pagina prin link sau @handle și programarea online funcționează.',
+  'clientVisibility.hint.hidden':
+    'Clienții nu văd profilul și nu se programează online. Programările existente rămân.',
+  'clientVisibility.pricesHidden.yes': 'Da',
+  'clientVisibility.pricesHidden.no': 'Nu',
+  'clientVisibility.decidedBySalon':
+    'O stabilește Salonul: Maestrul salonului urmează Vizibilitatea și Prețurile ascunse ale Salonului său.',
 };

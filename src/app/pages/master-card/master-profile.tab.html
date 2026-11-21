@@ -72,6 +72,8 @@
       }
     </dd>
 
+    <app-client-visibility-fields [view]="clientVisibility()" />
+
     <dt class="text-muted">{{ 'salon.field.shortLink' | t }}</dt>
     <dd data-testid="field-shortLink">
       @if (master.shortLinks.random || master.shortLinks.handle) {

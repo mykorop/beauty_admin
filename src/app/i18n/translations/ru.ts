@@ -839,4 +839,20 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'platform.field.ukrainianPhonesEnabled': 'Украинские номера (+380)',
   'audit.targetType.platform': 'Платформа',
   'audit.action.platform.ukrainian_phones.update': 'Изменение настройки «Украинские номера»',
+  // ── Видимость — выбор бизнеса, только для просмотра ─────────────────────────────────────────
+  'clientVisibility.field.visibility': 'Видимость',
+  'clientVisibility.field.pricesHidden': 'Скрытые цены',
+  'clientVisibility.field.lastChange': 'Видимость изменена',
+  'clientVisibility.value.public': 'Публичный',
+  'clientVisibility.value.link': 'По ссылке',
+  'clientVisibility.value.hidden': 'Скрытый',
+  'clientVisibility.hint.public': 'Есть в поиске, «Рядом» и топе; Клиенты записываются онлайн.',
+  'clientVisibility.hint.link':
+    'Нет в поиске, «Рядом» и топе. Страница по ссылке или @handle и онлайн-запись работают.',
+  'clientVisibility.hint.hidden':
+    'Клиенты не видят профиль и не записываются онлайн. Существующие Записи остаются.',
+  'clientVisibility.pricesHidden.yes': 'Да',
+  'clientVisibility.pricesHidden.no': 'Нет',
+  'clientVisibility.decidedBySalon':
+    'Определяет Салон: Мастер салона живёт по Видимости и Скрытым ценам своего Салона.',
 };

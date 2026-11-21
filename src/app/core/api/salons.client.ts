@@ -6,6 +6,7 @@ import { HOURS_REFUSAL_CODES } from './api-error';
 import type { DayHours } from './master-schedule.model';
 import { adminApiUrl, salonPath } from './admin-api-url';
 import { withAllowedAppointments } from './allow-existing-appointments';
+import type { ProfileClientVisibility } from './client-visibility.model';
 import { withReason } from './reason-body';
 
 export type SalonStatus = 'active' | 'blocked' | 'deleted';
@@ -70,7 +71,7 @@ export type Salon = {
   shortLinks: { random: ShortLink | null; handle: ShortLink | null };
   createdAt: string;
   updatedAt: string;
-};
+} & ProfileClientVisibility; // Its Видимість — the business's own choice, read only here.
 
 export type SalonDayHours = DayHours;
 
