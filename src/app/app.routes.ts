@@ -66,6 +66,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/audit-log/audit-log.page').then((m) => m.AuditLogPage),
       },
       {
+        path: 'activity-log',
+        loadComponent: () => import('./pages/activity-log/activity-log.page').then((m) => m.ActivityLogPage),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./pages/settings/settings.page').then((m) => m.SettingsPage),
       },

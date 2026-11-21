@@ -11,6 +11,7 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'nav.appointments': 'Programări',
   'nav.reviews': 'Recenzii',
   'nav.auditLog': 'Jurnal de acțiuni',
+  'nav.activityLog': 'Jurnal de activitate',
   'nav.settings': 'Setări',
 
   'header.signOut': 'Ieșire',
@@ -481,6 +482,77 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'auditLog.column.target': 'Țintă',
   'auditLog.details': 'Detaliile acțiunii',
   'auditLog.emptyPage': 'Nicio potrivire pe această pagină a jurnalului — vedeți mai vechi.',
+
+  // ── Jurnal de activitate ────────────────────────────────────────────────────────────────
+  'activityLog.periodToday':
+    'Se afișează ziua de azi. Alegeți o perioadă pentru a vedea alte zile.',
+  'activityLog.column.actor': 'Cine',
+  'activityLog.column.outcome': 'Rezultat',
+  'activityLog.column.duration': 'Durată',
+  'activityLog.details': 'Detaliile cererii',
+  'activityLog.outcome.ok': 'Succes',
+  'activityLog.outcome.rejected': 'Refuz',
+  'activityLog.outcome.failed': 'Eșec',
+  'activityLog.role.client': 'Client',
+  'activityLog.role.salon': 'Proprietarul salonului',
+  'activityLog.role.salon_admin': 'Administrator',
+  'activityLog.role.master': 'Maestru',
+  'activityLog.role.admin': 'Administratorul platformei',
+  'activityLog.anonymous': 'Fără autentificare',
+  'activityLog.durationMs': '{{ms}} ms',
+  'activityLog.field.errorCode': 'Codul erorii',
+  'activityLog.field.errorMessage': 'Mesajul erorii',
+  'activityLog.field.validation': 'Nu au trecut verificarea',
+  'activityLog.field.errorDetails': 'Detaliile erorii',
+  'activityLog.field.requestId': 'requestId',
+  'activityLog.copy': 'Copiază',
+  'activityLog.copied': 'requestId a fost copiat.',
+  'activityLog.copyFailed': 'Nu s-a putut copia. Selectați requestId manual.',
+  // Дії — за `routeKey` API Gateway; маршрут без запису тут показується як є.
+  'activity.route.POST /auth/phone/send-code': 'Trimiterea codului pe telefon',
+  'activity.route.POST /auth/phone/verify-code': 'Verificarea codului de pe telefon',
+  'activity.route.POST /client/profile': 'Crearea profilului Clientului',
+  'activity.route.PATCH /client/profile': 'Modificarea profilului Clientului',
+  'activity.route.DELETE /client/account': 'Ștergerea contului Clientului',
+  'activity.route.POST /client/appointments': 'Programarea Clientului la Salon',
+  'activity.route.POST /client/masters/{masterId}/appointments':
+    'Programarea Clientului la Maestrul independent',
+  'activity.route.PATCH /client/appointments/{appointmentId}/cancel':
+    'Anularea Programării de către Client',
+  'activity.route.PATCH /client/appointments/{appointmentId}/reschedule':
+    'Reprogramarea de către Client',
+  'activity.route.POST /client/appointments/{appointmentId}/review':
+    'Recenzia Clientului despre Programare',
+  'activity.route.POST /client/notifications/devices':
+    'Înregistrarea dispozitivului Clientului pentru push',
+  'activity.route.POST /salon/register': 'Înregistrarea Salonului',
+  'activity.route.PATCH /salon/profile': 'Modificarea profilului Salonului',
+  'activity.route.PUT /salon/profile/hours': 'Modificarea Programului de lucru',
+  'activity.route.POST /salon/services': 'Crearea unui serviciu din Catalog',
+  'activity.route.PATCH /salon/services/{serviceId}': 'Modificarea unui serviciu din Catalog',
+  'activity.route.POST /salon/appointments': 'Crearea unei Programări de către Salon',
+  'activity.route.POST /salon/appointments/manual-slot': 'Programare manuală a Salonului',
+  'activity.route.PATCH /salon/appointments/{appointmentId}':
+    'Modificarea Programării de către Salon',
+  'activity.route.PATCH /salon/appointments/{appointmentId}/reschedule':
+    'Reprogramarea de către Salon',
+  'activity.route.POST /salon/notifications/devices':
+    'Înregistrarea dispozitivului Salonului pentru push',
+  'activity.route.POST /master/create-account': 'Înregistrarea Maestrului',
+  'activity.route.PATCH /master/profile': 'Modificarea profilului Maestrului',
+  'activity.route.PUT /master/hours': 'Modificarea orelor săptămânale ale Maestrului',
+  'activity.route.PUT /master/schedule-pattern': 'Modificarea Rotației Maestrului',
+  'activity.route.POST /master/time-off': 'Crearea Absenței Maestrului',
+  'activity.route.DELETE /master/time-off/{groupId}': 'Ștergerea Absenței Maestrului',
+  'activity.route.POST /master/appointments': 'Crearea unei Programări de către Maestru',
+  'activity.route.POST /master/appointments/manual-slot': 'Programare manuală a Maestrului',
+  'activity.route.PATCH /master/appointments/{appointmentId}':
+    'Modificarea Programării de către Maestru',
+  'activity.route.PATCH /master/appointments/{appointmentId}/reschedule':
+    'Reprogramarea de către Maestru',
+  'activity.route.POST /master/invites/{inviteId}/accept': 'Acceptarea Invitației de către Maestru',
+  'activity.route.POST /master/notifications/devices':
+    'Înregistrarea dispozitivului Maestrului pentru push',
 
   // Каталог послуг
   'audit.action.salon.service.create': 'Crearea unui serviciu din Catalog',

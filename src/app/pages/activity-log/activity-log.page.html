@@ -1,0 +1,156 @@
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <h1 class="text-2xl font-semibold" data-testid="section-title">{{ 'nav.activityLog' | t }}</h1>
+  <span class="flex-1"></span>
+  <p-button
+    data-testid="activity-refresh"
+    severity="secondary"
+    size="small"
+    icon="pi pi-refresh"
+    [label]="'list.refresh' | t"
+    [loading]="log.loading()"
+    (onClick)="log.reload()"
+  />
+</div>
+
+<div class="content-filters mb-4 flex flex-wrap items-end gap-3">
+  <label class="flex flex-col gap-1 text-xs text-muted">
+    {{ 'auditLog.filter.from' | t }}
+    <input
+      pInputText
+      type="date"
+      data-testid="activity-filter-from"
+      [max]="filters().to ?? ''"
+      [value]="filters().from ?? ''"
+      (change)="setFilter({ from: $any($event.target).value })"
+    />
+  </label>
+  <label class="flex flex-col gap-1 text-xs text-muted">
+    {{ 'auditLog.filter.to' | t }}
+    <input
+      pInputText
+      type="date"
+      data-testid="activity-filter-to"
+      [min]="filters().from ?? ''"
+      [value]="filters().to ?? ''"
+      (change)="setFilter({ to: $any($event.target).value })"
+    />
+  </label>
+  @if (filtered()) {
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [text]="true"
+      size="small"
+      data-testid="activity-filter-reset"
+      [label]="'auditLog.filter.reset' | t"
+      (click)="resetFilters()"
+    ></button>
+  } @else {
+    <p class="pb-2 text-sm text-muted" data-testid="activity-period-today">
+      {{ 'activityLog.periodToday' | t }}
+    </p>
+  }
+</div>
+
+@if (log.items(); as entries) {
+  <div
+    class="profile-table-scroll"
+    role="region"
+    tabindex="0"
+    [attr.aria-label]="'nav.activityLog' | t"
+  >
+    <table class="profile-data-table audit-table" data-testid="activity-table">
+      <thead class="bg-raised text-xs text-muted">
+        <tr>
+          <th class="px-3 py-2"></th>
+          <th class="px-3 py-2 font-medium">{{ 'auditLog.column.time' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'activityLog.column.actor' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'auditLog.column.action' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'activityLog.column.outcome' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'activityLog.column.duration' | t }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (entry of entries; track entry.activityId) {
+          <tr
+            class="cursor-pointer border-t border-divider hover:bg-raised"
+            data-testid="activity-row"
+            (click)="toggle(entry)"
+          >
+            <td class="px-3 py-2">
+              <!-- The row toggles on its own click; the button is the keyboard's way in. -->
+              <button
+                type="button"
+                class="audit-toggle pi text-muted"
+                data-testid="activity-row-toggle"
+                [class.pi-chevron-right]="!isExpanded(entry)"
+                [class.pi-chevron-down]="isExpanded(entry)"
+                [attr.aria-expanded]="isExpanded(entry)"
+                [attr.aria-label]="'activityLog.details' | t"
+              ></button>
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap" data-testid="activity-time">
+              {{ formatTime(entry.createdAt) }}
+            </td>
+            <td class="px-3 py-2" data-testid="activity-actor">
+              @if (entry.actor; as actor) {
+                <span class="font-mono">{{ actor.id }}</span>
+                <span class="block text-xs text-muted">{{ roleLabel(actor.role) }}</span>
+              } @else {
+                <span class="text-muted">{{ 'activityLog.anonymous' | t }}</span>
+              }
+            </td>
+            <td class="px-3 py-2" data-testid="activity-action">{{ actionLabel(entry) }}</td>
+            <td class="px-3 py-2">
+              <p-tag
+                data-testid="activity-outcome"
+                [severity]="outcomeSeverity(entry)"
+                [value]="outcomeLabel(entry)"
+              />
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap" data-testid="activity-duration">
+              {{ 'activityLog.durationMs' | t: { ms: entry.durationMs } }}
+            </td>
+          </tr>
+          @if (isExpanded(entry)) {
+            <tr class="border-t border-divider bg-raised" data-testid="activity-details">
+              <td></td>
+              <td colspan="5" class="px-3 py-3">
+                <app-activity-entry-details [entry]="entry" />
+              </td>
+            </tr>
+          }
+        } @empty {
+          <tr>
+            <td colspan="6" class="py-8 text-center text-muted" data-testid="activity-empty">
+              {{ (log.hasMore() ? 'auditLog.emptyPage' : 'list.empty') | t }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (log.hasMore()) {
+    <div class="mt-3">
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        size="small"
+        data-testid="activity-more"
+        [label]="'history.more' | t"
+        [loading]="log.loading()"
+        (click)="log.loadMore()"
+      ></button>
+    </div>
+  }
+} @else if (log.failed()) {
+  <p class="content-state text-danger" role="alert" data-testid="activity-failed">
+    {{ 'list.failed' | t }}
+  </p>
+} @else {
+  <p class="content-state text-muted" role="status" data-testid="activity-loading">
+    {{ 'common.loading' | t }}
+  </p>
+}
