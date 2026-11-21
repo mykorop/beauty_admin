@@ -111,6 +111,7 @@ test.describe('salon card', () => {
       'Фото й сертифікати',
       'Інвайти',
       'Історія',
+      'Активність',
     ]);
 
     await page.getByTestId('card-tab').filter({ hasText: 'Фото й сертифікати' }).click();

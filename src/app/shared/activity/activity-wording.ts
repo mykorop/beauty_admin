@@ -1,0 +1,17 @@
+import type { I18nService } from '../../i18n/i18n.service';
+
+/** Where the dictionaries word an action: `activity.route.<routeKey>`. */
+export const ACTIVITY_ROUTE_KEY_PREFIX = 'activity.route.';
+
+/**
+ * How the panel words an action of the Журнал активності. The dictionaries word the most frequent
+ * routes; any other is shown as its `routeKey`, so no entry is left without a name.
+ */
+export function activityRouteLabel(i18n: I18nService, route: string): string {
+  return i18n.optional(`${ACTIVITY_ROUTE_KEY_PREFIX}${route}`) ?? route;
+}
+
+/** The backend's `UserRole`, worded — or as it came, for a role the panel does not know yet. */
+export function activityRoleLabel(i18n: I18nService, role: string): string {
+  return i18n.optional(`activityLog.role.${role}`) ?? role;
+}

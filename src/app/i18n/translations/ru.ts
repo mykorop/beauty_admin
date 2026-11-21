@@ -192,6 +192,7 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'salon.tab.media': 'Фото и сертификаты',
   'salon.tab.invites': 'Инвайты',
   'salon.tab.history': 'История',
+  'salon.tab.activity': 'Активность',
   'salon.field.name': 'Название',
   'salon.field.owner': 'Владелец салона',
   'salon.field.description': 'Описание',
@@ -523,6 +524,12 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.service.master-api': 'Бизнес-приложение: Мастер',
   'activityLog.service.admin-api': 'Админка',
   'activityLog.service.cognito': 'Регистрация и коды',
+  'activityTab.subject.account': 'Собственные действия',
+  'activityTab.subject.place': 'Всё в его Месте',
+  'activityTab.openInLog': 'Открыть в Журнале активности',
+  'activityTab.ownerActivity': 'Активность Владельца',
+  'activityTab.kept':
+    'Показано всё, что журнал хранит (90 дней). Чтобы сузить, откройте его в Журнале активности.',
   // Дії — за `routeKey` API Gateway; маршрут без запису тут показується як є.
   'activity.route.POST /auth/phone/send-code': 'Отправка кода на телефон',
   'activity.route.POST /auth/phone/verify-code': 'Проверка кода с телефона',

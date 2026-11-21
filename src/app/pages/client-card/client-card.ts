@@ -56,6 +56,7 @@ export class ClientCardAdapter implements CardAdapter<string, Client, null> {
       },
       audit: { type: 'client', id: profile.clientId },
       reviews: { writtenBy: profile.clientId },
+      activity: { subjects: [{ kind: 'account', id: profile.clientId }], owner: null },
     };
   }
 }
@@ -87,6 +88,11 @@ export const CLIENT_CARD: ProfileCardKind<string, Client, null> = {
       path: 'history',
       labelKey: 'salon.tab.history',
       load: () => import('../../shared/audit/audit-history').then((m) => m.AuditHistory),
+    },
+    {
+      path: 'activity',
+      labelKey: 'salon.tab.activity',
+      load: () => import('../../shared/activity/activity.tab').then((m) => m.ActivityTab),
     },
   ],
   back: { link: () => '/clients', labelKey: 'client.backToList' },

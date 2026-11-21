@@ -73,6 +73,8 @@ export class SalonMasterCardAdapter implements CardAdapter<SalonMasterIds, Salon
       },
       audit: { type: 'master', id: profile.masterId },
       reviews: { about: { salonId: context.salonId, masterId: profile.masterId } },
+      // What he did; his Салон's Місце is the Салон card's to show.
+      activity: { subjects: [{ kind: 'account', id: profile.masterId }], owner: null },
     };
   }
 }
@@ -109,6 +111,11 @@ export const SALON_MASTER_CARD: ProfileCardKind<SalonMasterIds, SalonMaster, Sal
       path: 'reviews',
       labelKey: 'salonMaster.tab.reviews',
       load: () => import('../../shared/reviews/reviews.tab').then((m) => m.ReviewsTab),
+    },
+    {
+      path: 'activity',
+      labelKey: 'salon.tab.activity',
+      load: () => import('../../shared/activity/activity.tab').then((m) => m.ActivityTab),
     },
   ],
   back: {

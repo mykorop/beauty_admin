@@ -192,6 +192,7 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'salon.tab.media': 'Fotografii și certificate',
   'salon.tab.invites': 'Invitații',
   'salon.tab.history': 'Istoric',
+  'salon.tab.activity': 'Activitate',
   'salon.field.name': 'Denumire',
   'salon.field.owner': 'Proprietarul salonului',
   'salon.field.description': 'Descriere',
@@ -526,6 +527,12 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.service.master-api': 'Aplicația business: Maestru',
   'activityLog.service.admin-api': 'Panoul de administrare',
   'activityLog.service.cognito': 'Înregistrare și coduri',
+  'activityTab.subject.account': 'Acțiuni proprii',
+  'activityTab.subject.place': 'Tot la Locul său',
+  'activityTab.openInLog': 'Deschide în Jurnalul de activitate',
+  'activityTab.ownerActivity': 'Activitatea Proprietarului',
+  'activityTab.kept':
+    'Se afișează tot ce păstrează jurnalul (90 de zile). Pentru a restrânge, deschideți-l în Jurnalul de activitate.',
   // Дії — за `routeKey` API Gateway; маршрут без запису тут показується як є.
   'activity.route.POST /auth/phone/send-code': 'Trimiterea codului pe telefon',
   'activity.route.POST /auth/phone/verify-code': 'Verificarea codului de pe telefon',

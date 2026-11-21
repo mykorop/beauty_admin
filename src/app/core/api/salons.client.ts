@@ -34,11 +34,19 @@ export type SalonList = {
 
 export type ShortLink = { kind: 'random' | 'handle'; code: string; path: string };
 
+/** A Салон's Власник, as `admin-api` names him from his Основний салон — `''` where it has no value. */
+export type SalonOwner = { ownerId: string; name: string; email: string };
+
 /** The whole profile of one Салон, Deleted ones included. */
 export type Salon = {
   salonId: string;
   name: string;
   ownerName: string;
+  /**
+   * Its Власник — absent from an `admin-api` from before it named him; the card then offers no
+   * «Активність Власника».
+   */
+  owner?: SalonOwner;
   description: string;
   addressStreet: string;
   addressHouseNumber: string;

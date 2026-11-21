@@ -1,3 +1,4 @@
+import { activityLogLink } from '../../shared/activity/activity-subject';
 import {
   type ActivityLogFilters,
   changeFilters,
@@ -249,5 +250,24 @@ describe('toApiFilters', () => {
       service: 'client-api',
       route: 'POST /client/appointments',
     });
+  });
+});
+
+describe('the screen opened from a card’s «Активність»', () => {
+  const opened = (queryParams: Record<string, string>) =>
+    parseActivityLogFilters({ get: (name) => queryParams[name] ?? null });
+
+  it('reads the account the tab showed, asks for it by its id, and reads it whole', () => {
+    const shown = opened(activityLogLink({ kind: 'account', id: 'm1' }).queryParams);
+    expect(shown).toEqual(filters({ account: 'm1' }));
+    expect(toApiFilters(shown)).toEqual({ actorId: 'm1' });
+    expect(openPeriod(shown)).toBe('kept');
+  });
+
+  it('reads the Місце the tab showed, asks for it, and reads it whole', () => {
+    const shown = opened(activityLogLink({ kind: 'place', id: 's1' }).queryParams);
+    expect(shown).toEqual(filters({ place: 's1' }));
+    expect(toApiFilters(shown)).toEqual({ placeId: 's1' });
+    expect(openPeriod(shown)).toBe('kept');
   });
 });

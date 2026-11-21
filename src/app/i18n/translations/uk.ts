@@ -190,6 +190,7 @@ export const UK_TRANSLATIONS = {
   'salon.tab.media': 'Фото й сертифікати',
   'salon.tab.invites': 'Інвайти',
   'salon.tab.history': 'Історія',
+  'salon.tab.activity': 'Активність',
   'salon.field.name': 'Назва',
   'salon.field.owner': 'Власник салону',
   'salon.field.description': 'Опис',
@@ -520,6 +521,12 @@ export const UK_TRANSLATIONS = {
   'activityLog.service.master-api': 'Бізнес-застосунок: Майстер',
   'activityLog.service.admin-api': 'Адмінка',
   'activityLog.service.cognito': 'Реєстрація й коди',
+  'activityTab.subject.account': 'Власні дії',
+  'activityTab.subject.place': 'Усе в його Місці',
+  'activityTab.openInLog': 'Відкрити в Журналі активності',
+  'activityTab.ownerActivity': 'Активність Власника',
+  'activityTab.kept':
+    'Показано все, що журнал зберігає (90 днів). Щоб звузити, відкрийте його в Журналі активності.',
   // Дії — за `routeKey` API Gateway; маршрут без запису тут показується як є.
   'activity.route.POST /auth/phone/send-code': 'Надсилання коду на телефон',
   'activity.route.POST /auth/phone/verify-code': 'Перевірка коду з телефону',
