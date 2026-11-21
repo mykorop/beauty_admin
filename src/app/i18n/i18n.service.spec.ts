@@ -32,6 +32,15 @@ describe('I18nService', () => {
     expect(document.documentElement.lang).toBe('ru');
   });
 
+  it('lists what the dictionaries word under a prefix, in their order, without the prefix', () => {
+    const routes = TestBed.inject(I18nService).wordedUnder('activity.route.');
+
+    expect(routes).toContain('PATCH /client/appointments/{appointmentId}/cancel');
+    expect(routes.indexOf('POST /client/profile')).toBeLessThan(routes.indexOf('POST /salon/register'));
+    expect(routes.every((route) => !route.startsWith('activity.'))).toBeTrue();
+    expect(TestBed.inject(I18nService).wordedUnder('no.such.prefix.')).toEqual([]);
+  });
+
   it('translates a known error code and shows an unknown one as it is', () => {
     const i18n = TestBed.inject(I18nService);
 

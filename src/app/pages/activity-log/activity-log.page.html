@@ -12,7 +12,7 @@
   />
 </div>
 
-<div class="content-filters mb-4 flex flex-wrap items-end gap-3">
+<div class="content-filters mb-3 flex flex-wrap items-end gap-3">
   <label class="flex flex-col gap-1 text-xs text-muted">
     {{ 'auditLog.filter.from' | t }}
     <input
@@ -35,6 +35,82 @@
       (change)="setFilter({ to: $any($event.target).value })"
     />
   </label>
+  <label class="flex flex-col gap-1 text-xs text-muted">
+    {{ 'activityLog.filter.account' | t }}
+    <input
+      pInputText
+      type="text"
+      class="w-72"
+      data-testid="activity-filter-account"
+      [placeholder]="'activityLog.filter.accountPlaceholder' | t"
+      [value]="filters().account ?? ''"
+      (change)="setTyped('account', $event)"
+    />
+  </label>
+  <label class="flex flex-col gap-1 text-xs text-muted">
+    {{ 'activityLog.filter.place' | t }}
+    <input
+      pInputText
+      type="text"
+      class="w-64"
+      data-testid="activity-filter-place"
+      [placeholder]="'activityLog.filter.placePlaceholder' | t"
+      [value]="filters().place ?? ''"
+      (change)="setTyped('place', $event)"
+    />
+  </label>
+</div>
+
+<div class="content-filters mb-4 flex flex-wrap items-end gap-3">
+  <p-select
+    data-testid="activity-filter-role"
+    class="w-56"
+    [options]="roleOptions()"
+    optionLabel="label"
+    optionValue="value"
+    [showClear]="true"
+    [placeholder]="'activityLog.filter.role' | t"
+    [ariaLabel]="'activityLog.filter.role' | t"
+    [ngModel]="filters().role"
+    (ngModelChange)="setFilter({ role: $event })"
+  />
+  <p-select
+    data-testid="activity-filter-outcome"
+    class="w-44"
+    [options]="outcomeOptions()"
+    optionLabel="label"
+    optionValue="value"
+    [showClear]="true"
+    [placeholder]="'activityLog.filter.outcome' | t"
+    [ariaLabel]="'activityLog.filter.outcome' | t"
+    [ngModel]="filters().outcome"
+    (ngModelChange)="setFilter({ outcome: $event })"
+  />
+  <p-select
+    data-testid="activity-filter-service"
+    class="w-56"
+    [options]="serviceOptions()"
+    optionLabel="label"
+    optionValue="value"
+    [showClear]="true"
+    [placeholder]="'activityLog.filter.service' | t"
+    [ariaLabel]="'activityLog.filter.service' | t"
+    [ngModel]="filters().service"
+    (ngModelChange)="setFilter({ service: $event })"
+  />
+  <p-select
+    data-testid="activity-filter-route"
+    class="w-80"
+    [options]="routeOptions()"
+    optionLabel="label"
+    optionValue="value"
+    [filter]="true"
+    [showClear]="true"
+    [placeholder]="'activityLog.filter.route' | t"
+    [ariaLabel]="'activityLog.filter.route' | t"
+    [ngModel]="filters().route"
+    (ngModelChange)="setFilter({ route: $event })"
+  />
   @if (filtered()) {
     <button
       pButton
@@ -46,12 +122,21 @@
       [label]="'auditLog.filter.reset' | t"
       (click)="resetFilters()"
     ></button>
-  } @else {
-    <p class="pb-2 text-sm text-muted" data-testid="activity-period-today">
+  }
+</div>
+
+@switch (openPeriod()) {
+  @case ('today') {
+    <p class="mb-4 text-sm text-muted" data-testid="activity-period-today">
       {{ 'activityLog.periodToday' | t }}
     </p>
   }
-</div>
+  @case ('kept') {
+    <p class="mb-4 text-sm text-muted" data-testid="activity-period-kept">
+      {{ 'activityLog.periodKept' | t }}
+    </p>
+  }
+}
 
 @if (log.items(); as entries) {
   <div

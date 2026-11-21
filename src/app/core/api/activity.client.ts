@@ -52,8 +52,51 @@ export type ActivityEntry = {
   sentryEventId: string | null;
 };
 
-/** `from` inclusive, `to` exclusive — both instants; neither, and the backend serves today on the platform's clock. */
-export type ActivityLogQuery = { from?: string; to?: string };
+/** Who acted, as the log narrows by it: a role of the verified token, or `anonymous` — nobody signed in. */
+export const ACTIVITY_ROLE_FILTERS = [
+  'client',
+  'salon',
+  'salon_admin',
+  'master',
+  'admin',
+  'anonymous',
+] as const;
+export type ActivityRoleFilter = (typeof ACTIVITY_ROLE_FILTERS)[number];
+
+export const ACTIVITY_OUTCOMES = [
+  'ok',
+  'rejected',
+  'failed',
+] as const satisfies readonly ActivityOutcome[];
+
+/** The services that write the log; `cognito` — an account's sign-up and the codes sent to it. */
+export const ACTIVITY_SERVICES = [
+  'client-api',
+  'salon-api',
+  'master-api',
+  'admin-api',
+  'cognito',
+] as const;
+export type ActivityService = (typeof ACTIVITY_SERVICES)[number];
+
+/**
+ * What the log is asked for. `from` inclusive, `to` exclusive — both instants; neither, and the
+ * backend serves today on the platform's clock — or, for an account or a Місце, all it keeps. An
+ * account is named by its id (`actorId`) or its email (`account`), never both; `placeId` is a Салон
+ * or a Незалежний майстер. Without an account or a Місце the period is at most a month, and one
+ * longer — or with no start — is refused with `ACTIVITY_PERIOD_TOO_LONG`.
+ */
+export type ActivityLogQuery = {
+  from?: string;
+  to?: string;
+  actorId?: string;
+  account?: string;
+  placeId?: string;
+  role?: ActivityRoleFilter;
+  outcome?: ActivityOutcome;
+  service?: ActivityService;
+  route?: string;
+};
 
 export type ActivityPage = { items: ActivityEntry[]; nextCursor: string | null };
 
@@ -61,7 +104,7 @@ export type ActivityPage = { items: ActivityEntry[]; nextCursor: string | null }
 export class ActivityClient {
   private readonly http = inject(HttpClient);
 
-  /** The whole platform's Журнал активності for a period, newest first — the «Журнал активності» screen. */
+  /** The Журнал активності, narrowed as asked, newest first — the «Журнал активності» screen. */
   list(query: ActivityLogQuery, cursor?: string): Observable<ActivityPage> {
     return this.http.get<ActivityPage>(adminApiUrl('/admin/activity'), {
       params: { ...query, ...(cursor ? { cursor } : {}) },

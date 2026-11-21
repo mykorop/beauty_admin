@@ -311,6 +311,186 @@ test.describe('activity log screen', () => {
     expect(seen).toEqual(['']);
   });
 
+  test('narrows by account, Місце, role, outcome, service and action, each kept in the address and sent as the backend names it', async ({
+    page,
+    mockBackend,
+  }) => {
+    const seen: URLSearchParams[] = [];
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: (url) => {
+        seen.push(url.searchParams);
+        return pageOf([entry()]);
+      },
+    });
+    await signIn(page, ADMIN, '/activity-log');
+    await expect(page.getByTestId('activity-row')).toHaveCount(1);
+    await expect(page.getByTestId('activity-filter-reset')).toHaveCount(0);
+    const asked = () => Object.fromEntries(seen.at(-1)!);
+
+    // An email is looked up by the backend; the address keeps what was typed, trimmed.
+    await page.getByTestId('activity-filter-account').fill('  ana@example.com ');
+    await page.getByTestId('activity-filter-account').press('Enter');
+
+    await expect(page).toHaveURL(/account=ana@example\.com/);
+    await expect(page.getByTestId('activity-filter-account')).toHaveValue('ana@example.com');
+    await expect.poll(asked).toEqual({ account: 'ana@example.com' });
+    // An account's log is read whole, not today's.
+    await expect(page.getByTestId('activity-period-kept')).toBeVisible();
+    await expect(page.getByTestId('activity-period-today')).toHaveCount(0);
+    await expect(page.getByTestId('activity-filter-reset')).toBeVisible();
+
+    // Anything else is the account's id.
+    await page.getByTestId('activity-filter-account').fill('client-sub-1');
+    await page.getByTestId('activity-filter-account').press('Enter');
+    await expect.poll(asked).toEqual({ actorId: 'client-sub-1' });
+
+    await page.getByTestId('activity-filter-place').fill('salon-2');
+    await page.getByTestId('activity-filter-place').press('Enter');
+    await expect.poll(asked).toEqual({ actorId: 'client-sub-1', placeId: 'salon-2' });
+
+    await page.getByTestId('activity-filter-role').click();
+    await page.getByRole('option', { name: 'Без входу' }).click();
+    await page.getByTestId('activity-filter-outcome').click();
+    await page.getByRole('option', { name: 'Збій' }).click();
+    await page.getByTestId('activity-filter-service').click();
+    await page.getByRole('option', { name: 'Адмінка' }).click();
+    await page.getByTestId('activity-filter-route').click();
+    await page.getByRole('option', { name: 'Скасування Запису Клієнтом' }).click();
+
+    await expect.poll(asked).toEqual({
+      actorId: 'client-sub-1',
+      placeId: 'salon-2',
+      role: 'anonymous',
+      outcome: 'failed',
+      service: 'admin-api',
+      route: 'PATCH /client/appointments/{appointmentId}/cancel',
+    });
+    await expect(page).toHaveURL(/account=client-sub-1/);
+    await expect(page).toHaveURL(/place=salon-2/);
+    await expect(page).toHaveURL(/role=anonymous/);
+    await expect(page).toHaveURL(/outcome=failed/);
+    await expect(page).toHaveURL(/service=admin-api/);
+    await expect(page).toHaveURL(/route=PATCH/);
+
+    // A select cleared on its own leaves the address; the rest stay.
+    await page.getByTestId('activity-filter-outcome').locator('.p-select-clear-icon').click();
+    await expect.poll(asked).toEqual({
+      actorId: 'client-sub-1',
+      placeId: 'salon-2',
+      role: 'anonymous',
+      service: 'admin-api',
+      route: 'PATCH /client/appointments/{appointmentId}/cancel',
+    });
+    await expect(page).not.toHaveURL(/outcome=/);
+
+    await page.getByTestId('activity-filter-reset').click();
+
+    await expect(page).toHaveURL(/\/activity-log$/);
+    await expect.poll(() => [...seen.at(-1)!.keys()]).toEqual([]);
+    await expect(page.getByTestId('activity-filter-account')).toHaveValue('');
+    await expect(page.getByTestId('activity-filter-place')).toHaveValue('');
+    await expect(page.getByTestId('activity-period-today')).toBeVisible();
+    await expect(page.getByTestId('activity-filter-reset')).toHaveCount(0);
+  });
+
+  test('reopens a copied link with every filter, an action the dictionaries do not word included', async ({
+    page,
+    mockBackend,
+  }) => {
+    const seen: URLSearchParams[] = [];
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: (url) => {
+        seen.push(url.searchParams);
+        return pageOf([entry()]);
+      },
+    });
+
+    await signIn(
+      page,
+      ADMIN,
+      '/activity-log?from=2026-09-21&to=2026-09-21&account=ana%40example.com&place=nina&role=master&outcome=rejected&service=master-api&route=POST%20%2Fmaster%2Fbrand-new-thing',
+    );
+
+    await expect(page.getByTestId('activity-row')).toHaveCount(1);
+    await expect(page.getByTestId('activity-filter-account')).toHaveValue('ana@example.com');
+    await expect(page.getByTestId('activity-filter-place')).toHaveValue('nina');
+    await expect(page.getByTestId('activity-filter-role')).toContainText('Майстер');
+    await expect(page.getByTestId('activity-filter-outcome')).toContainText('Відмова');
+    await expect(page.getByTestId('activity-filter-service')).toContainText('Бізнес-застосунок: Майстер');
+    await expect(page.getByTestId('activity-filter-route')).toContainText('POST /master/brand-new-thing');
+    expect(Object.fromEntries(seen.at(-1)!)).toEqual({
+      from: '2026-09-20T21:00:00.000Z',
+      to: '2026-09-21T21:00:00.000Z',
+      account: 'ana@example.com',
+      placeId: 'nina',
+      role: 'master',
+      outcome: 'rejected',
+      service: 'master-api',
+      route: 'POST /master/brand-new-thing',
+    });
+  });
+
+  test('offers an action the dictionaries do not word yet once a row shows it', async ({ page, mockBackend }) => {
+    const seen: URLSearchParams[] = [];
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: (url) => {
+        seen.push(url.searchParams);
+        return pageOf([entry({ route: 'POST /master/brand-new-thing', pathParams: {} })]);
+      },
+    });
+    await signIn(page, ADMIN, '/activity-log');
+    await expect(page.getByTestId('activity-action')).toHaveText('POST /master/brand-new-thing');
+
+    await page.getByTestId('activity-filter-route').click();
+    await page.getByRole('option', { name: 'POST /master/brand-new-thing' }).click();
+
+    await expect(page).toHaveURL(/route=POST/);
+    await expect.poll(() => Object.fromEntries(seen.at(-1)!)).toEqual({ route: 'POST /master/brand-new-thing' });
+  });
+
+  test('reads filter values the address got wrong as not set', async ({ page, mockBackend }) => {
+    const seen: string[] = [];
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: (url) => {
+        seen.push(url.search);
+        return pageOf([entry()]);
+      },
+    });
+
+    await signIn(
+      page,
+      ADMIN,
+      '/activity-log?account=two%20words&place=&role=owner&outcome=denied&service=search-api&route=cancel%20everything',
+    );
+
+    await expect(page.getByTestId('activity-row')).toHaveCount(1);
+    expect(seen).toEqual(['']);
+    await expect(page.getByTestId('activity-filter-account')).toHaveValue('');
+    await expect(page.getByTestId('activity-filter-reset')).toHaveCount(0);
+    await expect(page.getByTestId('activity-period-today')).toBeVisible();
+  });
+
+  test('words the refusal of a period too long for the whole platform', async ({ page, mockBackend }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: (url) =>
+        url.searchParams.has('from') ? apiError(400, 'ACTIVITY_PERIOD_TOO_LONG') : pageOf([entry()]),
+    });
+    await signIn(page, ADMIN, '/activity-log');
+    await expect(page.getByTestId('activity-row')).toHaveCount(1);
+
+    await page.getByTestId('activity-filter-from').fill('2026-08-01');
+
+    await expect(page.getByTestId('toast')).toContainText(
+      'Без акаунта чи Місця журнал показує щонайбільше 31 день. Звузьте період або задайте акаунт чи Місце.',
+    );
+    await expect(page.getByTestId('activity-failed')).toBeVisible();
+  });
+
   test('loads older entries on demand under the same period, and «Оновити» starts over', async ({
     page,
     mockBackend,
