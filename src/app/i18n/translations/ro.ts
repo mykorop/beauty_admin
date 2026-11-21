@@ -487,6 +487,7 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.periodToday':
     'Se afișează ziua de azi. Alegeți o perioadă pentru a vedea alte zile.',
   'activityLog.column.actor': 'Cine',
+  'activityLog.column.place': 'Locul',
   'activityLog.column.outcome': 'Rezultat',
   'activityLog.column.duration': 'Durată',
   'activityLog.details': 'Detaliile cererii',
@@ -499,6 +500,9 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.role.master': 'Maestru',
   'activityLog.role.admin': 'Administratorul platformei',
   'activityLog.anonymous': 'Fără autentificare',
+  'activityLog.unverified': 'neverificat',
+  'activityLog.place.salon': 'Salon',
+  'activityLog.place.master': 'Maestru',
   'activityLog.durationMs': '{{ms}} ms',
   'activityLog.field.errorCode': 'Codul erorii',
   'activityLog.field.errorMessage': 'Mesajul erorii',

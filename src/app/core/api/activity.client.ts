@@ -9,6 +9,15 @@ export type ActivityOutcome = 'ok' | 'rejected' | 'failed';
 /** The error envelope the request was answered with — never the rest of the response. */
 export type ActivityError = { code: string; message: string; details?: unknown };
 
+/**
+ * Who acted, named as his profile reads now — a Видалений one too. `name` is `null` for an account
+ * with no profile (the Адміністратор платформи) or a profile that names nobody.
+ */
+export type ActivityActor = { id: string; role: string; name: string | null };
+
+/** A Місце — a Салон, or a Незалежний майстер — named as its profile reads now, `null` when it names nothing. */
+export type ActivityPlace = { type: 'salon' | 'master'; id: string; name: string | null };
+
 /** One entry of the Журнал активності: one request, as it was answered. */
 export type ActivityEntry = {
   activityId: string;
@@ -24,7 +33,15 @@ export type ActivityEntry = {
    * `null` — nobody signed in, or a token that did not verify. `role` is the backend's `UserRole`
    * (`client`, `salon`, `salon_admin`, `master`, `admin`), worded by `activityLog.role.<role>`.
    */
-  actor: { id: string; role: string } | null;
+  actor: ActivityActor | null;
+  /** A token that did not verify (a `401`): the `sub` it claimed — unchecked, so never the actor. */
+  claimedActorId: string | null;
+  /** The Салон the request worked in, if any. */
+  salonId: string | null;
+  /** The Майстер it concerned, if any. */
+  masterId: string | null;
+  /** Where it happened: its Салон, or — with none — its Майстер; `null` without a Місце. */
+  place: ActivityPlace | null;
   outcome: ActivityOutcome;
   status: number;
   error: ActivityError | null;

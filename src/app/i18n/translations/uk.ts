@@ -481,6 +481,7 @@ export const UK_TRANSLATIONS = {
   // ── Журнал активності ───────────────────────────────────────────────────────────────────
   'activityLog.periodToday': 'Показано сьогодні. Задайте період, щоб побачити інші дні.',
   'activityLog.column.actor': 'Хто',
+  'activityLog.column.place': 'Місце',
   'activityLog.column.outcome': 'Результат',
   'activityLog.column.duration': 'Тривалість',
   'activityLog.details': 'Деталі запиту',
@@ -493,6 +494,9 @@ export const UK_TRANSLATIONS = {
   'activityLog.role.master': 'Майстер',
   'activityLog.role.admin': 'Адміністратор платформи',
   'activityLog.anonymous': 'Без входу',
+  'activityLog.unverified': 'неперевірено',
+  'activityLog.place.salon': 'Салон',
+  'activityLog.place.master': 'Майстер',
   'activityLog.durationMs': '{{ms}} мс',
   'activityLog.field.errorCode': 'Код помилки',
   'activityLog.field.errorMessage': 'Текст помилки',

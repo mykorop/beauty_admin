@@ -11,7 +11,11 @@ const entry = (overrides: Record<string, unknown> = {}) => ({
   service: 'client-api',
   route: 'PATCH /client/appointments/{appointmentId}/cancel',
   pathParams: { appointmentId: 'appt-1' },
-  actor: { id: 'client-sub-1', role: 'client' },
+  actor: { id: 'client-sub-1', role: 'client', name: null },
+  claimedActorId: null,
+  salonId: null,
+  masterId: null,
+  place: null,
   outcome: 'ok',
   status: 200,
   error: null,
@@ -46,7 +50,7 @@ test.describe('activity log screen', () => {
             service: 'salon-api',
             route: 'POST /salon/appointments',
             pathParams: {},
-            actor: { id: 'owner-sub-1', role: 'salon' },
+            actor: { id: 'owner-sub-1', role: 'salon', name: null },
             outcome: 'rejected',
             status: 409,
             error: { code: 'SLOT_UNAVAILABLE', message: 'Slot is taken' },
@@ -109,6 +113,100 @@ test.describe('activity log screen', () => {
     await expect(third.getByTestId('activity-outcome')).toHaveClass(/p-tag-danger/);
 
     await expect(page.getByTestId('activity-more')).toHaveCount(0);
+  });
+
+  test('names who acted and where, each linked to its card where it has one, and a claimed actor as unverified', async ({
+    page,
+    mockBackend,
+  }) => {
+    const studio = { type: 'salon', id: 'salon-2', name: 'Studio Botanica' };
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: pageOf([
+        entry({
+          actor: { id: 'client-sub-1', role: 'client', name: 'Ana Rusu' },
+          salonId: 'salon-2',
+          masterId: 'iryna',
+          place: studio,
+        }),
+        entry({
+          activityId: 'act-2',
+          actor: { id: 'owner-1', role: 'salon', name: 'Ion Popa' },
+          salonId: 'salon-2',
+          place: studio,
+        }),
+        entry({
+          activityId: 'act-3',
+          actor: { id: 'olena', role: 'salon_admin', name: 'Olena Rotaru' },
+          salonId: 'salon-2',
+          place: studio,
+        }),
+        entry({
+          activityId: 'act-4',
+          actor: { id: 'nina', role: 'master', name: 'Nina Lupu' },
+          masterId: 'nina',
+          place: { type: 'master', id: 'nina', name: 'Nina Lupu' },
+        }),
+        entry({
+          activityId: 'act-5',
+          actor: { id: 'admin-sub', role: 'admin', name: null },
+          salonId: 'salon-404',
+          place: { type: 'salon', id: 'salon-404', name: null },
+        }),
+        entry({
+          activityId: 'act-6',
+          actor: null,
+          claimedActorId: 'client-sub-9',
+          outcome: 'rejected',
+          status: 401,
+          error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' },
+        }),
+      ]),
+    });
+
+    await signIn(page, ADMIN, '/activity-log');
+
+    const rows = page.getByTestId('activity-row');
+    await expect(rows).toHaveCount(6);
+    const actorLink = (row: number) => rows.nth(row).getByTestId('activity-actor-link');
+    const place = (row: number) => rows.nth(row).getByTestId('activity-place');
+    const placeLink = (row: number) => place(row).getByRole('link');
+
+    // A Клієнт, by name, to his card; the Салон he booked into, to its card.
+    await expect(actorLink(0)).toHaveText('Ana Rusu');
+    await expect(actorLink(0)).toHaveAttribute('href', '/clients/client-sub-1');
+    await expect(rows.nth(0).getByTestId('activity-actor')).toContainText('Клієнт');
+    await expect(placeLink(0)).toHaveText('Studio Botanica');
+    await expect(placeLink(0)).toHaveAttribute('href', '/salons/salon-2');
+    await expect(place(0)).toContainText('Салон');
+
+    // A Власник, to the card of his Основний салон — its id is his.
+    await expect(actorLink(1)).toHaveText('Ion Popa');
+    await expect(actorLink(1)).toHaveAttribute('href', '/salons/owner-1');
+
+    // An Адміністратор has no card of his own: his name, not a link.
+    await expect(rows.nth(2).getByTestId('activity-actor')).toContainText('Olena Rotaru');
+    await expect(actorLink(2)).toHaveCount(0);
+
+    // A Незалежний майстер is his own Місце; his card opens either way.
+    await expect(actorLink(3)).toHaveAttribute('href', '/independent-masters/nina');
+    await expect(placeLink(3)).toHaveText('Nina Lupu');
+    await expect(placeLink(3)).toHaveAttribute('href', '/independent-masters/nina');
+    await expect(place(3)).toContainText('Майстер');
+
+    // Nobody named: the id stands in, and a Місце whose profile is gone still leads to its card.
+    await expect(rows.nth(4).getByTestId('activity-actor')).toContainText('admin-sub');
+    await expect(rows.nth(4).getByTestId('activity-actor')).toContainText('Адміністратор платформи');
+    await expect(actorLink(4)).toHaveCount(0);
+    await expect(placeLink(4)).toHaveText('salon-404');
+    await expect(placeLink(4)).toHaveAttribute('href', '/salons/salon-404');
+
+    // A refused token: nobody signed in, and whom it claimed, unverified.
+    const claimed = rows.nth(5).getByTestId('activity-actor');
+    await expect(claimed).toContainText('Без входу');
+    await expect(claimed.getByTestId('activity-claimed-actor')).toContainText('client-sub-9');
+    await expect(claimed.getByTestId('activity-claimed-actor')).toContainText('неперевірено');
+    await expect(place(5)).toHaveText('—');
   });
 
   test('words the action in the language of the interface', async ({ page, mockBackend }) => {

@@ -484,6 +484,7 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   // ── Журнал активности ───────────────────────────────────────────────────────────────────
   'activityLog.periodToday': 'Показан сегодняшний день. Задайте период, чтобы увидеть другие дни.',
   'activityLog.column.actor': 'Кто',
+  'activityLog.column.place': 'Место',
   'activityLog.column.outcome': 'Результат',
   'activityLog.column.duration': 'Длительность',
   'activityLog.details': 'Детали запроса',
@@ -496,6 +497,9 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.role.master': 'Мастер',
   'activityLog.role.admin': 'Администратор платформы',
   'activityLog.anonymous': 'Без входа',
+  'activityLog.unverified': 'не проверено',
+  'activityLog.place.salon': 'Салон',
+  'activityLog.place.master': 'Мастер',
   'activityLog.durationMs': '{{ms}} мс',
   'activityLog.field.errorCode': 'Код ошибки',
   'activityLog.field.errorMessage': 'Текст ошибки',

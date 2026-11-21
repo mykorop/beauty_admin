@@ -1,14 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Button, ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Tag } from 'primeng/tag';
 import { map } from 'rxjs';
-import { ActivityClient, type ActivityEntry, type ActivityOutcome } from '../../core/api/activity.client';
+import {
+  ActivityClient,
+  type ActivityEntry,
+  type ActivityOutcome,
+  type ActivityPlace,
+} from '../../core/api/activity.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ActivityEntryDetails } from '../../shared/activity/activity-entry-details';
+import { actorCardLink, placeCardLink } from '../../shared/activity/activity-links';
 import { feed } from '../../shared/feed';
 import { PLATFORM_TIME_ZONE } from '../../shared/platform-clock';
 import { formatVenueDateTime } from '../../shared/venue-date';
@@ -36,7 +42,7 @@ const OUTCOME_SEVERITY: Record<ActivityOutcome, 'success' | 'warn' | 'danger'> =
  */
 @Component({
   selector: 'app-activity-log-page',
-  imports: [ActivityEntryDetails, Button, ButtonDirective, InputText, Tag, TranslatePipe],
+  imports: [ActivityEntryDetails, Button, ButtonDirective, InputText, RouterLink, Tag, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'moderation-page' },
   templateUrl: './activity-log.page.html',
@@ -59,6 +65,10 @@ export class ActivityLogPage {
   });
   private readonly expanded = this.log.listState<ReadonlySet<string>>(new Set());
 
+  /** Where the card of whoever acted, and of the Місце, lives — the «Активність» tab links them alike. */
+  protected readonly actorLink = actorCardLink;
+  protected readonly placeLink = placeCardLink;
+
   protected setFilter(change: Partial<ActivityLogFilters>): void {
     // A cleared date input reports ''.
     const normalised = Object.fromEntries(Object.entries(change).map(([key, value]) => [key, value || null]));
@@ -73,7 +83,11 @@ export class ActivityLogPage {
     return this.expanded().has(entry.activityId);
   }
 
-  protected toggle(entry: ActivityEntry): void {
+  protected toggle(entry: ActivityEntry, event: MouseEvent): void {
+    // A name or a Місце is a real link to its card; let it handle its own clicks.
+    if ((event.target as HTMLElement).closest('a')) {
+      return;
+    }
     this.expanded.update((expanded) => {
       const next = new Set(expanded);
       if (!next.delete(entry.activityId)) {
@@ -86,6 +100,11 @@ export class ActivityLogPage {
   /** The dictionaries word the most frequent routes; any other is shown as its `routeKey`. */
   protected actionLabel(entry: ActivityEntry): string {
     return this.i18n.optional(`activity.route.${entry.route}`) ?? entry.route;
+  }
+
+  /** «Салон» or «Майстер» — which kind of Місце it is. */
+  protected placeTypeLabel(place: ActivityPlace): string {
+    return this.i18n.t(`activityLog.place.${place.type}`);
   }
 
   protected roleLabel(role: string): string {

@@ -66,6 +66,7 @@
           <th class="px-3 py-2"></th>
           <th class="px-3 py-2 font-medium">{{ 'auditLog.column.time' | t }}</th>
           <th class="px-3 py-2 font-medium">{{ 'activityLog.column.actor' | t }}</th>
+          <th class="px-3 py-2 font-medium">{{ 'activityLog.column.place' | t }}</th>
           <th class="px-3 py-2 font-medium">{{ 'auditLog.column.action' | t }}</th>
           <th class="px-3 py-2 font-medium">{{ 'activityLog.column.outcome' | t }}</th>
           <th class="px-3 py-2 font-medium">{{ 'activityLog.column.duration' | t }}</th>
@@ -76,7 +77,7 @@
           <tr
             class="cursor-pointer border-t border-divider hover:bg-raised"
             data-testid="activity-row"
-            (click)="toggle(entry)"
+            (click)="toggle(entry, $event)"
           >
             <td class="px-3 py-2">
               <!-- The row toggles on its own click; the button is the keyboard's way in. -->
@@ -95,10 +96,39 @@
             </td>
             <td class="px-3 py-2" data-testid="activity-actor">
               @if (entry.actor; as actor) {
-                <span class="font-mono">{{ actor.id }}</span>
+                @if (actorLink(actor); as link) {
+                  <a
+                    class="font-medium hover:underline"
+                    data-testid="activity-actor-link"
+                    [class.font-mono]="!actor.name"
+                    [routerLink]="link"
+                    >{{ actor.name ?? actor.id }}</a
+                  >
+                } @else {
+                  <span [class.font-mono]="!actor.name">{{ actor.name ?? actor.id }}</span>
+                }
                 <span class="block text-xs text-muted">{{ roleLabel(actor.role) }}</span>
               } @else {
                 <span class="text-muted">{{ 'activityLog.anonymous' | t }}</span>
+                @if (entry.claimedActorId; as claimed) {
+                  <span class="block text-xs" data-testid="activity-claimed-actor">
+                    <span class="font-mono">{{ claimed }}</span>
+                    <p-tag class="ml-1" severity="warn" [value]="'activityLog.unverified' | t" />
+                  </span>
+                }
+              }
+            </td>
+            <td class="px-3 py-2" data-testid="activity-place">
+              @if (entry.place; as place) {
+                <a
+                  class="font-medium hover:underline"
+                  [class.font-mono]="!place.name"
+                  [routerLink]="placeLink(place)"
+                  >{{ place.name ?? place.id }}</a
+                >
+                <span class="block text-xs text-muted">{{ placeTypeLabel(place) }}</span>
+              } @else {
+                <span class="text-muted">—</span>
               }
             </td>
             <td class="px-3 py-2" data-testid="activity-action">{{ actionLabel(entry) }}</td>
@@ -116,14 +146,14 @@
           @if (isExpanded(entry)) {
             <tr class="border-t border-divider bg-raised" data-testid="activity-details">
               <td></td>
-              <td colspan="5" class="px-3 py-3">
+              <td colspan="6" class="px-3 py-3">
                 <app-activity-entry-details [entry]="entry" />
               </td>
             </tr>
           }
         } @empty {
           <tr>
-            <td colspan="6" class="py-8 text-center text-muted" data-testid="activity-empty">
+            <td colspan="7" class="py-8 text-center text-muted" data-testid="activity-empty">
               {{ (log.hasMore() ? 'auditLog.emptyPage' : 'list.empty') | t }}
             </td>
           </tr>
