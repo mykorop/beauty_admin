@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Amplify } from 'aws-amplify';
 import { confirmSignIn, fetchAuthSession, signIn, signOut } from 'aws-amplify/auth';
 import { environment } from '../../../environments/environment';
+import { forgetAdmin, identifyAdmin } from '../monitoring/sentry';
 import { AuthFailure, toAuthFailure } from './auth-failure';
 
 export const ADMIN_ROLE = 'admin';
@@ -73,7 +74,12 @@ export class AuthService {
     }
   }
 
+  /**
+   * Every way out passes here — the header button, an expired session, a refused role — so this is
+   * also where Sentry stops putting the admin's id on events.
+   */
   async signOut(): Promise<void> {
+    forgetAdmin();
     await signOut().catch(() => undefined);
   }
 
@@ -91,10 +97,19 @@ export class AuthService {
     }
   }
 
+  /**
+   * Whether the ID token is an admin's. If it is, the Sentry events that follow are marked as his by
+   * its `sub` — taken from the token, so that even a failing `GET /admin/me` is reported as his.
+   */
   async hasAdminSession(): Promise<boolean> {
     try {
       const session = await fetchAuthSession();
-      return session.tokens?.idToken?.payload[ROLE_CLAIM] === ADMIN_ROLE;
+      const claims = session.tokens?.idToken?.payload;
+      const isAdmin = claims?.[ROLE_CLAIM] === ADMIN_ROLE;
+      if (isAdmin && typeof claims?.sub === 'string') {
+        identifyAdmin(claims.sub);
+      }
+      return isAdmin;
     } catch {
       return false;
     }

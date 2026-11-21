@@ -15,4 +15,11 @@ export type Environment = {
   };
   /** Base URL of `admin-api`, without the `/admin` prefix and without a trailing slash. */
   adminApiUrl: string;
+  sentry: {
+    /**
+     * DSN of the panel's own Sentry project. Public by design — it only lets a browser send
+     * events — so it lives here, not in a secret. Empty leaves Sentry off: no SDK, no events.
+     */
+    dsn: string;
+  };
 };

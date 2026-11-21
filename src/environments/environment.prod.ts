@@ -10,4 +10,6 @@ export const environment: Environment = {
   },
   // HTTP API endpoint of admin-api, stage `prod` (`serverless info --stage prod`).
   adminApiUrl: 'https://18mfwx1bcb.execute-api.eu-central-1.amazonaws.com',
+  // Empty until the panel's Sentry project exists; see README → Sentry.
+  sentry: { dsn: '' },
 };

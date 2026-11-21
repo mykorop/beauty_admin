@@ -13,4 +13,6 @@ export const environment: Environment = {
     userPoolClientId: 'e2e-client-id',
   },
   adminApiUrl: 'https://admin-api.e2e.invalid',
+  // The suite must never report: a spec that wants Sentry uses `environment.e2e-sentry.ts`.
+  sentry: { dsn: '' },
 };
