@@ -10,6 +10,7 @@ import {
 import { inject } from '@angular/core';
 import { MessageService, type ToastMessageOptions } from 'primeng/api';
 import { catchError, from, map, type Observable, switchMap, throwError } from 'rxjs';
+import { version } from '../../../../package.json';
 import { environment } from '../../../environments/environment';
 import { I18nService } from '../../i18n/i18n.service';
 import { AuthService } from '../auth/auth.service';
@@ -21,6 +22,13 @@ import { ApiError, NETWORK_ERROR_CODE } from './api-error';
  * The `ApiError` is thrown either way.
  */
 export const SILENT_ERROR_CODES = new HttpContextToken<readonly string[]>(() => []);
+
+/**
+ * How the panel names itself to `admin-api` — `admin/<version> (web)`, the version being this
+ * build's `package.json` one — so a Журнал активності entry tells which build made the request
+ * (`X-BookMe-Client`, which `admin-api`'s CORS lets through).
+ */
+const BOOKME_CLIENT_HEADERS = { 'X-BookMe-Client': `admin/${version} (web)` };
 
 const UNAUTHORIZED = 401;
 
@@ -63,8 +71,8 @@ export function refusalMessage(i18n: I18nService, code: string): ToastMessageOpt
 }
 
 /**
- * Everything a call to `/admin/*` has in common: the ID token goes out, the `{ success, data }`
- * envelope comes off, and a refusal becomes an `ApiError` shown as a toast worded by its
+ * Everything a call to `/admin/*` has in common: the ID token and the panel's name go out, the
+ * `{ success, data }` envelope comes off, and a refusal becomes an `ApiError` shown as a toast worded by its
  * `error.code`. A 401 gets one forced token refresh and one retry; if that fails too the session
  * is over, and the login screen — not a toast — is the feedback.
  */
@@ -113,7 +121,7 @@ function isUnauthorizedResponse(error: unknown): boolean {
 }
 
 function sendWithToken(req: HttpRequest<unknown>, next: HttpHandlerFn, token: string): Observable<HttpEvent<unknown>> {
-  return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })).pipe(
+  return next(req.clone({ setHeaders: { ...BOOKME_CLIENT_HEADERS, Authorization: `Bearer ${token}` } })).pipe(
     map((event) =>
       event instanceof HttpResponse && isSuccessEnvelope(event.body) ? event.clone({ body: event.body.data }) : event,
     ),

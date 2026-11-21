@@ -18,6 +18,13 @@ export type ActivityActor = { id: string; role: string; name: string | null };
 /** A Місце — a Салон, or a Незалежний майстер — named as its profile reads now, `null` when it names nothing. */
 export type ActivityPlace = { type: 'salon' | 'master'; id: string; name: string | null };
 
+/**
+ * The app a request came from, as its `X-BookMe-Client` header named it: `app` — `client` (the
+ * client app), `salon` (the business app) or `admin` (this panel); `platform` — `ios`, `android`
+ * or `web`; `version` — the build's own.
+ */
+export type ActivityApp = { app: string; version: string; platform: string };
+
 /** One entry of the Журнал активності: one request, as it was answered. */
 export type ActivityEntry = {
   activityId: string;
@@ -53,6 +60,8 @@ export type ActivityEntry = {
    */
   requestBody: unknown;
   requestBodyTruncated: boolean;
+  /** `null` — the app named none: a build from before the header, or a caller that is no BookMe app. */
+  client: ActivityApp | null;
   /** `requestContext.requestId` — what the request's CloudWatch lines carry. */
   requestId: string;
   traceId: string | null;

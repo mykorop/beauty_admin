@@ -131,6 +131,7 @@ const entry = (overrides: Record<string, unknown> = {}) => ({
   durationMs: 87,
   requestBody: null,
   requestBodyTruncated: false,
+  client: null,
   requestId: 'req-1',
   traceId: null,
   sentryEventId: null,

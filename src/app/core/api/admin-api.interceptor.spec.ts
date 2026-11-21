@@ -56,11 +56,22 @@ describe('adminApiInterceptor', () => {
     expect(body).toEqual({ adminId: 'a1', email: 'admin@bookme.md' });
   });
 
+  it('names the panel, its version and its platform on every call', async () => {
+    http.get(ME_URL).subscribe();
+    await flushPromises();
+
+    const request = backend.expectOne(ME_URL);
+    // `admin/<version> (web)` — what the Журнал активності keeps as the entry's app.
+    expect(request.request.headers.get('X-BookMe-Client')).toMatch(/^admin\/\d+\.\d+\.\d+\S* \(web\)$/);
+    request.flush({ success: true, data: null });
+  });
+
   it('leaves a request to any other origin untouched', () => {
     http.get('https://elsewhere.example/file.json').subscribe();
 
     const request = backend.expectOne('https://elsewhere.example/file.json');
     expect(request.request.headers.has('Authorization')).toBeFalse();
+    expect(request.request.headers.has('X-BookMe-Client')).toBeFalse();
     expect(auth.getIdToken).not.toHaveBeenCalled();
     request.flush({});
   });
@@ -151,6 +162,7 @@ describe('adminApiInterceptor', () => {
 
     const retry = backend.expectOne(ME_URL);
     expect(retry.request.headers.get('Authorization')).toBe('Bearer token-2');
+    expect(retry.request.headers.has('X-BookMe-Client')).toBeTrue();
     retry.flush({ success: true, data: { ok: true } });
 
     expect(body).toEqual({ ok: true });

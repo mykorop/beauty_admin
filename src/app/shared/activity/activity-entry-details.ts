@@ -8,13 +8,18 @@ import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { failedFieldsOf } from './activity-error';
 import { type PathId, pathIdsOf } from './activity-links';
-import { activityPathIdLabel } from './activity-wording';
+import {
+  activityClientAppLabel,
+  activityClientPlatformLabel,
+  activityPathIdLabel,
+} from './activity-wording';
 
 /**
  * What one Журнал активності entry tells beyond its row: the error it was answered with — the
  * fields that failed the check, when that was the reason — what the app sent (the body, redacted by
  * the backend, marked when it was cut at 4 KB), the ids of the request's address, each leading to
- * its screen where the panel has one, and the `requestId` a developer finds the request's
+ * its screen where the panel has one, the app, version and platform the request came from — to
+ * tell an old build's failure from a new one's — and the `requestId` a developer finds the request's
  * CloudWatch lines by, with a button to copy it. Shared, like `AuditEntryDetails`,
  * so the «Активність» tab of a card words an entry as the screen does.
  */
@@ -79,6 +84,15 @@ import { activityPathIdLabel } from './activity-wording';
           </ul>
         </dd>
       }
+      @if (client(); as client) {
+        <dt class="text-muted">{{ 'activityLog.field.client' | t }}</dt>
+        <dd data-testid="activity-client">
+          <span data-testid="activity-client-app">{{ client.app }}</span>
+          <span class="ml-2 font-mono" data-testid="activity-client-version">{{ client.version }}</span>
+          <span class="text-muted"> · </span>
+          <span data-testid="activity-client-platform">{{ client.platform }}</span>
+        </dd>
+      }
       <dt class="text-muted">{{ 'activityLog.field.requestId' | t }}</dt>
       <dd class="flex flex-wrap items-center gap-2">
         <span class="font-mono" data-testid="activity-request-id">{{ entry().requestId }}</span>
@@ -127,6 +141,21 @@ export class ActivityEntryDetails {
   protected pathIdLabel(pathId: PathId): string {
     return activityPathIdLabel(this.i18n, pathId);
   }
+
+  /**
+   * The app the request came from, worded, with its version; `null` when it named none — and for an
+   * entry from before apps named themselves, or from an `admin-api` that does not serve `client` yet.
+   */
+  protected readonly client = computed(() => {
+    const client = this.entry().client ?? null;
+    return client === null
+      ? null
+      : {
+          app: activityClientAppLabel(this.i18n, client.app),
+          version: client.version,
+          platform: activityClientPlatformLabel(this.i18n, client.platform),
+        };
+  });
 
   /** Whatever else the error carried, as it came. */
   protected readonly otherDetails = computed(() => {

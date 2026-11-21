@@ -22,6 +22,7 @@ const entry = (overrides: Record<string, unknown> = {}) => ({
   durationMs: 87,
   requestBody: null,
   requestBodyTruncated: false,
+  client: null,
   requestId: 'req-1',
   traceId: null,
   sentryEventId: null,
@@ -723,6 +724,61 @@ test.describe('activity log screen', () => {
     await toggle(3).click();
     await expect(details.getByTestId('activity-request-id')).toHaveText('req-1');
     await expect(details.getByTestId('activity-path-ids')).toHaveCount(0);
+  });
+
+  test('expands a row into the app, version and platform the request came from, and names none the app did not name', async ({
+    page,
+    mockBackend,
+  }) => {
+    const api = await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: pageOf([
+        entry({ client: { app: 'client', version: '1.3.0', platform: 'ios' } }),
+        entry({
+          activityId: 'act-2',
+          service: 'salon-api',
+          client: { app: 'salon', version: '1.2.0', platform: 'android' },
+        }),
+        entry({
+          activityId: 'act-3',
+          service: 'admin-api',
+          client: { app: 'admin', version: '0.4.0', platform: 'web' },
+        }),
+        entry({ activityId: 'act-4' }),
+      ]),
+    });
+    await signIn(page, ADMIN, '/activity-log');
+    const details = page.getByTestId('activity-details');
+    const toggle = (row: number) => page.getByTestId('activity-row-toggle').nth(row);
+
+    await toggle(0).click();
+    await expect(details.getByTestId('activity-client-app')).toHaveText('Клієнтський застосунок');
+    await expect(details.getByTestId('activity-client-version')).toHaveText('1.3.0');
+    await expect(details.getByTestId('activity-client-platform')).toHaveText('iOS');
+
+    await toggle(0).click();
+    await toggle(1).click();
+    await expect(details.getByTestId('activity-client-app')).toHaveText('Бізнес-застосунок');
+    await expect(details.getByTestId('activity-client-version')).toHaveText('1.2.0');
+    await expect(details.getByTestId('activity-client-platform')).toHaveText('Android');
+
+    await toggle(1).click();
+    await toggle(2).click();
+    await expect(details.getByTestId('activity-client-app')).toHaveText('Адмінка');
+    await expect(details.getByTestId('activity-client-version')).toHaveText('0.4.0');
+    await expect(details.getByTestId('activity-client-platform')).toHaveText('веб');
+
+    // An older build — or no BookMe app at all — named none: the details say nothing of one.
+    await toggle(2).click();
+    await toggle(3).click();
+    await expect(details.getByTestId('activity-request-id')).toHaveText('req-1');
+    await expect(details.getByTestId('activity-client')).toHaveCount(0);
+
+    // And the panel names itself on every call to admin-api, as the backend keeps it.
+    expect(api.clientHeaders.length).toBeGreaterThan(0);
+    for (const header of api.clientHeaders) {
+      expect(header).toMatch(/^admin\/\d+\.\d+\.\d+\S* \(web\)$/);
+    }
   });
 
   test('says when it is loading, when it could not load, and when there is nothing', async ({

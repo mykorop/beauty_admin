@@ -42,6 +42,10 @@ endpoint of `admin-api` for that stage (`serverless info --stage <stage>`); it c
 API is removed and redeployed. The prod `admin-api` allows no `localhost` origin, so a production
 build works only from `https://admin.bookme.md`.
 
+Every call to `admin-api` names the panel in `X-BookMe-Client: admin/<version> (web)`, the version
+being `version` in `package.json`; the Журнал активності keeps it with each entry, so raise it when
+a build is hosted to tell that build's requests from an older one's.
+
 ## Sentry
 
 Errors of the panel go to its own Sentry project, in the organisation the backend and the mobile
