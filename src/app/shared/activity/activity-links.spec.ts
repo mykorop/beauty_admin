@@ -1,4 +1,4 @@
-import { actorCardLink, pathIdsOf, placeCardLink } from './activity-links';
+import { actorCardLink, auditRowLink, pathIdsOf, placeCardLink, recipientCardLink } from './activity-links';
 
 describe('actorCardLink', () => {
   it('leads to the card of a Клієнт, a Власник (his Основний салон) and a Майстер', () => {
@@ -11,6 +11,18 @@ describe('actorCardLink', () => {
     expect(actorCardLink({ id: 'a-1', role: 'salon_admin', name: 'Olena' })).toBeNull();
     expect(actorCardLink({ id: 'admin-sub', role: 'admin', name: null })).toBeNull();
     expect(actorCardLink({ id: 'x-1', role: 'someone-new', name: null })).toBeNull();
+  });
+});
+
+describe('recipientCardLink', () => {
+  it('leads to the card of the account told, by the role it was addressed to', () => {
+    expect(recipientCardLink({ id: 'o-1', role: 'salon' })).toEqual(['/salons', 'o-1']);
+    expect(recipientCardLink({ id: 'c-1', role: 'client' })).toEqual(['/clients', 'c-1']);
+  });
+
+  it('leads nowhere for a role its sender did not know, or one with no card', () => {
+    expect(recipientCardLink({ id: 'u-1', role: null })).toBeNull();
+    expect(recipientCardLink({ id: 'a-1', role: 'salon_admin' })).toBeNull();
   });
 });
 
@@ -83,5 +95,61 @@ describe('pathIdsOf', () => {
 
   it('names nothing for an address without ids', () => {
     expect(pathIdsOf(entry({}))).toEqual([]);
+  });
+});
+
+describe('auditRowLink', () => {
+  const audit = (target: { type: string; id: string }, salonId: string | null, action: string) => ({
+    kind: 'audit' as const,
+    auditId: 'audit-1',
+    target,
+    salonId,
+    action,
+  });
+  /** 00:30 on 22 September in Chișinău — still the 21st in UTC. */
+  const AT = '2026-09-21T21:30:00.000Z';
+
+  it('leads to the «Історія» of the card the row is about: a Салон, a Незалежний майстер, a Клієнт', () => {
+    expect(auditRowLink(audit({ type: 'salon', id: 's-1' }, 's-1', 'salon.profile.update'), AT)).toEqual({
+      to: 'history',
+      path: ['/salons', 's-1', 'history'],
+      queryParams: null,
+    });
+    expect(auditRowLink(audit({ type: 'master', id: 'm-1' }, null, 'master.block'), AT)).toEqual({
+      to: 'history',
+      path: ['/independent-masters', 'm-1', 'history'],
+      queryParams: null,
+    });
+    expect(auditRowLink(audit({ type: 'client', id: 'c-1' }, null, 'client.block'), AT)).toEqual({
+      to: 'history',
+      path: ['/clients', 'c-1', 'history'],
+      queryParams: null,
+    });
+  });
+
+  it('leads to the row in the Журнал дій where the card has no «Історія» — a Майстер салону, the platform’s settings — by its day on the platform’s clock, target and action', () => {
+    expect(
+      auditRowLink(audit({ type: 'master', id: 'm-1' }, 's-1', 'salon.master.update'), AT),
+    ).toEqual({
+      to: 'audit-log',
+      path: ['/audit-log'],
+      // The row is written as the request is served: by the next day at the latest.
+      queryParams: { from: '2026-09-22', to: '2026-09-23', targetType: 'master', action: 'salon.master.update' },
+    });
+    expect(
+      auditRowLink(
+        audit({ type: 'platform', id: 'settings' }, null, 'platform.ukrainian_phones.update'),
+        AT,
+      ),
+    ).toEqual({
+      to: 'audit-log',
+      path: ['/audit-log'],
+      queryParams: {
+        from: '2026-09-22',
+        to: '2026-09-23',
+        targetType: 'platform',
+        action: 'platform.ukrainian_phones.update',
+      },
+    });
   });
 });

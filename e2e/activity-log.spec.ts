@@ -781,6 +781,126 @@ test.describe('activity log screen', () => {
     }
   });
 
+  test('expands a row into what the request caused: each push, SMS and email, whom it went to and whether it did, and the Журнал дій row it wrote', async ({
+    page,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: pageOf([
+        entry({
+          route: 'POST /client/appointments',
+          pathParams: {},
+          status: 201,
+          effects: [
+            { kind: 'push', recipient: { id: 'owner-1', role: 'salon' }, result: 'sent' },
+            {
+              kind: 'push',
+              recipient: { id: 'owner-1', role: 'salon' },
+              result: 'invalid-token',
+              code: 'UNREGISTERED',
+            },
+            { kind: 'sms', recipient: null, result: 'failed', code: 'rate-limited' },
+            { kind: 'email', recipient: { id: 'iryna', role: 'master' }, result: 'sent' },
+          ],
+          effectsOmitted: 3,
+        }),
+        entry({
+          activityId: 'act-2',
+          // 00:30 on 22 September in Chișinău — the 21st in UTC.
+          createdAt: '2026-09-21T21:30:00.000Z',
+          service: 'admin-api',
+          route: 'POST /admin/salons/{salonId}/block',
+          pathParams: { salonId: 'salon-1' },
+          actor: { id: 'admin-sub', role: 'admin', name: null },
+          effects: [
+            {
+              kind: 'audit',
+              auditId: 'audit-1',
+              target: { type: 'salon', id: 'salon-1' },
+              salonId: 'salon-1',
+              action: 'salon.block',
+            },
+            { kind: 'push', recipient: { id: 'salon-1', role: 'salon' }, result: 'sent' },
+          ],
+        }),
+        entry({
+          activityId: 'act-3',
+          createdAt: '2026-09-21T21:30:00.000Z',
+          service: 'admin-api',
+          route: 'PATCH /admin/salons/{salonId}/masters/{masterId}',
+          pathParams: { salonId: 'salon-1', masterId: 'iryna' },
+          actor: { id: 'admin-sub', role: 'admin', name: null },
+          effects: [
+            {
+              kind: 'audit',
+              auditId: 'audit-2',
+              target: { type: 'master', id: 'iryna' },
+              salonId: 'salon-1',
+              action: 'salon.master.update',
+            },
+          ],
+        }),
+        // An entry from before effects were kept, as an older admin-api serves it.
+        entry({ activityId: 'act-4' }),
+      ]),
+      'GET /admin/audit': apiOk({ items: [], nextCursor: null }),
+    });
+    await signIn(page, ADMIN, '/activity-log');
+    const details = page.getByTestId('activity-details');
+    const effects = details.getByTestId('activity-effect');
+    const toggle = (row: number) => page.getByTestId('activity-row-toggle').nth(row);
+
+    await toggle(0).click();
+
+    // One line a try: the channel, the account told — linked to its card — and how it ended.
+    await expect(effects).toHaveCount(4);
+    await expect(effects.nth(0).getByTestId('activity-effect-kind')).toHaveText('Push');
+    await expect(effects.nth(0).getByTestId('activity-effect-recipient')).toContainText('Власник салону');
+    await expect(effects.nth(0).getByRole('link')).toHaveText('owner-1');
+    await expect(effects.nth(0).getByRole('link')).toHaveAttribute('href', '/salons/owner-1');
+    await expect(effects.nth(0).getByTestId('activity-effect-result')).toHaveText('Надіслано');
+    await expect(effects.nth(0).getByTestId('activity-effect-code')).toHaveCount(0);
+    // A token FCM no longer knows, apart from a push that went.
+    await expect(effects.nth(1).getByTestId('activity-effect-result')).toHaveText('Недійсний токен');
+    await expect(effects.nth(1).getByTestId('activity-effect-code')).toHaveText('UNREGISTERED');
+    // An SMS to a number no account holds, and why it did not go.
+    await expect(effects.nth(2).getByTestId('activity-effect-kind')).toHaveText('SMS');
+    await expect(effects.nth(2).getByTestId('activity-effect-recipient')).toHaveText('без акаунта');
+    await expect(effects.nth(2).getByTestId('activity-effect-result')).toHaveText('Не надіслано');
+    await expect(effects.nth(2).getByTestId('activity-effect-code')).toHaveText('rate-limited');
+    await expect(effects.nth(3).getByTestId('activity-effect-kind')).toHaveText('Email');
+    await expect(effects.nth(3).getByRole('link')).toHaveAttribute('href', '/independent-masters/iryna');
+    // What the entry counts rather than lists.
+    await expect(details.getByTestId('activity-effects-omitted')).toContainText('3');
+
+    // An action of the Адміністратор платформи: its Журнал дій row, leading to the «Історія» of its card.
+    await toggle(0).click();
+    await toggle(1).click();
+    await expect(effects).toHaveCount(2);
+    await expect(effects.nth(0).getByTestId('activity-effect-kind')).toHaveText('Журнал дій');
+    await expect(effects.nth(0)).toContainText('Блокування Салону');
+    const history = effects.nth(0).getByTestId('activity-effect-history');
+    await expect(history).toHaveText('Відкрити «Історію»');
+    await expect(history).toHaveAttribute('href', '/salons/salon-1/history');
+    await expect(details.getByTestId('activity-effects-omitted')).toHaveCount(0);
+
+    // A Майстер салону's card has no «Історія»: the row is found in the Журнал дій instead.
+    await toggle(1).click();
+    await toggle(2).click();
+    const auditLog = effects.nth(0).getByTestId('activity-effect-history');
+    await expect(auditLog).toHaveText('Відкрити в Журналі дій');
+    await auditLog.click();
+    await expect(page).toHaveURL(
+      /\/audit-log\?from=2026-09-22&to=2026-09-23&targetType=master&action=salon\.master\.update$/,
+    );
+
+    await page.goBack();
+    await toggle(3).click();
+    await expect(details.getByTestId('activity-request-id')).toHaveText('req-1');
+    await expect(details.getByTestId('activity-effects')).toHaveCount(0);
+  });
+
   test('says when it is loading, when it could not load, and when there is nothing', async ({
     page,
     mockBackend,

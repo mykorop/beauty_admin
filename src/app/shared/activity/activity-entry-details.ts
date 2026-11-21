@@ -6,6 +6,7 @@ import { Tag } from 'primeng/tag';
 import type { ActivityEntry } from '../../core/api/activity.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { effectLinesOf } from './activity-effects';
 import { failedFieldsOf } from './activity-error';
 import { type PathId, pathIdsOf } from './activity-links';
 import {
@@ -19,7 +20,9 @@ import {
  * fields that failed the check, when that was the reason — what the app sent (the body, redacted by
  * the backend, marked when it was cut at 4 KB), the ids of the request's address, each leading to
  * its screen where the panel has one, the app, version and platform the request came from — to
- * tell an old build's failure from a new one's — and the `requestId` a developer finds the request's
+ * tell an old build's failure from a new one's — what the request caused (each push, SMS and email
+ * it tried, whom it went to and whether it did, and the Журнал дій row it wrote, leading to the
+ * «Історія» where its old and new values are) and the `requestId` a developer finds the request's
  * CloudWatch lines by, with a button to copy it. Shared, like `AuditEntryDetails`,
  * so the «Активність» tab of a card words an entry as the screen does.
  */
@@ -93,6 +96,54 @@ import {
           <span data-testid="activity-client-platform">{{ client.platform }}</span>
         </dd>
       }
+      @if (effects(); as effects) {
+        <dt class="text-muted">{{ 'activityLog.field.effects' | t }}</dt>
+        <dd>
+          <ul class="flex flex-col gap-1" data-testid="activity-effects">
+            @for (line of effects; track $index) {
+              <li class="flex flex-wrap items-center gap-2" data-testid="activity-effect">
+                <span class="font-medium" data-testid="activity-effect-kind">{{ line.channel }}</span>
+                @if (line.kind === 'delivery') {
+                  <span data-testid="activity-effect-recipient">
+                    @if (line.recipient; as recipient) {
+                      @if (recipient.role) {
+                        <span class="text-muted">{{ recipient.role }}</span>
+                      }
+                      @if (recipient.link; as link) {
+                        <a class="ml-1 font-mono hover:underline" [routerLink]="link">{{ recipient.id }}</a>
+                      } @else {
+                        <span class="ml-1 font-mono">{{ recipient.id }}</span>
+                      }
+                    } @else {
+                      <span class="text-muted">{{ 'activityLog.effect.noAccount' | t }}</span>
+                    }
+                  </span>
+                  <p-tag data-testid="activity-effect-result" [severity]="line.severity" [value]="line.result" />
+                  @if (line.code; as code) {
+                    <span class="font-mono text-muted" data-testid="activity-effect-code">{{ code }}</span>
+                  }
+                } @else if (line.kind === 'audit') {
+                  <span>{{ line.action }}</span>
+                  <span class="text-muted">{{ line.target }}</span>
+                  <span class="font-mono">{{ line.targetId }}</span>
+                  <a
+                    class="hover:underline"
+                    data-testid="activity-effect-history"
+                    [routerLink]="line.link.path"
+                    [queryParams]="line.link.queryParams"
+                    >{{ line.linkLabel }}</a
+                  >
+                }
+              </li>
+            }
+          </ul>
+          @if (entry().effectsOmitted; as omitted) {
+            <p class="mt-1 text-muted" data-testid="activity-effects-omitted">
+              {{ 'activityLog.effectsOmitted' | t: { count: omitted } }}
+            </p>
+          }
+        </dd>
+      }
       <dt class="text-muted">{{ 'activityLog.field.requestId' | t }}</dt>
       <dd class="flex flex-wrap items-center gap-2">
         <span class="font-mono" data-testid="activity-request-id">{{ entry().requestId }}</span>
@@ -155,6 +206,15 @@ export class ActivityEntryDetails {
           version: client.version,
           platform: activityClientPlatformLabel(this.i18n, client.platform),
         };
+  });
+
+  /**
+   * What the request caused, one line an effect in the order it happened; `null` for a request that
+   * caused nothing — and for an entry from before effects were kept.
+   */
+  protected readonly effects = computed(() => {
+    const lines = effectLinesOf(this.i18n, this.entry());
+    return lines.length > 0 ? lines : null;
   });
 
   /** Whatever else the error carried, as it came. */

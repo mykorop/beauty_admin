@@ -1,5 +1,14 @@
-import type { ActivityActor, ActivityEntry, ActivityPlace } from '../../core/api/activity.client';
+import type {
+  ActivityActor,
+  ActivityAuditEffect,
+  ActivityEntry,
+  ActivityPlace,
+  ActivityRecipient,
+} from '../../core/api/activity.client';
+import { addCalendarDays } from '../calendar-day';
+import { PLATFORM_TIME_ZONE } from '../platform-clock';
 import { profileCardLink } from '../profile-card-link';
+import { venueDate } from '../venue-date';
 
 /**
  * Where the card of whoever an entry names lives. Shared, like `ActivityEntryDetails`, so the
@@ -19,6 +28,55 @@ const ACTOR_CARD: Partial<Record<string, (id: string) => string[]>> = {
 
 export const actorCardLink = (actor: ActivityActor): string[] | null =>
   ACTOR_CARD[actor.role]?.(actor.id) ?? null;
+
+/**
+ * The card of the account a push, an SMS or an email went to, by the role it was addressed to —
+ * `null` where its sender did not know the role, or the role has no card.
+ */
+export const recipientCardLink = (recipient: ActivityRecipient): string[] | null =>
+  (recipient.role && ACTOR_CARD[recipient.role]?.(recipient.id)) || null;
+
+/**
+ * Where a Журнал дій row is read: the «Історія» of its card (`history`), or the Журнал дій itself,
+ * narrowed to it (`audit-log`) — the screen's `path` and the filters it opens on (`null` — none).
+ */
+export type AuditRowLink = {
+  to: 'history' | 'audit-log';
+  path: string[];
+  queryParams: Record<string, string> | null;
+};
+
+/** The «Історія» tab of a card, by the Журнал дій target it lists. */
+const HISTORY_CARD: Partial<Record<string, (id: string) => string[]>> = {
+  salon: (id) => [...profileCardLink('salon', id), 'history'],
+  master: (id) => [...profileCardLink('independentMaster', id), 'history'],
+  client: (id) => [...clientCardLink(id), 'history'],
+};
+
+/**
+ * Where the Журнал дій row an entry links to is read, with its old and new values: the «Історія» of
+ * the card it is about — a Салон's, a Незалежний майстер's, a Клієнт's. A Майстер салону's card and
+ * the platform's settings have no «Історія»: the row is then found in the Журнал дій, by its day on
+ * the platform's clock — the day the request came in `createdAt`, or the next, should it have
+ * crossed midnight — its target and its action.
+ */
+export function auditRowLink(effect: ActivityAuditEffect, createdAt: string): AuditRowLink {
+  const card = effect.target.type === 'master' && effect.salonId ? undefined : HISTORY_CARD[effect.target.type];
+  if (card) {
+    return { to: 'history', path: card(effect.target.id), queryParams: null };
+  }
+  const day = venueDate(createdAt, PLATFORM_TIME_ZONE) ?? createdAt.slice(0, 10);
+  return {
+    to: 'audit-log',
+    path: ['/audit-log'],
+    queryParams: {
+      from: day,
+      to: addCalendarDays(day, 1),
+      targetType: effect.target.type,
+      action: effect.action,
+    },
+  };
+}
 
 /** A Салон's card, or a Майстер's — the one a Незалежний майстер is his own Місце in. */
 export const placeCardLink = (place: ActivityPlace): string[] =>

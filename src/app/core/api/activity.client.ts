@@ -25,6 +25,39 @@ export type ActivityPlace = { type: 'salon' | 'master'; id: string; name: string
  */
 export type ActivityApp = { app: string; version: string; platform: string };
 
+/** The account a push, an SMS or an email went to, and the role it was addressed to, if known. */
+export type ActivityRecipient = { id: string; role: string | null };
+
+/**
+ * One try to deliver something a request caused: a push to one device, an SMS, an email. `recipient`
+ * is the account it went to — `role` `null` where the sender did not know it — and `null` for none
+ * (an SMS to a walk-in's number, an invitation to an address no account holds); never a device,
+ * number or address. `result` — `sent`, `failed`, or `invalid-token` (FCM no longer knows the
+ * device); `code` — why not, in the words of whoever said no (`UNREGISTERED`, `rate-limited`,
+ * `MessageRejected`).
+ */
+export type ActivityDeliveryEffect = {
+  kind: 'push' | 'sms' | 'email';
+  recipient: ActivityRecipient | null;
+  result: 'sent' | 'failed' | 'invalid-token';
+  code?: string;
+};
+
+/**
+ * The Журнал дій row an action of the Адміністратор платформи wrote: its `auditId`, the target whose
+ * «Історія» lists it, the Салон the target is in (a Майстер салону's), and the action's name.
+ */
+export type ActivityAuditEffect = {
+  kind: 'audit';
+  auditId: string;
+  target: { type: string; id: string };
+  salonId: string | null;
+  action: string;
+};
+
+/** What a request caused beside its answer. */
+export type ActivityEffect = ActivityDeliveryEffect | ActivityAuditEffect;
+
 /** One entry of the Журнал активності: one request, as it was answered. */
 export type ActivityEntry = {
   activityId: string;
@@ -66,6 +99,13 @@ export type ActivityEntry = {
   requestId: string;
   traceId: string | null;
   sentryEventId: string | null;
+  /**
+   * What the request caused, in the order it happened — each try to deliver and each Журнал дій row
+   * it wrote; `[]` for an entry from before effects were kept, or from an `admin-api` that does not
+   * serve them yet. At most 50 deliveries; the rest are counted in `effectsOmitted`.
+   */
+  effects?: ActivityEffect[];
+  effectsOmitted?: number;
 };
 
 /** Who acted, as the log narrows by it: a role of the verified token, or `anonymous` — nobody signed in. */
