@@ -63,6 +63,14 @@ apps report to, so a trace runs from the panel into `admin-api`. The set-up is
 - **Who** — `user.id` is the admin's Cognito `sub`, read from the ID token once an admin session is
   found; signing out, by hand or by an expired session, clears it. No email or name of his is sent.
 - **Traces** — `sentry-trace` and `baggage` go only to `adminApiUrl`, whose CORS allows them.
+- **Links** — `sentry.orgUrl` in each `environment*.ts` is the organisation's address
+  (`https://<org>.sentry.io`), independent of the DSN. With it, a Журнал активності entry's details
+  lead to «Траса в Sentry» (the issues of its `traceId`) and «Подія в Sentry» (its `sentryEventId`),
+  and a card's «Активність» to «Помилки в Sentry» (the issues of the account's `user.id`; on a
+  Салон's card, «Помилки Власника в Sentry»). Each is a search of Sentry's issues across every
+  project over 90 days, opened in a new tab: no API token, whoever opens it signs in to Sentry.
+  Empty — as now — leaves out the links. The `e2e` build names a made-up organisation; `e2e-sentry`
+  names none.
 
 Source maps of `build:staging` and `build:prod` are hidden: the bundles do not reference them.
 `scripts/sentry-sourcemaps.mjs` runs after either build. With `SENTRY_AUTH_TOKEN` set it injects

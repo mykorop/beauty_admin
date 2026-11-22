@@ -550,6 +550,9 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.copy': 'Copiază',
   'activityLog.copied': 'requestId a fost copiat.',
   'activityLog.copyFailed': 'Nu s-a putut copia. Selectați requestId manual.',
+  'activityLog.field.sentry': 'Sentry',
+  'activityLog.sentryTrace': 'Trace-ul în Sentry',
+  'activityLog.sentryEvent': 'Evenimentul în Sentry',
   'activityLog.periodKept': 'Se afișează tot ce păstrează jurnalul (90 de zile). Alegeți o perioadă pentru a restrânge.',
   'activityLog.filter.account': 'Cont',
   'activityLog.filter.accountPlaceholder': 'id sau email',
@@ -568,6 +571,8 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityTab.subject.place': 'Tot la Locul său',
   'activityTab.openInLog': 'Deschide în Jurnalul de activitate',
   'activityTab.ownerActivity': 'Activitatea Proprietarului',
+  'activityTab.sentryErrors': 'Erori în Sentry',
+  'activityTab.ownerSentryErrors': 'Erorile Proprietarului în Sentry',
   'activityTab.kept':
     'Se afișează tot ce păstrează jurnalul (90 de zile). Pentru a restrânge, deschideți-l în Jurnalul de activitate.',
   // Дії — за `routeKey` API Gateway; маршрут без запису тут показується як є.

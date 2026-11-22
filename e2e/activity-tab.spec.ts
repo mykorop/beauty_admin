@@ -1,5 +1,6 @@
 import { apiError, apiOk, holdResponse, type MockResponse } from './fixtures/api-mock';
 import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
+import { answerSentryPages, SENTRY_ORG } from './fixtures/sentry-ingest';
 
 /**
  * «Активність» of a card: the «Журнал активності» feed of the profile it is open on, its filter
@@ -173,6 +174,57 @@ test.describe('«Активність» on a card', () => {
     });
   }
 
+  /** Each card, the label of its «Помилки в Sentry» and the account whose errors it finds. */
+  const CARD_ACCOUNTS = [
+    { name: 'Салон', path: '/salons/s1', label: 'Помилки Власника в Sentry', account: 'owner-1' },
+    {
+      name: 'Незалежний майстер',
+      path: '/independent-masters/m1',
+      label: 'Помилки в Sentry',
+      account: 'm1',
+    },
+    {
+      name: 'Майстер салону',
+      path: '/salons/s1/masters/m1',
+      label: 'Помилки в Sentry',
+      account: 'm1',
+    },
+    { name: 'Клієнт', path: '/clients/c1', label: 'Помилки в Sentry', account: 'c1' },
+  ];
+
+  for (const card of CARD_ACCOUNTS) {
+    test(`a ${card.name} leads to the errors of its account in Sentry, in a new tab`, async ({
+      page,
+      context,
+      mockBackend,
+    }) => {
+      await mockBackend(ADMIN, {
+        'GET /admin/me': ME,
+        'GET /admin/salons/s1': apiOk(salon()),
+        'GET /admin/masters/m1': apiOk(master()),
+        'GET /admin/salons/s1/masters/m1': apiOk(salonMaster()),
+        'GET /admin/clients/c1': apiOk(client()),
+        [ACTIVITY]: pageOf([entry()]),
+      });
+      await answerSentryPages(context);
+      await signIn(page, ADMIN, `${card.path}/activity`);
+      await expect(page.getByTestId('activity-row')).toHaveCount(1);
+
+      // By the account's `user.id`, across every project, over the 90 days the log keeps too.
+      const href = `${SENTRY_ORG}/issues/?project=-1&statsPeriod=90d&query=user.id%3A${card.account}`;
+      const errors = page.getByTestId('activity-tab-sentry-errors');
+      await expect(errors).toHaveText(card.label);
+      await expect(errors).toHaveAttribute('href', href);
+      await expect(errors).toHaveAttribute('target', '_blank');
+      await expect(errors).toHaveAttribute('rel', /noopener/);
+
+      const [sentryTab] = await Promise.all([context.waitForEvent('page'), errors.click()]);
+      await expect(sentryTab).toHaveURL(href);
+      await sentryTab.close();
+      await expect(page).toHaveURL(new RegExp(`${card.path}/activity$`));
+    });
+  }
+
   test('a Салон shows its Місце, opens it in the «Журнал активності», and leads on to its Власник across his Мережа', async ({
     page,
     mockBackend,
@@ -251,7 +303,7 @@ test.describe('«Активність» on a card', () => {
     await expect.poll(() => asked(seen).at(-1)).toEqual({ actorId: 'owner-1' });
   });
 
-  test('a Салон whose Власник admin-api does not name offers no «Активність Власника»', async ({
+  test('a Салон whose Власник admin-api does not name offers no «Активність Власника», nor his errors in Sentry', async ({
     page,
     mockBackend,
   }) => {
@@ -270,6 +322,7 @@ test.describe('«Активність» on a card', () => {
       '/activity-log?place=s1',
     );
     await expect(page.getByTestId('activity-tab-owner')).toHaveCount(0);
+    await expect(page.getByTestId('activity-tab-sentry-errors')).toHaveCount(0);
   });
 
   test('a Незалежний майстер shows his own actions, and all that happened in his Місце on demand', async ({

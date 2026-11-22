@@ -1,5 +1,6 @@
 import { apiError, apiOk, holdResponse, type MockResponse } from './fixtures/api-mock';
 import { ADMIN, expect, signIn, test } from './fixtures/app.fixture';
+import { answerSentryPages, SENTRY_ORG } from './fixtures/sentry-ingest';
 
 const ME = apiOk({ adminId: 'e2e-user-sub', email: ADMIN.email });
 const ACTIVITY = 'GET /admin/activity';
@@ -989,6 +990,88 @@ test.describe('activity log screen', () => {
     await toggle(3).click();
     await expect(details.getByTestId('activity-request-id')).toHaveText('req-1');
     await expect(details.getByTestId('activity-effects')).toHaveCount(0);
+  });
+
+  test('expands a row into its trace and its event in Sentry, each where the entry has one, opening in a new tab', async ({
+    page,
+    context,
+    mockBackend,
+  }) => {
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: pageOf([
+        entry({
+          outcome: 'failed',
+          status: 500,
+          error: { code: 'INTERNAL_SERVER_ERROR', message: 'Internal server error' },
+          traceId: '4bf92f3577b34da6a3ce929d0e0e4736',
+          sentryEventId: 'd3b07384d113edec49eaa6238ad5ff00',
+        }),
+        entry({ activityId: 'act-2', traceId: '0af7651916cd43dd8448eb211c80319c' }),
+        entry({
+          activityId: 'act-3',
+          outcome: 'failed',
+          status: 500,
+          error: { code: 'INTERNAL_SERVER_ERROR', message: 'Internal server error' },
+          sentryEventId: '9e107d9d372bb6826bd81d3542a419d6',
+        }),
+        entry({ activityId: 'act-4' }),
+      ]),
+    });
+    await answerSentryPages(context);
+    await signIn(page, ADMIN, '/activity-log');
+    const details = page.getByTestId('activity-details');
+    const toggle = (row: number) => page.getByTestId('activity-row-toggle').nth(row);
+    const trace = details.getByTestId('activity-sentry-trace');
+    const event = details.getByTestId('activity-sentry-event');
+
+    // A failure: the issues of its trace, and its own event — across every project, over 90 days.
+    await toggle(0).click();
+    await expect(trace).toHaveText('Траса в Sentry');
+    await expect(trace).toHaveAttribute(
+      'href',
+      `${SENTRY_ORG}/issues/?project=-1&statsPeriod=90d&query=trace%3A4bf92f3577b34da6a3ce929d0e0e4736`,
+    );
+    await expect(event).toHaveText('Подія в Sentry');
+    await expect(event).toHaveAttribute(
+      'href',
+      `${SENTRY_ORG}/issues/?project=-1&statsPeriod=90d&query=d3b07384d113edec49eaa6238ad5ff00`,
+    );
+    for (const link of [trace, event]) {
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', /noopener/);
+    }
+
+    const [sentryTab] = await Promise.all([context.waitForEvent('page'), event.click()]);
+    await expect(sentryTab).toHaveURL(
+      `${SENTRY_ORG}/issues/?project=-1&statsPeriod=90d&query=d3b07384d113edec49eaa6238ad5ff00`,
+    );
+    await sentryTab.close();
+    await expect(page).toHaveURL(/\/activity-log$/);
+
+    // A request that did not fail has a trace, but no event.
+    await toggle(0).click();
+    await toggle(1).click();
+    await expect(trace).toHaveAttribute(
+      'href',
+      `${SENTRY_ORG}/issues/?project=-1&statsPeriod=90d&query=trace%3A0af7651916cd43dd8448eb211c80319c`,
+    );
+    await expect(event).toHaveCount(0);
+
+    // A failure of a request that came with no trace has its event alone.
+    await toggle(1).click();
+    await toggle(2).click();
+    await expect(event).toHaveAttribute(
+      'href',
+      `${SENTRY_ORG}/issues/?project=-1&statsPeriod=90d&query=9e107d9d372bb6826bd81d3542a419d6`,
+    );
+    await expect(trace).toHaveCount(0);
+
+    // Neither a trace nor a failure: nowhere into Sentry to lead.
+    await toggle(2).click();
+    await toggle(3).click();
+    await expect(details.getByTestId('activity-request-id')).toHaveText('req-1');
+    await expect(details.getByTestId('activity-sentry')).toHaveCount(0);
   });
 
   test('says when it is loading, when it could not load, and when there is nothing', async ({

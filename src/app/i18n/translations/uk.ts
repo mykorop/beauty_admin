@@ -544,6 +544,9 @@ export const UK_TRANSLATIONS = {
   'activityLog.copy': 'Копіювати',
   'activityLog.copied': 'requestId скопійовано.',
   'activityLog.copyFailed': 'Не вдалося скопіювати. Виділіть requestId вручну.',
+  'activityLog.field.sentry': 'Sentry',
+  'activityLog.sentryTrace': 'Траса в Sentry',
+  'activityLog.sentryEvent': 'Подія в Sentry',
   'activityLog.periodKept': 'Показано все, що журнал зберігає (90 днів). Задайте період, щоб звузити.',
   'activityLog.filter.account': 'Акаунт',
   'activityLog.filter.accountPlaceholder': 'id або email',
@@ -562,6 +565,8 @@ export const UK_TRANSLATIONS = {
   'activityTab.subject.place': 'Усе в його Місці',
   'activityTab.openInLog': 'Відкрити в Журналі активності',
   'activityTab.ownerActivity': 'Активність Власника',
+  'activityTab.sentryErrors': 'Помилки в Sentry',
+  'activityTab.ownerSentryErrors': 'Помилки Власника в Sentry',
   'activityTab.kept':
     'Показано все, що журнал зберігає (90 днів). Щоб звузити, відкрийте його в Журналі активності.',
   // Дії — за `routeKey` API Gateway; маршрут без запису тут показується як є.

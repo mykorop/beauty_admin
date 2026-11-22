@@ -547,6 +547,9 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.copy': 'Копировать',
   'activityLog.copied': 'requestId скопирован.',
   'activityLog.copyFailed': 'Не удалось скопировать. Выделите requestId вручную.',
+  'activityLog.field.sentry': 'Sentry',
+  'activityLog.sentryTrace': 'Трасса в Sentry',
+  'activityLog.sentryEvent': 'Событие в Sentry',
   'activityLog.periodKept': 'Показано всё, что журнал хранит (90 дней). Задайте период, чтобы сузить.',
   'activityLog.filter.account': 'Аккаунт',
   'activityLog.filter.accountPlaceholder': 'id или email',
@@ -565,6 +568,8 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityTab.subject.place': 'Всё в его Месте',
   'activityTab.openInLog': 'Открыть в Журнале активности',
   'activityTab.ownerActivity': 'Активность Владельца',
+  'activityTab.sentryErrors': 'Ошибки в Sentry',
+  'activityTab.ownerSentryErrors': 'Ошибки Владельца в Sentry',
   'activityTab.kept':
     'Показано всё, что журнал хранит (90 дней). Чтобы сузить, откройте его в Журнале активности.',
   // Дії — за `routeKey` API Gateway; маршрут без запису тут показується як є.

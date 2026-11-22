@@ -8,14 +8,16 @@ import { isReportable, sentryOptions } from './sentry';
 const DSN = 'https://public-key@o1.ingest.de.sentry.io/2';
 
 const build = (overrides: Partial<Environment>): Environment => ({ ...environment, ...overrides });
+/** The build's Sentry settings with this DSN. */
+const withDsn = (dsn: string): Environment['sentry'] => ({ ...environment.sentry, dsn });
 
 describe('sentryOptions', () => {
   it('leaves Sentry off for a build without a DSN', () => {
-    expect(sentryOptions(build({ sentry: { dsn: '' } }))).toBeNull();
+    expect(sentryOptions(build({ sentry: withDsn('') }))).toBeNull();
   });
 
   it('reports to the DSN of the build, its stage as the environment, and no personal data', () => {
-    const options = sentryOptions(build({ stage: 'staging', sentry: { dsn: DSN } }));
+    const options = sentryOptions(build({ stage: 'staging', sentry: withDsn(DSN) }));
 
     expect(options?.dsn).toBe(DSN);
     expect(options?.environment).toBe('staging');
@@ -23,13 +25,13 @@ describe('sentryOptions', () => {
   });
 
   it('carries the trace into admin-api and nowhere else', () => {
-    const options = sentryOptions(build({ sentry: { dsn: DSN } }));
+    const options = sentryOptions(build({ sentry: withDsn(DSN) }));
 
     expect(options?.tracePropagationTargets).toEqual([environment.adminApiUrl]);
   });
 
   it('drops an event raised by a refusal and keeps one raised by a failure or a bug', () => {
-    const beforeSend = sentryOptions(build({ sentry: { dsn: DSN } }))?.beforeSend;
+    const beforeSend = sentryOptions(build({ sentry: withDsn(DSN) }))?.beforeSend;
     const event: ErrorEvent = { type: undefined };
     const send = (originalException: unknown) => beforeSend?.(event, { originalException });
 

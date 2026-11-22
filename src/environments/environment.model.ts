@@ -21,5 +21,11 @@ export type Environment = {
      * events — so it lives here, not in a secret. Empty leaves Sentry off: no SDK, no events.
      */
     dsn: string;
+    /**
+     * Address of the Sentry organisation the panel, the backend and the apps report to —
+     * `https://<org>.sentry.io` — which an activity entry's «Траса в Sentry» and «Подія в Sentry»
+     * and a card's «Помилки в Sentry» lead into. Independent of the DSN: empty, no such links.
+     */
+    orgUrl: string;
   };
 };

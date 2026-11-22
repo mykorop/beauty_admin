@@ -3,11 +3,17 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { SelectButton } from 'primeng/selectbutton';
+import { SENTRY_LINKS } from '../../core/monitoring/sentry-links';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { cardScope } from '../profile-card/loaded-card';
 import { activityFeed } from './activity-feed';
-import { activityLogLink, type ActivitySubject, activitySubjectQuery } from './activity-subject';
+import {
+  activityLogLink,
+  type ActivitySubject,
+  activitySubjectQuery,
+  sentryErrorsLink,
+} from './activity-subject';
 import { ActivityTable } from './activity.table';
 
 /**
@@ -20,6 +26,9 @@ import { ActivityTable } from './activity.table';
  * scope says whose entries to offer. A Незалежний майстер has two subjects — his own actions and
  * all that happened in his Місце — and the tab switches between them. A Салон's Власник acts across
  * his Мережа, so his entries are not the Салон's: the tab leads to them on the screen.
+ *
+ * «Помилки в Sentry» opens, in a new tab, every error Sentry holds of the profile's account — a
+ * Салон's Власник's — where the build names a Sentry organisation.
  */
 @Component({
   selector: 'app-activity-tab',
@@ -49,6 +58,17 @@ import { ActivityTable } from './activity.table';
           [queryParams]="owner.queryParams"
           >{{ 'activityTab.ownerActivity' | t }}</a
         >
+      }
+      @if (sentryErrors; as errors) {
+        <a
+          class="text-sm font-medium hover:underline"
+          data-testid="activity-tab-sentry-errors"
+          target="_blank"
+          rel="noopener noreferrer"
+          [href]="errors.href"
+          >{{ errors.labelKey | t
+          }}<i class="pi pi-external-link ml-1 text-xs" aria-hidden="true"></i
+        ></a>
       }
       <a
         class="text-sm font-medium hover:underline"
@@ -100,4 +120,6 @@ export class ActivityTab {
     this.activity.owner === null
       ? null
       : activityLogLink({ kind: 'account', id: this.activity.owner });
+  /** «Помилки в Sentry»: the errors of the card's account — a Салон's Власник's. */
+  protected readonly sentryErrors = sentryErrorsLink(this.activity, SENTRY_LINKS);
 }

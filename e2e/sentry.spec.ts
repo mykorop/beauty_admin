@@ -197,3 +197,78 @@ test.describe('with a DSN', () => {
     expect(ingest.events[seen]?.user?.id).toBeUndefined();
   });
 });
+
+test.describe('without the Sentry organisation’s address', () => {
+  // The `e2e-sentry` build has a DSN and no address: links into Sentry need the address alone.
+  test.use({ baseURL: SENTRY_E2E_URL });
+
+  test('an entry and a card lead nowhere into Sentry, and read as they did', async ({
+    page,
+    context,
+    mockBackend,
+  }) => {
+    const ingest = await installSentryIngest(context);
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      'GET /admin/activity': apiOk({
+        items: [
+          {
+            activityId: 'act-1',
+            createdAt: '2026-09-21T10:00:00.000Z',
+            stage: 'dev',
+            service: 'client-api',
+            route: 'PATCH /client/appointments/{appointmentId}/cancel',
+            pathParams: { appointmentId: 'appt-1' },
+            actor: { id: 'c1', role: 'client', name: 'Maria Rusu' },
+            claimedActorId: null,
+            salonId: null,
+            masterId: null,
+            place: null,
+            outcome: 'failed',
+            status: 500,
+            error: { code: 'INTERNAL_SERVER_ERROR', message: 'Internal server error' },
+            durationMs: 87,
+            requestBody: null,
+            requestBodyTruncated: false,
+            client: null,
+            requestId: 'req-1',
+            traceId: '4bf92f3577b34da6a3ce929d0e0e4736',
+            sentryEventId: 'd3b07384d113edec49eaa6238ad5ff00',
+          },
+        ],
+        nextCursor: null,
+      }),
+      'GET /admin/clients/c1': apiOk({
+        clientId: 'c1',
+        name: 'Maria Rusu',
+        firstName: 'Maria',
+        lastName: 'Rusu',
+        email: 'maria@bookme.md',
+        phone: '+37360000001',
+        avatarUrl: '',
+        language: 'uk',
+        status: 'active',
+        deletedAt: null,
+        blockedAt: null,
+        blockedReason: null,
+        createdAt: '2026-01-10T22:30:00.000Z',
+        updatedAt: null,
+      }),
+    });
+
+    await signIn(page, ADMIN, '/activity-log');
+    await page.getByTestId('activity-row-toggle').first().click();
+
+    const details = page.getByTestId('activity-details');
+    await expect(details.getByTestId('activity-error-code')).toHaveText('INTERNAL_SERVER_ERROR');
+    await expect(details.getByTestId('activity-request-id')).toHaveText('req-1');
+    await expect(details.getByTestId('activity-sentry')).toHaveCount(0);
+
+    await page.goto('/clients/c1/activity');
+    await expect(page.getByTestId('activity-row')).toHaveCount(1);
+    await expect(page.getByTestId('activity-tab-open-log')).toBeVisible();
+    await expect(page.getByTestId('activity-tab-sentry-errors')).toHaveCount(0);
+    // Nor did the screen or the card throw over the missing address.
+    expect(ingest.events.map(exceptionOf)).toEqual([]);
+  });
+});

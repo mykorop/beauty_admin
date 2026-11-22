@@ -4,6 +4,7 @@ import { MessageService } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import type { ActivityEntry } from '../../core/api/activity.client';
+import { SENTRY_LINKS } from '../../core/monitoring/sentry-links';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { effectLinesOf } from './activity-effects';
@@ -24,8 +25,9 @@ import {
  * request's address, each leading to its screen where the panel has one, the app, version and
  * platform the request came from — to tell an old build's failure from a new one's — what the
  * request caused (each push, SMS and email it tried, whom it went to and whether it did, and the
- * Журнал дій row it wrote, leading to the «Історія» where its old and new values are) and the
- * `requestId` a developer finds the request's CloudWatch lines by, with a button to copy it.
+ * Журнал дій row it wrote, leading to the «Історія» where its old and new values are), the
+ * `requestId` a developer finds the request's CloudWatch lines by, with a button to copy it, and —
+ * where the build names a Sentry organisation — the request's trace and its failure's event there.
  * Shared, like `AuditEntryDetails`, so the «Активність» tab of a card words an entry as the screen
  * does.
  */
@@ -173,6 +175,33 @@ import {
           (click)="copyRequestId()"
         ></button>
       </dd>
+      @if (sentry(); as sentry) {
+        <dt class="text-muted">{{ 'activityLog.field.sentry' | t }}</dt>
+        <dd class="flex flex-wrap items-center gap-3" data-testid="activity-sentry">
+          @if (sentry.trace; as href) {
+            <a
+              class="hover:underline"
+              data-testid="activity-sentry-trace"
+              target="_blank"
+              rel="noopener noreferrer"
+              [href]="href"
+              >{{ 'activityLog.sentryTrace' | t
+              }}<i class="pi pi-external-link ml-1 text-xs" aria-hidden="true"></i
+            ></a>
+          }
+          @if (sentry.event; as href) {
+            <a
+              class="hover:underline"
+              data-testid="activity-sentry-event"
+              target="_blank"
+              rel="noopener noreferrer"
+              [href]="href"
+              >{{ 'activityLog.sentryEvent' | t
+              }}<i class="pi pi-external-link ml-1 text-xs" aria-hidden="true"></i
+            ></a>
+          }
+        </dd>
+      }
     </dl>
   `,
 })
@@ -240,6 +269,22 @@ export class ActivityEntryDetails {
   protected readonly otherDetails = computed(() => {
     const details = this.entry().error?.details;
     return details === undefined || details === null ? null : JSON.stringify(details, null, 2);
+  });
+
+  /**
+   * Where the entry leads into Sentry: the issues of its trace, where its app sent one, and the
+   * event its failure was reported as, where the backend reported one. `null` with neither — and in
+   * a build that names no Sentry organisation.
+   */
+  protected readonly sentry = computed(() => {
+    const { traceId, sentryEventId } = this.entry();
+    if (!SENTRY_LINKS || (!traceId && !sentryEventId)) {
+      return null;
+    }
+    return {
+      trace: traceId ? SENTRY_LINKS.trace(traceId) : null,
+      event: sentryEventId ? SENTRY_LINKS.event(sentryEventId) : null,
+    };
   });
 
   protected async copyRequestId(): Promise<void> {

@@ -1,9 +1,23 @@
 import type { BrowserContext, Route } from '@playwright/test';
+import { environment as e2eBuild } from '../../src/environments/environment.e2e';
 import { environment } from '../../src/environments/environment.e2e-sentry';
 
 /** Where the `e2e-sentry` build, the e2e one with a DSN, is served; see `playwright.config.ts`. */
 export const SENTRY_E2E_PORT = 4301;
 export const SENTRY_E2E_URL = `http://localhost:${SENTRY_E2E_PORT}`;
+
+/** The Sentry organisation the `e2e` build links into, as made up as the rest of it. */
+export const SENTRY_ORG = e2eBuild.sentry.orgUrl;
+
+/**
+ * Answers every page of `SENTRY_ORG` with a blank one, so that a spec can follow a link into Sentry
+ * to the tab it opens and read that tab's address.
+ */
+export async function answerSentryPages(context: BrowserContext): Promise<void> {
+  await context.route(`${SENTRY_ORG}/**`, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<title>Sentry</title>' }),
+  );
+}
 
 /** The part of a Sentry error event the specs read. */
 export type SentryEvent = {
