@@ -10,7 +10,7 @@ import { formatVenueDateTime } from '../venue-date';
 import { ActivityEntryDetails } from './activity-entry-details';
 import type { ActivityFeed } from './activity-feed';
 import { actorCardLink, placeCardLink } from './activity-links';
-import { activityRoleLabel, activityRouteLabel } from './activity-wording';
+import { activityRoleLabel, activityRouteLabel, activityTriggerLabel } from './activity-wording';
 
 /** How each outcome is marked, so a problem stands out: a refusal warns, a failure alarms. */
 const OUTCOME_SEVERITY: Record<ActivityOutcome, 'success' | 'warn' | 'danger'> = {
@@ -20,8 +20,8 @@ const OUTCOME_SEVERITY: Record<ActivityOutcome, 'success' | 'warn' | 'danger'> =
 };
 
 /**
- * The entries of an `ActivityFeed`: who acted and where, each linked to its card, what was done,
- * how it ended and how long it took, on the platform's clock — a row opening into its details —
+ * The entries of an `ActivityFeed`: who acted and where, each linked to its card, what was done
+ * (for a Cognito trigger's entry, what Cognito did it for), how it ended and how long it took, on the platform's clock — a row opening into its details —
  * with the next page on demand, and a word for a feed still loading, empty or refused. One table
  * for the screen and for every card's «Активність», so an entry reads the same wherever it is
  * shown; what is asked, and «Оновити», are the host's.
@@ -114,7 +114,14 @@ const OUTCOME_SEVERITY: Record<ActivityOutcome, 'success' | 'warn' | 'danger'> =
                     <span class="text-muted">—</span>
                   }
                 </td>
-                <td class="px-3 py-2" data-testid="activity-action">{{ actionLabel(entry) }}</td>
+                <td class="px-3 py-2" data-testid="activity-action">
+                  {{ actionLabel(entry) }}
+                  @if (entry.triggerSource; as triggerSource) {
+                    <span class="block text-xs text-muted" data-testid="activity-trigger">{{
+                      triggerLabel(triggerSource)
+                    }}</span>
+                  }
+                </td>
                 <td class="px-3 py-2">
                   <p-tag
                     data-testid="activity-outcome"
@@ -198,6 +205,11 @@ export class ActivityTable {
 
   protected actionLabel(entry: ActivityEntry): string {
     return activityRouteLabel(this.i18n, entry.route);
+  }
+
+  /** What Cognito sent a code for, or signed the account up by, under an entry of the `cognito` service. */
+  protected triggerLabel(triggerSource: string): string {
+    return activityTriggerLabel(this.i18n, triggerSource);
   }
 
   /** «Салон» or «Майстер» — which kind of Місце it is. */

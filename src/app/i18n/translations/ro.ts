@@ -517,6 +517,16 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.pathId.master': 'Maestru',
   'activityLog.pathId.salon': 'Salon',
   'activityLog.pathId.client': 'Client',
+  'activityLog.field.trigger': 'Declanșator Cognito',
+  'activityLog.field.emailDomain': 'Domeniul emailului',
+  'activityLog.trigger.PreSignUp_SignUp': 'Înregistrare cu parolă',
+  'activityLog.trigger.PreSignUp_ExternalProvider': 'Înregistrare prin Google sau Apple',
+  'activityLog.trigger.CustomMessage_SignUp': 'Confirmarea emailului',
+  'activityLog.trigger.CustomMessage_ResendCode': 'Retrimiterea codului',
+  'activityLog.trigger.CustomMessage_ForgotPassword': 'Resetarea parolei',
+  'activityLog.trigger.CustomMessage_UpdateUserAttribute': 'Schimbarea emailului',
+  'activityLog.trigger.CustomMessage_VerifyUserAttribute': 'Confirmarea noului email',
+  'activityLog.trigger.CustomMessage_Authentication': 'Cod de autentificare',
   'activityLog.field.client': 'Aplicația',
   'activityLog.clientApp.client': 'Aplicația pentru clienți',
   'activityLog.clientApp.salon': 'Aplicația business',
@@ -605,6 +615,9 @@ export const RO_TRANSLATIONS: Record<TranslationKey, string> = {
   'activity.route.POST /master/invites/{inviteId}/accept': 'Acceptarea Invitației de către Maestru',
   'activity.route.POST /master/notifications/devices':
     'Înregistrarea dispozitivului Maestrului pentru push',
+  // Cognito-тригери — за власною назвою дії, не за маршрутом.
+  'activity.route.auth.sign-up': 'Înregistrarea contului',
+  'activity.route.auth.code-sent': 'Trimiterea codului pe email',
 
   // Каталог послуг
   'audit.action.salon.service.create': 'Crearea unui serviciu din Catalog',

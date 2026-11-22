@@ -514,6 +514,16 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'activityLog.pathId.master': 'Мастер',
   'activityLog.pathId.salon': 'Салон',
   'activityLog.pathId.client': 'Клиент',
+  'activityLog.field.trigger': 'Триггер Cognito',
+  'activityLog.field.emailDomain': 'Домен почты',
+  'activityLog.trigger.PreSignUp_SignUp': 'Регистрация с паролем',
+  'activityLog.trigger.PreSignUp_ExternalProvider': 'Регистрация через Google или Apple',
+  'activityLog.trigger.CustomMessage_SignUp': 'Подтверждение почты',
+  'activityLog.trigger.CustomMessage_ResendCode': 'Повторная отправка',
+  'activityLog.trigger.CustomMessage_ForgotPassword': 'Сброс пароля',
+  'activityLog.trigger.CustomMessage_UpdateUserAttribute': 'Смена почты',
+  'activityLog.trigger.CustomMessage_VerifyUserAttribute': 'Подтверждение новой почты',
+  'activityLog.trigger.CustomMessage_Authentication': 'Код для входа',
   'activityLog.field.client': 'Приложение',
   'activityLog.clientApp.client': 'Клиентское приложение',
   'activityLog.clientApp.salon': 'Бизнес-приложение',
@@ -592,6 +602,9 @@ export const RU_TRANSLATIONS: Record<TranslationKey, string> = {
   'activity.route.PATCH /master/appointments/{appointmentId}/reschedule': 'Перенос Записи Мастером',
   'activity.route.POST /master/invites/{inviteId}/accept': 'Принятие Инвайта Мастером',
   'activity.route.POST /master/notifications/devices': 'Регистрация устройства Мастера для push',
+  // Cognito-тригери — за власною назвою дії, не за маршрутом.
+  'activity.route.auth.sign-up': 'Регистрация аккаунта',
+  'activity.route.auth.code-sent': 'Отправка кода на почту',
 
   // Каталог послуг
   'audit.action.salon.service.create': 'Создание услуги Каталога',

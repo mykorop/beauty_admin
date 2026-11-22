@@ -13,18 +13,21 @@ import {
   activityClientAppLabel,
   activityClientPlatformLabel,
   activityPathIdLabel,
+  activityTriggerLabel,
 } from './activity-wording';
 
 /**
  * What one Журнал активності entry tells beyond its row: the error it was answered with — the
- * fields that failed the check, when that was the reason — what the app sent (the body, redacted by
- * the backend, marked when it was cut at 4 KB), the ids of the request's address, each leading to
- * its screen where the panel has one, the app, version and platform the request came from — to
- * tell an old build's failure from a new one's — what the request caused (each push, SMS and email
- * it tried, whom it went to and whether it did, and the Журнал дій row it wrote, leading to the
- * «Історія» where its old and new values are) and the `requestId` a developer finds the request's
- * CloudWatch lines by, with a button to copy it. Shared, like `AuditEntryDetails`,
- * so the «Активність» tab of a card words an entry as the screen does.
+ * fields that failed the check, when that was the reason — for an account's sign-up or a code
+ * Cognito sent, what Cognito did it for and the domain of the address (never the address), what the
+ * app sent (the body, redacted by the backend, marked when it was cut at 4 KB), the ids of the
+ * request's address, each leading to its screen where the panel has one, the app, version and
+ * platform the request came from — to tell an old build's failure from a new one's — what the
+ * request caused (each push, SMS and email it tried, whom it went to and whether it did, and the
+ * Журнал дій row it wrote, leading to the «Історія» where its old and new values are) and the
+ * `requestId` a developer finds the request's CloudWatch lines by, with a button to copy it.
+ * Shared, like `AuditEntryDetails`, so the «Активність» tab of a card words an entry as the screen
+ * does.
  */
 @Component({
   selector: 'app-activity-entry-details',
@@ -55,6 +58,17 @@ import {
             <pre class="activity-error-details" data-testid="activity-error-details">{{ details }}</pre>
           </dd>
         }
+      }
+      @if (entry().triggerSource; as triggerSource) {
+        <dt class="text-muted">{{ 'activityLog.field.trigger' | t }}</dt>
+        <dd data-testid="activity-trigger-source">
+          {{ triggerLabel(triggerSource) }}
+          <span class="ml-2 font-mono text-muted">{{ triggerSource }}</span>
+        </dd>
+      }
+      @if (entry().emailDomain; as emailDomain) {
+        <dt class="text-muted">{{ 'activityLog.field.emailDomain' | t }}</dt>
+        <dd class="font-mono" data-testid="activity-email-domain">{{ emailDomain }}</dd>
       }
       @if (requestBody(); as body) {
         <dt class="text-muted">{{ 'activityLog.field.requestBody' | t }}</dt>
@@ -191,6 +205,11 @@ export class ActivityEntryDetails {
 
   protected pathIdLabel(pathId: PathId): string {
     return activityPathIdLabel(this.i18n, pathId);
+  }
+
+  /** What Cognito invoked its trigger for, worded beside its own name for it. */
+  protected triggerLabel(triggerSource: string): string {
+    return activityTriggerLabel(this.i18n, triggerSource);
   }
 
   /**

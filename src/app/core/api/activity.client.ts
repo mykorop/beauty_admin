@@ -64,10 +64,24 @@ export type ActivityEntry = {
   createdAt: string;
   /** dev and staging share a table, so each entry says which stage wrote it. */
   stage: string;
-  /** `client-api`, `salon-api`, `master-api` or `admin-api`. */
+  /**
+   * `client-api`, `salon-api`, `master-api` or `admin-api` — or `cognito`: an account's sign-up and
+   * the codes Cognito sent it.
+   */
   service: string;
-  /** API Gateway's `routeKey`, e.g. `PATCH /client/appointments/{appointmentId}/cancel`. */
+  /**
+   * API Gateway's `routeKey`, e.g. `PATCH /client/appointments/{appointmentId}/cancel` — or, of the
+   * `cognito` service, `auth.sign-up` and `auth.code-sent`.
+   */
   route: string;
+  /**
+   * What Cognito invoked its trigger for — `PreSignUp_SignUp`, `CustomMessage_ForgotPassword` —
+   * worded by `activityLog.trigger.<triggerSource>`; `null` for a request, and absent from an
+   * `admin-api` that does not serve it yet.
+   */
+  triggerSource?: string | null;
+  /** The domain of the address a Cognito trigger's entry concerns — never the address; `null` for none. */
+  emailDomain?: string | null;
   pathParams: Record<string, string>;
   /**
    * `null` — nobody signed in, or a token that did not verify. `role` is the backend's `UserRole`
@@ -95,7 +109,10 @@ export type ActivityEntry = {
   requestBodyTruncated: boolean;
   /** `null` — the app named none: a build from before the header, or a caller that is no BookMe app. */
   client: ActivityApp | null;
-  /** `requestContext.requestId` — what the request's CloudWatch lines carry. */
+  /**
+   * `requestContext.requestId` — what the request's CloudWatch lines carry; for a Cognito trigger's
+   * entry, the trigger's Lambda `awsRequestId`.
+   */
   requestId: string;
   traceId: string | null;
   sentryEventId: string | null;

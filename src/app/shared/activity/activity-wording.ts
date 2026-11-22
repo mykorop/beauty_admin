@@ -12,6 +12,14 @@ export function activityRouteLabel(i18n: I18nService, route: string): string {
   return i18n.optional(`${ACTIVITY_ROUTE_KEY_PREFIX}${route}`) ?? route;
 }
 
+/**
+ * What Cognito sent a code for, or signed an account up by (`CustomMessage_ForgotPassword`,
+ * `PreSignUp_SignUp`), worded — or as Cognito names it, for one the panel does not word.
+ */
+export function activityTriggerLabel(i18n: I18nService, triggerSource: string): string {
+  return i18n.optional(`activityLog.trigger.${triggerSource}`) ?? triggerSource;
+}
+
 /** The backend's `UserRole`, worded — or as it came, for a role the panel does not know yet. */
 export function activityRoleLabel(i18n: I18nService, role: string): string {
   return i18n.optional(`activityLog.role.${role}`) ?? role;

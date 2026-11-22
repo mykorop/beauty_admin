@@ -229,6 +229,96 @@ test.describe('activity log screen', () => {
     await expect(page.getByTestId('activity-outcome')).toContainText('Succes');
   });
 
+  test('words an account’s sign-up and a code Cognito sent, with what Cognito sent it for and the address’s domain', async ({
+    page,
+    mockBackend,
+  }) => {
+    const seen: URLSearchParams[] = [];
+    await mockBackend(ADMIN, {
+      'GET /admin/me': ME,
+      [ACTIVITY]: (url) => {
+        seen.push(url.searchParams);
+        return pageOf([
+          entry({
+            service: 'cognito',
+            route: 'auth.code-sent',
+            triggerSource: 'CustomMessage_ForgotPassword',
+            emailDomain: 'example.com',
+            pathParams: {},
+          }),
+          entry({
+            activityId: 'act-2',
+            service: 'cognito',
+            route: 'auth.sign-up',
+            triggerSource: 'PreSignUp_SignUp',
+            emailDomain: 'gmail.com',
+            pathParams: {},
+            actor: null,
+            outcome: 'rejected',
+            status: 409,
+            error: {
+              code: 'ACCOUNT_EMAIL_ALREADY_LINKED',
+              message: 'An account already exists with this email. Use a different email.',
+              details: { field: 'email' },
+            },
+          }),
+          // A trigger source the panel does not word is shown as Cognito names it.
+          entry({
+            activityId: 'act-3',
+            service: 'cognito',
+            route: 'auth.code-sent',
+            triggerSource: 'CustomMessage_AdminCreateUser',
+            emailDomain: null,
+            pathParams: {},
+          }),
+          entry({ activityId: 'act-4' }),
+        ]);
+      },
+    });
+    await signIn(page, ADMIN, '/activity-log');
+    const action = (row: number) => page.getByTestId('activity-action').nth(row);
+    const trigger = (row: number) => action(row).getByTestId('activity-trigger');
+
+    await expect(action(0)).toContainText('Надсилання коду на пошту');
+    await expect(trigger(0)).toHaveText('Скидання пароля');
+    await expect(action(1)).toContainText('Реєстрація акаунта');
+    await expect(trigger(1)).toHaveText('Реєстрація з паролем');
+    await expect(trigger(2)).toHaveText('CustomMessage_AdminCreateUser');
+    // A request has no trigger.
+    await expect(action(3)).toHaveText('Скасування Запису Клієнтом');
+    await expect(trigger(3)).toHaveCount(0);
+
+    const details = page.getByTestId('activity-details');
+    await page.getByTestId('activity-row-toggle').nth(0).click();
+    await expect(details.getByTestId('activity-trigger-source')).toContainText('Скидання пароля');
+    await expect(details.getByTestId('activity-trigger-source')).toContainText('CustomMessage_ForgotPassword');
+    await expect(details.getByTestId('activity-email-domain')).toHaveText('example.com');
+    await page.getByTestId('activity-row-toggle').nth(0).click();
+    await page.getByTestId('activity-row-toggle').nth(2).click();
+    await expect(details.getByTestId('activity-trigger-source')).toContainText('CustomMessage_AdminCreateUser');
+    await expect(details.getByTestId('activity-email-domain')).toHaveCount(0);
+
+    await page.getByTestId('activity-filter-service').click();
+    await page.getByRole('option', { name: 'Реєстрація й коди' }).click();
+    await page.getByTestId('activity-filter-route').click();
+    await page.getByRole('option', { name: 'Реєстрація акаунта' }).click();
+    await expect.poll(() => Object.fromEntries(seen.at(-1)!)).toEqual({ service: 'cognito', route: 'auth.sign-up' });
+
+    await page.getByTestId('language-switcher').click();
+    await page.getByRole('option', { name: 'Română' }).click();
+    await expect(action(0)).toContainText('Trimiterea codului pe email');
+    await expect(trigger(0)).toHaveText('Resetarea parolei');
+    await expect(action(1)).toContainText('Înregistrarea contului');
+    await expect(page.getByTestId('activity-filter-service')).toContainText('Înregistrare și coduri');
+
+    await page.getByTestId('language-switcher').click();
+    await page.getByRole('option', { name: 'Русский' }).click();
+    await expect(action(0)).toContainText('Отправка кода на почту');
+    await expect(trigger(0)).toHaveText('Сброс пароля');
+    await expect(action(1)).toContainText('Регистрация аккаунта');
+    await expect(trigger(1)).toHaveText('Регистрация с паролем');
+  });
+
   test('keeps the period in the address and sends it as whole days on the platform’s clock', async ({
     page,
     mockBackend,

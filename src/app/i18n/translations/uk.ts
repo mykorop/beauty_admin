@@ -511,6 +511,16 @@ export const UK_TRANSLATIONS = {
   'activityLog.pathId.master': 'Майстер',
   'activityLog.pathId.salon': 'Салон',
   'activityLog.pathId.client': 'Клієнт',
+  'activityLog.field.trigger': 'Тригер Cognito',
+  'activityLog.field.emailDomain': 'Домен пошти',
+  'activityLog.trigger.PreSignUp_SignUp': 'Реєстрація з паролем',
+  'activityLog.trigger.PreSignUp_ExternalProvider': 'Реєстрація через Google чи Apple',
+  'activityLog.trigger.CustomMessage_SignUp': 'Підтвердження пошти',
+  'activityLog.trigger.CustomMessage_ResendCode': 'Повторне надсилання',
+  'activityLog.trigger.CustomMessage_ForgotPassword': 'Скидання пароля',
+  'activityLog.trigger.CustomMessage_UpdateUserAttribute': 'Зміна пошти',
+  'activityLog.trigger.CustomMessage_VerifyUserAttribute': 'Підтвердження нової пошти',
+  'activityLog.trigger.CustomMessage_Authentication': 'Код для входу',
   'activityLog.field.client': 'Застосунок',
   'activityLog.clientApp.client': 'Клієнтський застосунок',
   'activityLog.clientApp.salon': 'Бізнес-застосунок',
@@ -592,6 +602,9 @@ export const UK_TRANSLATIONS = {
     'Перенесення Запису Майстром',
   'activity.route.POST /master/invites/{inviteId}/accept': 'Прийняття Інвайту Майстром',
   'activity.route.POST /master/notifications/devices': 'Реєстрація пристрою Майстра для push',
+  // Cognito-тригери — за власною назвою дії, не за маршрутом.
+  'activity.route.auth.sign-up': 'Реєстрація акаунта',
+  'activity.route.auth.code-sent': 'Надсилання коду на пошту',
 
   // Каталог послуг
   'audit.action.salon.service.create': 'Створення послуги Каталогу',
