@@ -1,5 +1,9 @@
 # beauty_admin
 
+## Compatibility
+
+Every feature lands among old data and old code: the panel reads rows written by every earlier backend version, so their older shapes stay readable to it. The full rule (old data, old code, backfills): `beauty_salon_backend/CLAUDE.md`, «Compatibility».
+
 ## Agent skills
 
 ### Issue tracker
