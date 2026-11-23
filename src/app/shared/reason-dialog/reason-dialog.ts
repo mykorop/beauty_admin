@@ -31,8 +31,10 @@ let reasonInputSequence = 0;
  * disabled until there is one, and what comes out is already trimmed.
  *
  * `reasonRequired: false` is for the few actions that only close something that already happened —
- * marking a Запис «завершено» or «не з'явився». They still ask, because neither can be undone, but
- * an explanation is not owed to anyone the way a cancellation's is.
+ * marking a Запис «завершено» or «не з'явився» — and for a decision that takes nothing away from
+ * anyone, such as turning a Салон's «SMS-сповіщення клієнтам» on or off. They still ask, because the
+ * first cannot be undone and the second costs money, but an explanation is not owed to anyone the
+ * way a cancellation's is.
  *
  * The dialog does not perform the action, so it can ask for a reason without one. `reasonAction`
  * performs it: it keeps `busy` true meanwhile and closes the dialog (`visible`) on success; on a

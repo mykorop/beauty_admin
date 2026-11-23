@@ -1,6 +1,7 @@
 import type { AdminPath } from '../../core/api/admin-api-url';
 import type { AuditTargetType } from '../../core/api/audit.client';
 import type { ReviewsScope } from '../../core/api/reviews.client';
+import type { ActivitySubject } from '../activity/activity-subject';
 
 /** The four cards a profile can be open on. */
 export type ProfileKind = 'salon' | 'master' | 'salonMaster' | 'client';
@@ -72,4 +73,11 @@ export type CardScope = {
    * inside one Салон — or, for a Клієнт, the ones he wrote, at his own address.
    */
   reviews: { about: ReviewsScope } | { writtenBy: string };
+  /**
+   * Whose entries «Активність» reads from the Журнал активності: the subjects it offers, the first
+   * shown first — what the profile's account did, all that happened in its Місце — and the account
+   * of a Салон's Власник, whose own entries span his Мережа. `owner` is `null` for every other kind,
+   * and for a Салон whose Власник `admin-api` does not name.
+   */
+  activity: { subjects: readonly [ActivitySubject, ...ActivitySubject[]]; owner: string | null };
 };

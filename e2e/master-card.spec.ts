@@ -82,6 +82,7 @@ test.describe('independent master card', () => {
       'Відгуки',
       'Фото й сертифікати',
       'Історія',
+      'Активність',
     ]);
 
     await expect(page.getByTestId('field-name')).toHaveText('Ion Popa');

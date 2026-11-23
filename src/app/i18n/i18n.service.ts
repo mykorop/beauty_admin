@@ -52,6 +52,17 @@ export class I18nService {
     return this.lookup(key);
   }
 
+  /**
+   * What the dictionaries word under `prefix`, without it, in their order — the values a filter can
+   * offer by name (the actions of the Журнал активності). Every language holds the same keys
+   * (`translations.spec.ts`), so the default one answers for all.
+   */
+  wordedUnder(prefix: string): string[] {
+    return Object.keys(TRANSLATIONS[DEFAULT_LANGUAGE])
+      .filter((key) => key.startsWith(prefix))
+      .map((key) => key.slice(prefix.length));
+  }
+
   private lookup(key: string, params?: TranslationParams): string | null {
     const dictionaries: TranslationDictionary = TRANSLATIONS;
     const value = dictionaries[this._language()][key] ?? dictionaries[DEFAULT_LANGUAGE][key];

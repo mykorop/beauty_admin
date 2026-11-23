@@ -133,7 +133,8 @@
     color: var(--bm-accent);
     border-color: var(--bm-accent);
   }
-  .audit-entry-details {
+  .audit-entry-details,
+  .activity-entry-details {
     display: block;
     min-width: 0;
     font-size: 0.875rem;
@@ -154,5 +155,22 @@
   }
   .audit-changes td {
     overflow-wrap: anywhere;
+  }
+  .activity-details {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.5rem 1rem;
+  }
+  .activity-error-details,
+  .activity-request-body {
+    margin: 0;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  /* Up to 4 KB of a body, laid out a field a line: scrolled rather than stretching the row. */
+  .activity-request-body {
+    max-height: 24rem;
+    overflow-y: auto;
   }
 }

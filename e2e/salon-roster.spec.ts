@@ -186,6 +186,7 @@ test.describe('salon roster', () => {
       'Копії послуг',
       'Записи',
       'Відгуки',
+      'Активність',
     ]);
     await expect(page.getByTestId('field-specialization')).toHaveText('Барбер');
     await expect(page.getByTestId('field-commission')).toHaveText('40%');

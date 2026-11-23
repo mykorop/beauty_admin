@@ -27,6 +27,12 @@ describe('parseAuditLogFilters', () => {
     ).toEqual({ from: '2026-09-01', to: '2026-09-21', targetType: 'salon', action: 'salon.profile.update' });
   });
 
+  it('reads the platform’s own settings as a target, with their action', () => {
+    expect(
+      parseAuditLogFilters(params({ targetType: 'platform', action: 'platform.ukrainian_phones.update' })),
+    ).toEqual(filters({ targetType: 'platform', action: 'platform.ukrainian_phones.update' }));
+  });
+
   it('drops what a hand-edited address got wrong', () => {
     expect(
       parseAuditLogFilters(params({ from: '01.09.2026', to: '2026-02-31', targetType: 'planet', action: 'explode' })),

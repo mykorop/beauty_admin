@@ -3,8 +3,11 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { adminApiUrl } from './admin-api-url';
 
-/** Mirrors of the backend's lists; they grow with every card that gains write actions. */
-export const AUDIT_TARGET_TYPES = ['salon', 'master', 'client'] as const;
+/**
+ * Mirrors of the backend's lists; they grow with every card that gains write actions. `platform` is
+ * no profile but the platform's own settings — one target, `settings`.
+ */
+export const AUDIT_TARGET_TYPES = ['salon', 'master', 'client', 'platform'] as const;
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 
 export const AUDIT_ACTIONS = [
@@ -12,6 +15,8 @@ export const AUDIT_ACTIONS = [
   'salon.hours.update',
   'salon.block',
   'salon.unblock',
+  // «SMS-сповіщення клієнтам»: the one setting of a Салон only the platform turns on or off.
+  'salon.sms_notifications.update',
   'salon.master.update',
   'salon.master.remove',
   'salon.master.hours.update',
@@ -56,6 +61,8 @@ export const AUDIT_ACTIONS = [
   // so Блокування and its lifting are the whole of his «Історія».
   'client.block',
   'client.unblock',
+  // «Українські номери (+380)» on the «Налаштування» page: the platform's own setting, not a profile's.
+  'platform.ukrainian_phones.update',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

@@ -6,6 +6,7 @@ import {
   type AuditTargetType,
 } from '../../core/api/audit.client';
 import { addCalendarDays, parseCalendarDay } from '../../shared/calendar-day';
+import { oneOf } from '../../shared/one-of';
 import { PLATFORM_TIME_ZONE, zonedDayStart } from '../../shared/platform-clock';
 
 /** The filters of the Журнал дій screen, as the address holds them; days are `YYYY-MM-DD`, both inclusive. */
@@ -19,9 +20,6 @@ export type AuditLogFilters = {
 export const NO_AUDIT_LOG_FILTERS: AuditLogFilters = { from: null, to: null, targetType: null, action: null };
 
 type ParamReader = { get(name: string): string | null };
-
-const oneOf = <T extends string>(allowed: readonly T[], raw: string | null): T | null =>
-  allowed.find((value) => value === raw) ?? null;
 
 /** Anything a hand-edited address got wrong reads as "not set" rather than as a refusal. */
 export function parseAuditLogFilters(params: ParamReader): AuditLogFilters {

@@ -13,4 +13,7 @@ export const environment: Environment = {
     userPoolClientId: 'e2e-client-id',
   },
   adminApiUrl: 'https://admin-api.e2e.invalid',
+  // The suite must never report: a spec that wants Sentry uses `environment.e2e-sentry.ts`. Its
+  // links into Sentry lead to a made-up organisation, so the specs read where each one goes.
+  sentry: { dsn: '', orgUrl: 'https://bookme-e2e.sentry.invalid' },
 };

@@ -10,6 +10,7 @@ import {
 } from '../../core/api/stats.client';
 import type { ReviewsScope } from '../../core/api/reviews.client';
 import { addCalendarDays } from '../../shared/calendar-day';
+import { profileCardLink } from '../../shared/profile-card-link';
 import { toQueryParams } from '../../shared/reviews/review-filters';
 
 /**
@@ -127,11 +128,6 @@ export function attentionCounts(items: readonly AttentionItem[]): Record<Attenti
     }
   }
   return counts;
-}
-
-/** The card of a Салон or of a Незалежний майстер — where every row naming one leads. */
-export function profileCardLink(kind: 'salon' | 'independentMaster', id: string): string[] {
-  return kind === 'salon' ? ['/salons', id] : ['/independent-masters', id];
 }
 
 /**

@@ -34,6 +34,10 @@ export function salonScope(salon: Salon): CardScope {
     },
     audit: { type: 'salon', id: salon.salonId },
     reviews: { about: { salonId: salon.salonId } },
+    activity: {
+      subjects: [{ kind: 'place', id: salon.salonId }],
+      owner: salon.owner?.ownerId || null,
+    },
   };
 }
 
@@ -109,6 +113,11 @@ export const SALON_CARD: ProfileCardKind<string, Salon, null> = {
       path: 'history',
       labelKey: 'salon.tab.history',
       load: () => import('../../shared/audit/audit-history').then((m) => m.AuditHistory),
+    },
+    {
+      path: 'activity',
+      labelKey: 'salon.tab.activity',
+      load: () => import('../../shared/activity/activity.tab').then((m) => m.ActivityTab),
     },
   ],
   back: { link: () => '/salons', labelKey: 'salon.backToList' },

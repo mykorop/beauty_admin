@@ -29,7 +29,7 @@ test('narrow navigation opens by keyboard, closes on Escape or selection, and re
   await toggle.focus();
   await page.keyboard.press('Enter');
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-  await expect(navigation.getByRole('link')).toHaveCount(7);
+  await expect(navigation.getByRole('link')).toHaveCount(9);
   await page.keyboard.press('Tab');
   await expect(navigation.getByRole('link').first()).toBeFocused();
   await expect(navigation.getByRole('link').first()).toHaveAttribute('aria-current', 'page');

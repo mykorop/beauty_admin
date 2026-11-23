@@ -22,6 +22,7 @@ import type { TranslationKey } from '../../i18n/translations';
 import { formatBuiltAt } from '../../shared/built-at';
 import { calendarDayAsUtcDate } from '../../shared/calendar-day';
 import { PLATFORM_TIME_ZONE } from '../../shared/platform-clock';
+import { profileCardLink } from '../../shared/profile-card-link';
 import { formatRating } from '../../shared/rating';
 import { TableRunFollower } from '../../shared/table-run';
 import { formatVenueDate } from '../../shared/venue-date';
@@ -38,7 +39,6 @@ import {
   attentionLink,
   daysFrom,
   lowRatedFeed,
-  profileCardLink,
   weeksFrom,
   growthTotals,
   periodStart,

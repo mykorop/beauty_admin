@@ -24,6 +24,8 @@ export type ApiMock = {
   readonly unmatched: string[];
   /** `Authorization` header of every matched request, in order. */
   readonly authorizations: (string | undefined)[];
+  /** `X-BookMe-Client` header of every matched request, in order — how the panel named itself. */
+  readonly clientHeaders: (string | undefined)[];
   /** JSON body of every matched request under its route key, in order — what the app really sent. */
   readonly bodies: Record<string, unknown[]>;
 };
@@ -82,7 +84,7 @@ export function holdResponse(response: MockResponse): HeldResponse {
  * worse than a red one.
  */
 export async function installApiMock(context: BrowserContext, routes: MockRoutes): Promise<ApiMock> {
-  const mock: ApiMock = { unmatched: [], authorizations: [], bodies: {} };
+  const mock: ApiMock = { unmatched: [], authorizations: [], clientHeaders: [], bodies: {} };
 
   await context.route(`${environment.adminApiUrl}/**`, async (route: Route): Promise<void> => {
     const request = route.request();
@@ -102,6 +104,7 @@ export async function installApiMock(context: BrowserContext, routes: MockRoutes
 
     const body: unknown = request.postDataJSON();
     mock.authorizations.push(request.headers()['authorization']);
+    mock.clientHeaders.push(request.headers()['x-bookme-client']);
     (mock.bodies[key] ??= []).push(body);
     const entry = typeof matched === 'function' ? await matched(url, body) : matched;
     try {

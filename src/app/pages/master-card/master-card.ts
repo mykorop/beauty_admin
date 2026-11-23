@@ -66,6 +66,14 @@ export class MasterCardAdapter implements CardAdapter<string, Master, null> {
       },
       audit: { type: 'master', id: profile.masterId },
       reviews: { about: { masterId: profile.masterId } },
+      // A Незалежний майстер is his own Місце: what he did, and all that happened there.
+      activity: {
+        subjects: [
+          { kind: 'account', id: profile.masterId },
+          { kind: 'place', id: profile.masterId },
+        ],
+        owner: null,
+      },
     };
   }
 
@@ -132,6 +140,11 @@ export const MASTER_CARD: ProfileCardKind<string, Master, null> = {
       path: 'history',
       labelKey: 'salon.tab.history',
       load: () => import('../../shared/audit/audit-history').then((m) => m.AuditHistory),
+    },
+    {
+      path: 'activity',
+      labelKey: 'salon.tab.activity',
+      load: () => import('../../shared/activity/activity.tab').then((m) => m.ActivityTab),
     },
   ],
   back: { link: () => '/independent-masters', labelKey: 'master.backToList' },

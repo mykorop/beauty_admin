@@ -5,6 +5,8 @@ import type { MasterStatus } from '../../core/api/masters.client';
 import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import type { TranslationKey } from '../../i18n/translations';
+import { masterClientVisibility } from '../../shared/client-visibility/client-visibility';
+import { ClientVisibilityFields } from '../../shared/client-visibility/client-visibility.fields';
 import { cardDates, loadedCard } from '../../shared/profile-card/loaded-card';
 import { formatRating } from '../../shared/rating';
 import { specializationLabel } from '../../shared/specialization';
@@ -17,7 +19,7 @@ import { MasterProfileForm } from './master-profile.form';
  */
 @Component({
   selector: 'app-master-profile-tab',
-  imports: [ButtonDirective, MasterProfileForm, RouterLink, TranslatePipe],
+  imports: [ButtonDirective, ClientVisibilityFields, MasterProfileForm, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './master-profile.tab.html',
 })
@@ -28,6 +30,9 @@ export class MasterProfileTab {
   protected readonly profile = this.card.profile;
   protected readonly scope = this.card.scope;
   protected readonly editing = signal(false);
+
+  /** Видимість: his own choice — never the Салон's he has left — shown and never changed here. */
+  protected readonly clientVisibility = computed(() => masterClientVisibility(this.profile()));
 
   protected readonly addressLines = computed(() => {
     const master = this.profile();

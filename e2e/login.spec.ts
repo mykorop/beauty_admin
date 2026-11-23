@@ -40,6 +40,8 @@ test.describe('sign-in', () => {
       'Записи',
       'Відгуки',
       'Журнал дій',
+      'Журнал активності',
+      'Налаштування',
     ]);
     expect(api.authorizations[0]).toMatch(/^Bearer ey/);
   });

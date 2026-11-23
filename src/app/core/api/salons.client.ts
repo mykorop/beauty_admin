@@ -6,6 +6,7 @@ import { HOURS_REFUSAL_CODES } from './api-error';
 import type { DayHours } from './master-schedule.model';
 import { adminApiUrl, salonPath } from './admin-api-url';
 import { withAllowedAppointments } from './allow-existing-appointments';
+import type { ProfileClientVisibility } from './client-visibility.model';
 import { withReason } from './reason-body';
 
 export type SalonStatus = 'active' | 'blocked' | 'deleted';
@@ -33,11 +34,19 @@ export type SalonList = {
 
 export type ShortLink = { kind: 'random' | 'handle'; code: string; path: string };
 
+/** A Салон's Власник, as `admin-api` names him from his Основний салон — `''` where it has no value. */
+export type SalonOwner = { ownerId: string; name: string; email: string };
+
 /** The whole profile of one Салон, Deleted ones included. */
 export type Salon = {
   salonId: string;
   name: string;
   ownerName: string;
+  /**
+   * Its Власник — absent from an `admin-api` from before it named him; the card then offers no
+   * «Активність Власника».
+   */
+  owner?: SalonOwner;
   description: string;
   addressStreet: string;
   addressHouseNumber: string;
@@ -62,10 +71,15 @@ export type Salon = {
   deletedAt: string | null;
   blockedAt: string | null;
   blockedReason: string | null;
+  /**
+   * «SMS-сповіщення клієнтам»: the Салон's Клієнти get a paid SMS about their Записи. Only the
+   * Адміністратор платформи changes it (`setSmsNotifications`); the Салон itself cannot.
+   */
+  smsNotificationsEnabled: boolean;
   shortLinks: { random: ShortLink | null; handle: ShortLink | null };
   createdAt: string;
   updatedAt: string;
-};
+} & ProfileClientVisibility; // Its Видимість — the business's own choice, read only here.
 
 export type SalonDayHours = DayHours;
 
@@ -114,6 +128,22 @@ export class SalonsClient {
 
   hours(salonId: string): Observable<SalonHours> {
     return this.http.get<SalonHours>(salonUrl(salonId, 'hours'));
+  }
+
+  /**
+   * «SMS-сповіщення клієнтам» set to `enabled` — the whole state, not a toggle — with the optional
+   * reason the Журнал records. Answers with the whole Салон, which the card then shows. Its refusal
+   * (a Видалений Салон) is an ordinary toast.
+   */
+  setSmsNotifications(
+    salonId: string,
+    request: { enabled: boolean; reason?: string },
+  ): Observable<Salon> {
+    const { enabled, reason } = request;
+    return this.http.put<Salon>(salonUrl(salonId, 'sms-notifications'), {
+      enabled,
+      ...withReason(reason),
+    });
   }
 
   /**

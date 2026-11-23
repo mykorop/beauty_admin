@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { SILENT_ERROR_CODES } from './admin-api.interceptor';
 import { adminApiUrl, masterPath } from './admin-api-url';
+import type { ProfileClientVisibility, SalonClientVisibility } from './client-visibility.model';
 import type { ShortLink } from './salons.client';
 
 /** A Незалежний майстер wears the same three states as a Салон. */
@@ -29,7 +30,11 @@ export type MasterList = {
   builtAt: string;
 };
 
-/** The Салон a master is on the Ростер of, or the one he used to be on. */
+/**
+ * The Салон a master is on the Ростер of, or the one he used to be on — with, beside its state, its
+ * Видимість: what clients get of him while `current` (his own, at the top of the card, are unread
+ * then).
+ */
 export type MasterSalon = {
   salonId: string;
   name: string;
@@ -39,7 +44,7 @@ export type MasterSalon = {
   current: boolean;
   joinedAt: string | null;
   leftAt: string | null;
-};
+} & SalonClientVisibility;
 
 /** The whole profile of one Майстер, Deleted ones included. */
 export type Master = {
@@ -75,7 +80,7 @@ export type Master = {
   salon: MasterSalon | null;
   createdAt: string;
   updatedAt: string;
-};
+} & ProfileClientVisibility; // His own Видимість, read only here; a Майстер салону's is `salon`'s.
 
 /** What the administrator may change on a Майстер; the account's email and password are not here. */
 export type MasterProfileFields = {

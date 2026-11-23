@@ -58,6 +58,22 @@
       {{ 'salon.value.days' | t: { count: salon.bookingForwardDays } }}
     </dd>
 
+    <dt class="text-muted">
+      <label for="salon-sms-notifications">{{ 'salon.field.smsNotificationsEnabled' | t }}</label>
+    </dt>
+    <dd class="flex items-start gap-2" data-testid="field-smsNotifications">
+      <!-- Never changed in place: the dialog asks first, and the card takes the backend's answer. -->
+      <p-checkbox
+        inputId="salon-sms-notifications"
+        data-testid="sms-notifications"
+        [binary]="true"
+        [ngModel]="smsShown()"
+        (ngModelChange)="askSmsChange($event)"
+        [disabled]="!scope().writable"
+      />
+      <span class="text-sm text-muted">{{ 'salon.sms.hint' | t }}</span>
+    </dd>
+
     <dt class="text-muted">{{ 'salon.field.brandColor' | t }}</dt>
     <dd class="flex items-center gap-2" data-testid="field-brandColor">
       @if (salon.brandColor) {
@@ -71,6 +87,8 @@
         —
       }
     </dd>
+
+    <app-client-visibility-fields [view]="clientVisibility()" />
 
     <dt class="text-muted">{{ 'salon.field.shortLink' | t }}</dt>
     <dd data-testid="field-shortLink">
@@ -100,4 +118,16 @@
   <p class="mt-2 text-xs text-muted">
     {{ 'salon.datesInVenueZone' | t: { timezone: salon.timezone } }}
   </p>
+  <app-reason-dialog
+    [titleKey]="smsCopy().title"
+    [confirmLabelKey]="smsCopy().confirm"
+    [confirmSeverity]="smsCopy().severity"
+    [reasonRequired]="smsChange.reasonRequired()"
+    [busy]="smsChange.busy()"
+    [visible]="smsChange.open()"
+    (visibleChange)="$event || smsChange.dismiss()"
+    (confirmed)="smsChange.confirm($event)"
+  >
+    {{ smsCopy().message | t: { name: salon.name } }}
+  </app-reason-dialog>
 }
