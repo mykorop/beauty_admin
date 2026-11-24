@@ -5,10 +5,20 @@
 //
 // sentry-cli takes the rest of its settings from the environment: SENTRY_ORG and SENTRY_PROJECT
 // (an organisation token carries the organisation and its region already), SENTRY_URL if needed.
+// Each may also sit in the gitignored `.env` at the repo root; a variable already set in the shell wins.
 import { spawnSync } from 'node:child_process';
 import { readdirSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { SentryCli } from '@sentry/cli';
+
+try {
+  process.loadEnvFile(join(dirname(fileURLToPath(import.meta.url)), '..', '.env'));
+} catch (error) {
+  if (error.code !== 'ENOENT') {
+    throw error;
+  }
+}
 
 const OUTPUT = 'dist/beauty-admin/browser';
 

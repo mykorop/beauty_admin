@@ -76,7 +76,8 @@ Source maps of `build:staging` and `build:prod` are hidden: the bundles do not r
 `scripts/sentry-sourcemaps.mjs` runs after either build. With `SENTRY_AUTH_TOKEN` set it injects
 Sentry debug ids into the bundles and uploads the maps; it then deletes every `.map` from `dist`, so
 none is hosted. Without the token the build ends as before, minus the maps. A failed upload fails
-the build. Set these in the shell that builds, never in the repository:
+the build. Set these in the shell that builds, or in the gitignored `.env` at the root (the shell
+wins); never in a tracked file:
 
 | Variable            | Needed                                    | Meaning                                                   |
 | ------------------- | ----------------------------------------- | --------------------------------------------------------- |
