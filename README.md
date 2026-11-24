@@ -53,9 +53,9 @@ apps report to, so a trace runs from the panel into `admin-api`. The set-up is
 `src/app/core/monitoring/sentry.ts`; `main.ts`, `app.config.ts` and `AuthService` call into it.
 
 - **DSN** — `sentry.dsn` in each `environment*.ts`. A DSN only lets a browser send events, so it is
-  committed, not kept secret. Empty — as now, until the project exists — leaves Sentry off: no SDK
-  set-up, no events, no trace headers. The `e2e` build keeps it empty; `e2e-sentry` points it at a
-  made-up ingest that `e2e/sentry.spec.ts` answers itself.
+  committed, not kept secret. dev, staging and prod point at the `admin` project of `bookme-sy`.
+  Empty leaves Sentry off: no SDK set-up, no events, no trace headers. The `e2e` build keeps it
+  empty; `e2e-sentry` points it at a made-up ingest that `e2e/sentry.spec.ts` answers itself.
 - **Environment** — the build's stage (`dev`, `staging`, `prod`), as on the backend and in the apps.
 - **What is reported** — whatever Angular's error handler sees, and every request that got no answer
   (offline, connection refused or timed out: status 0) or a 5xx, API Gateway's own 503/504 time-out
@@ -69,8 +69,8 @@ apps report to, so a trace runs from the panel into `admin-api`. The set-up is
   and a card's «Активність» to «Помилки в Sentry» (the issues of the account's `user.id`; on a
   Салон's card, «Помилки Власника в Sentry»). Each is a search of Sentry's issues across every
   project over 90 days, opened in a new tab: no API token, whoever opens it signs in to Sentry.
-  Empty — as now — leaves out the links. The `e2e` build names a made-up organisation; `e2e-sentry`
-  names none.
+  dev, staging and prod name `https://bookme-sy.sentry.io`. Empty leaves out the links. The `e2e`
+  build names a made-up organisation; `e2e-sentry` names none.
 
 Source maps of `build:staging` and `build:prod` are hidden: the bundles do not reference them.
 `scripts/sentry-sourcemaps.mjs` runs after either build. With `SENTRY_AUTH_TOKEN` set it injects
@@ -82,7 +82,7 @@ the build. Set these in the shell that builds, never in the repository:
 | ------------------- | ----------------------------------------- | --------------------------------------------------------- |
 | `SENTRY_AUTH_TOKEN` | to upload                                 | Sentry auth token allowed to upload source maps — an organisation token is |
 | `SENTRY_ORG`        | with a user token                         | organisation slug; an organisation token already carries it |
-| `SENTRY_PROJECT`    | to upload                                 | slug of the panel's project                               |
+| `SENTRY_PROJECT`    | to upload                                 | slug of the panel's project: `admin`                     |
 | `SENTRY_URL`        | only if the token does not name a region  | e.g. `https://de.sentry.io` for the EU region             |
 
 ## Layout
